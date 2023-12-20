@@ -1,0 +1,8 @@
+{
+  "name": "TapDano",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite",
+  "id": "3964cc0d"
+}
