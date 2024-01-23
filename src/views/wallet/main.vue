@@ -5,15 +5,13 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
         </ion-buttons>
-        <ion-title>NFC Wallet</ion-title>
+        <ion-title>My Investments</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>Welcome to<br />TapDano Wallet</h1>
-        <ion-button expand="block" @click="$router.push('/NFC-Wallet/Index')">Create a new wallet</ion-button>
-        <ion-button expand="block" fill="outline">Restore wallet</ion-button>
+        <p>Main</p>
       </div>
     </ion-content>
   </ion-page>
@@ -31,15 +29,5 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-}
-
-#container h1 {
-  margin: 20px 0;
-  font-size: 2.625rem;
-}
-
-#container ion-button {
-  padding: 5px 20px;
-  min-height: 50px;
 }
 </style>

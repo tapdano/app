@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { Storage } from '@ionic/storage';
 import {
   IonApp,
   IonContent,
@@ -35,7 +36,7 @@ import {
   IonRouterOutlet,
   IonSplitPane,
 } from '@ionic/vue';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import {
   walletOutline,
   walletSharp,
@@ -43,25 +44,57 @@ import {
   logInSharp
 } from 'ionicons/icons';
 
-const selectedIndex = ref(0);
-const appPages = [
-{
-    title: 'NFC Wallet',
-    url: '/NFC-Wallet',
-    iosIcon: walletOutline,
-    mdIcon: walletSharp,
-  },
-  {
-    title: 'NFT Authentication',
-    url: '/NFT-Authentication',
-    iosIcon: logInOutline,
-    mdIcon: logInSharp,
-  },
-];
+const storage = new Storage();
+storage.create();
 
+const appPages = ref([] as Array<{ title: string; url: string; iosIcon: string; mdIcon: string }>);
+
+const loadAppPages = async () => {
+  const storedPages = await storage.get('appPages');
+  if (storedPages) {
+    appPages.value = storedPages;
+  }
+
+  appPages.value = [
+    {
+      title: 'Welcome',
+      url: '/welcome',
+      iosIcon: walletOutline,
+      mdIcon: walletSharp,
+    },
+    {
+      title: 'Create a new wallet',
+      url: '/new',
+      iosIcon: walletOutline,
+      mdIcon: walletSharp,
+    },
+    {
+      title: 'Restore wallet',
+      url: '/restore',
+      iosIcon: walletOutline,
+      mdIcon: walletSharp,
+    },
+    {
+      title: 'Settings',
+      url: '/settings',
+      iosIcon: walletOutline,
+      mdIcon: walletSharp,
+    }
+  ];
+};
+
+const saveAppPages = async () => {
+  await storage.set('appPages', appPages.value);
+};
+
+onMounted(async () => {
+  await loadAppPages();
+});
+
+const selectedIndex = ref(0);
 const path = '/' + window.location.pathname.split('/')[1];
 if (path !== undefined) {
-  selectedIndex.value = appPages.findIndex((page) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
+  selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
 }
 </script>
 

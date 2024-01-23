@@ -5,13 +5,13 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
         </ion-buttons>
-        <ion-title>NFC Wallet</ion-title>
+        <ion-title>New</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <p>Settings</p>
+        <p>New</p>
       </div>
     </ion-content>
   </ion-page>

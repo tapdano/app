@@ -5,33 +5,41 @@ import WalletTabBar from '../components/WalletTabBar.vue';
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/NFC-Wallet'
+    redirect: '/welcome'
   },
   {
-    path: '/NFC-Wallet',
-    component: () => import ('../views/NFC-Wallet.vue')
+    path: '/welcome',
+    component: () => import ('../views/welcome.vue')
   },
   {
-    path: '/NFC-Wallet/Index',
+    path: '/new',
+    component: () => import ('../views/new.vue')
+  },
+  {
+    path: '/restore',
+    component: () => import ('../views/restore.vue')
+  },
+  {
+    path: '/settings',
+    component: () => import ('../views/settings.vue')
+  },
+  {
+    path: '/wallet',
     component: WalletTabBar,
     children: [
       {
-        path: '/NFC-Wallet/Index',
-        component: () => import ('../views/NFC-Wallet/Index.vue')
+        path: '/wallet/main',
+        component: () => import ('../views/wallet/main.vue')
       },
       {
-        path: '/NFC-Wallet/Transactions',
-        component: () => import ('../views/NFC-Wallet/Transactions.vue')
+        path: '/wallet/transactions',
+        component: () => import ('../views/wallet/transactions.vue')
       },
       {
-        path: '/NFC-Wallet/Settings',
-        component: () => import ('../views/NFC-Wallet/Settings.vue')
+        path: '/wallet/settings',
+        component: () => import ('../views/wallet/settings.vue')
       }
     ]
-  },
-  {
-    path: '/NFT-Authentication',
-    component: () => import ('../views/NFT-Authentication.vue')
   }
 ]
 
