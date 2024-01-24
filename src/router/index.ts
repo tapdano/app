@@ -2,14 +2,19 @@ import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import WalletTabBar from '../components/WalletTabBar.vue';
 
+import { Storage } from '@ionic/storage';
+
+const storage = new Storage();
+storage.create();
+
 const routes: Array<RouteRecordRaw> = [
-  {
-    path: '/',
-    redirect: '/welcome'
-  },
   {
     path: '/welcome',
     component: () => import ('../views/welcome.vue')
+  },
+  {
+    path: '/my-wallets',
+    component: () => import ('../views/my-wallets.vue')
   },
   {
     path: '/new',
@@ -41,11 +46,25 @@ const routes: Array<RouteRecordRaw> = [
       }
     ]
   }
-]
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
-})
+});
+
+router.beforeEach((to, from, next) => {
+  if (to.path === '/') {
+    storage.get('wallets').then(wallets => {
+      if (wallets) {
+        next('/my-wallets');
+      } else {
+        next('/welcome');
+      }
+    });
+  } else {
+    next();
+  }
+});
 
 export default router

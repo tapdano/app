@@ -57,8 +57,8 @@ const loadAppPages = async () => {
 
   appPages.value = [
     {
-      title: 'Welcome',
-      url: '/welcome',
+      title: 'My Wallets',
+      url: '/my-wallets',
       iosIcon: walletOutline,
       mdIcon: walletSharp,
     },
