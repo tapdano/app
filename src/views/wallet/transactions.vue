@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
         </ion-buttons>
-        <ion-title>My Investments</ion-title>
+        <ion-title>{{ walletName }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -18,7 +18,32 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { Storage } from '@ionic/storage';
+
+const router = useRouter();
+const storage = new Storage();
+storage.create();
+
+const walletName = ref('My Investments');
+
+onMounted(async () => {
+  const currentIndex = await storage.get('currentWallet');
+  if (currentIndex === null) {
+    router.push('/my-wallets');
+    return;
+  }
+
+  const wallets = await storage.get('wallets');
+  if (!wallets || !wallets[currentIndex]) {
+    router.push('/my-wallets');
+    return;
+  }
+
+  walletName.value = wallets[currentIndex].name;
+});
 </script>
 
 <style scoped>

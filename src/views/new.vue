@@ -14,7 +14,7 @@
         <form @submit.prevent="handleSubmit">
           <ion-item>
             <ion-label position="floating">Name</ion-label>
-            <ion-input placeholder="My Investments"></ion-input>
+            <ion-input v-model="walletName" placeholder="My Investments"></ion-input>
           </ion-item>
 
           <div id="advanced-options" @click="toggleAdvancedOptions">
@@ -23,7 +23,7 @@
           <div v-show="showAdvancedOptions">
             <ion-item>
               <ion-label>Type</ion-label>
-              <ion-select value="nfc-wallet" placeholder="Select One">
+              <ion-select v-model="walletType" value="nfc-wallet" placeholder="Select One">
                 <ion-select-option value="nfc-wallet">NFC Wallet</ion-select-option>
                 <ion-select-option value="nfc-authentication">NFC Authentication</ion-select-option>
               </ion-select>
@@ -41,15 +41,31 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { Storage } from '@ionic/storage';
 
 const router = useRouter();
+const storage = new Storage();
+storage.create();
+
 const showAdvancedOptions = ref(false);
+const walletName = ref('');
+const walletType = ref('');
 
 const toggleAdvancedOptions = () => {
   showAdvancedOptions.value = !showAdvancedOptions.value;
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
+  let name = walletName.value.trim() || `My Investments #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+  let type = walletType.value || 'nfc-wallet';
+
+  const wallets = (await storage.get('wallets')) || [];
+  const newIndex = wallets.length - 1;
+  wallets.push({ name, type });
+
+  await storage.set('wallets', wallets);
+  await storage.set('currentWallet', newIndex);  
+
   router.push('/wallet/main');
 };
 </script>
