@@ -40,8 +40,8 @@ import { ref, onMounted } from 'vue';
 import {
   walletOutline,
   walletSharp,
-  logInOutline,
-  logInSharp
+  settingsOutline,
+  settingsSharp
 } from 'ionicons/icons';
 
 const storage = new Storage();
@@ -63,22 +63,10 @@ const loadAppPages = async () => {
       mdIcon: walletSharp,
     },
     {
-      title: 'Create a new wallet',
-      url: '/new',
-      iosIcon: walletOutline,
-      mdIcon: walletSharp,
-    },
-    {
-      title: 'Restore wallet',
-      url: '/restore',
-      iosIcon: walletOutline,
-      mdIcon: walletSharp,
-    },
-    {
       title: 'Settings',
       url: '/settings',
-      iosIcon: walletOutline,
-      mdIcon: walletSharp,
+      iosIcon: settingsOutline,
+      mdIcon: settingsSharp,
     }
   ];
 };
