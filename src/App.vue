@@ -36,54 +36,43 @@ import {
   IonRouterOutlet,
   IonSplitPane,
 } from '@ionic/vue';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import {
   walletOutline,
   walletSharp,
   settingsOutline,
   settingsSharp
 } from 'ionicons/icons';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
 
 const storage = new Storage();
 storage.create();
 
-const appPages = ref([] as Array<{ title: string; url: string; iosIcon: string; mdIcon: string }>);
-
-const loadAppPages = async () => {
-  const storedPages = await storage.get('appPages');
-  if (storedPages) {
-    appPages.value = storedPages;
+const appPages = ref([
+  {
+    title: 'My Wallets',
+    url: '/my-wallets',
+    iosIcon: walletOutline,
+    mdIcon: walletSharp,
+  },
+  {
+    title: 'Settings',
+    url: '/settings',
+    iosIcon: settingsOutline,
+    mdIcon: settingsSharp,
   }
-
-  appPages.value = [
-    {
-      title: 'My Wallets',
-      url: '/my-wallets',
-      iosIcon: walletOutline,
-      mdIcon: walletSharp,
-    },
-    {
-      title: 'Settings',
-      url: '/settings',
-      iosIcon: settingsOutline,
-      mdIcon: settingsSharp,
-    }
-  ];
-};
-
-const saveAppPages = async () => {
-  await storage.set('appPages', appPages.value);
-};
-
-onMounted(async () => {
-  await loadAppPages();
-});
+]);
 
 const selectedIndex = ref(0);
 const path = '/' + window.location.pathname.split('/')[1];
 if (path !== undefined) {
   selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
 }
+watch(() => route.path, async (newPath) => {
+  selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(newPath.toLowerCase()) != -1);
+});
 </script>
 
 <style scoped>
