@@ -13,8 +13,7 @@
       <div id="container">
         <form @submit.prevent="handleSubmit">
           <ion-item>
-            <ion-label position="floating">Name</ion-label>
-            <ion-input v-model="walletName" placeholder="My Investments"></ion-input>
+            <ion-input v-model="walletName" label="Name" placeholder="My Investments"></ion-input>
           </ion-item>
 
           <div id="advanced-options" @click="toggleAdvancedOptions">
@@ -22,8 +21,7 @@
           </div>
           <div v-show="showAdvancedOptions">
             <ion-item>
-              <ion-label>Type</ion-label>
-              <ion-select v-model="walletType" value="nfc-wallet" placeholder="Select One">
+              <ion-select v-model="walletType" label="Type">
                 <ion-select-option value="nfc-wallet">NFC Wallet</ion-select-option>
                 <ion-select-option value="nfc-authentication">NFC Authentication</ion-select-option>
               </ion-select>
@@ -49,7 +47,7 @@ storage.create();
 
 const showAdvancedOptions = ref(false);
 const walletName = ref('');
-const walletType = ref('');
+const walletType = ref('nfc-wallet');
 
 const toggleAdvancedOptions = () => {
   showAdvancedOptions.value = !showAdvancedOptions.value;
