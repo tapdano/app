@@ -9,7 +9,7 @@
     </ion-content>
   </ion-page>
 </template>
-
+ 
 <script setup lang="ts">
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
 </script>
