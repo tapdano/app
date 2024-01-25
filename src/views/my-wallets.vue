@@ -14,7 +14,7 @@
         <p>My Wallets</p>
         <ion-list>
           <ion-item v-for="(wallet, index) in wallets" :key="index" @click="selectWallet(index)">
-            {{ wallet.name }}
+            {{ (wallet as any).name }}
           </ion-item>
         </ion-list>
         <div v-if="wallets.length === 0">Nenhuma Wallet found</div>
