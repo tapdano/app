@@ -17,7 +17,6 @@
             {{ (wallet as any).name }}
           </ion-item>
         </ion-list>
-        <div v-if="wallets.length === 0">Nenhuma Wallet found</div>
         <div id="buttons-box">
           <ion-button expand="block" @click="$router.push('/new')">Create a new wallet</ion-button>
           <ion-button expand="block" @click="$router.push('/restore')" fill="outline">Restore wallet</ion-button>
