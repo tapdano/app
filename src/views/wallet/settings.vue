@@ -22,37 +22,40 @@
 
 <script setup lang="ts">
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 
 const router = useRouter();
+const route = useRoute();
 const storage = new Storage();
 storage.create();
 
 const walletName = ref('');
-let currentIndex = -1;
 
-onMounted(async () => {
-  currentIndex = await storage.get('currentWallet');
-  if (currentIndex === null) {
-    router.push('/my-wallets');
-    return;
+watch(() => route.path, async (newPath) => {
+  if (newPath === '/wallet/settings') {
+    const currentIndex = await storage.get('currentWallet');
+    if (currentIndex === null) {
+      router.push('/my-wallets');
+      return;
+    }
+
+    const wallets = await storage.get('wallets');
+    if (!wallets || !wallets[currentIndex]) {
+      router.push('/my-wallets');
+      return;
+    }
+
+    walletName.value = wallets[currentIndex].name;
   }
-
-  const wallets = await storage.get('wallets');
-  if (!wallets || !wallets[currentIndex]) {
-    router.push('/my-wallets');
-    return;
-  }
-
-  walletName.value = wallets[currentIndex].name;
-});
+}, { immediate: true });
 
 const deleteWallet = async () => {
   const confirmation = confirm('Are you sure you want to delete this wallet?');
   if (confirmation) {
     let wallets = await storage.get('wallets');
+    const currentIndex = await storage.get('currentWallet');
     if (wallets && wallets[currentIndex]) {
       wallets.splice(currentIndex, 1);
       await storage.set('wallets', wallets);

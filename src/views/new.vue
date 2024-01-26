@@ -64,7 +64,7 @@ const handleSubmit = async () => {
   console.log(rootKey);
 
   const wallets = (await storage.get('wallets')) || [];
-  const newIndex = wallets.length - 1;
+  const newIndex = wallets.length;
   wallets.push({ name, type });
 
   await storage.set('wallets', wallets);

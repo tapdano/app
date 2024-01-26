@@ -53,15 +53,19 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   if (to.path === '/') {
-    storage.get('wallets').then(wallets => {
-      if (wallets) {
-        next('/my-wallets');
+    const wallets = await storage.get('wallets') || [];
+    if (wallets.length > 0) {
+      const currentIndex = await storage.get('currentWallet');
+      if (!(currentIndex===null) && wallets[currentIndex]) {
+        next('/wallet/main');
       } else {
-        next('/welcome');
+        next('/my-wallets');
       }
-    });
+    } else {
+      next('/welcome');
+    }
   } else {
     next();
   }

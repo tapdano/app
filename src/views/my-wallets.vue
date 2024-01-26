@@ -17,7 +17,6 @@
             {{ (wallet as any).name }}
           </ion-item>
         </ion-list>
-        <div v-if="wallets.length === 0">Nenhuma Wallet found</div>
         <div id="buttons-box">
           <ion-button expand="block" @click="$router.push('/new')">Create a new wallet</ion-button>
           <ion-button expand="block" @click="$router.push('/restore')" fill="outline">Restore wallet</ion-button>
@@ -28,23 +27,31 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonButton } from '@ionic/vue';
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 
-const router = useRouter();
 const storage = new Storage();
 storage.create();
 
+const router = useRouter();
+const route = useRoute();
 const wallets = ref([]);
 
-onMounted(async () => {
-  const storedWallets = await storage.get('wallets');
-  if (storedWallets && storedWallets.length > 0) {
-    wallets.value = storedWallets;
+const loadWallets = async () => {
+  const storedWallets = await storage.get('wallets') || [];
+  if (storedWallets.length == 0) {
+    router.push('/welcome');
   }
-});
+  wallets.value = storedWallets;
+};
+
+watch(() => route.path, async (newPath) => {
+  if (newPath === '/my-wallets') {
+    await loadWallets();
+  }
+}, { immediate: true });
 
 const selectWallet = async (index: number) => {
   await storage.set('currentWallet', index);
