@@ -11,9 +11,11 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>Main</h1>
+        <h1>ADA / USD</h1>
         <PriceChart />
-        <ion-input v-model="walletAddress" label="Address"></ion-input>
+        <div id="myWalletBox">
+          <ion-input ref="walletAddressRef" v-model="walletAddress" label="My Wallet Address" :label-placement="'stacked'" @click="copyToClipboard"></ion-input>
+        </div>
       </div>
     </ion-content>
   </ion-page>
@@ -21,6 +23,7 @@
 
 <script setup lang="ts">
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonInput } from '@ionic/vue';
+import { toastController } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
@@ -33,6 +36,31 @@ storage.create();
 
 const walletName = ref('');
 const walletAddress = ref('');
+const walletAddressRef = ref<HTMLElement | null>(null);
+
+const copyToClipboard = async () => {
+  if (walletAddressRef.value) {
+    const inputElement = (walletAddressRef.value as any).$el.querySelector('input');
+    if (inputElement) {
+      const textToCopy = inputElement.value;
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        await showToast('Copied to the clipboard!');
+      } catch (err) {
+        console.error('Failed to copy: ', err);
+      }
+    }
+  }
+};
+
+const showToast = async (message: string) => {
+  const toast = await toastController.create({
+    message: message,
+    duration: 2000,
+    position: 'top',
+  });
+  return toast.present();
+};
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/main') {
@@ -57,5 +85,8 @@ watch(() => route.path, async (newPath) => {
 <style scoped>
 #container {
   margin: 20px;
+}
+#myWalletBox{
+  margin: 20px 0;
 }
 </style>

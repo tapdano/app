@@ -12,7 +12,7 @@
     <ion-content :fullscreen="true">
       <div id="container">
         <h1>Settings</h1>
-        <ion-input v-model="walletMnemonic" label="Mnemonic"></ion-input>
+        <ion-input ref="walletMnemonicRef" v-model="walletMnemonic" label="Mnemonic" :label-placement="'stacked'" @click="copyToClipboard"></ion-input>
         <ion-button color="danger" @click="deleteWallet">
           Delete Wallet
         </ion-button>
@@ -23,6 +23,7 @@
 
 <script setup lang="ts">
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonInput } from '@ionic/vue';
+import { toastController } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
@@ -34,6 +35,31 @@ storage.create();
 
 const walletName = ref('');
 const walletMnemonic = ref('');
+const walletMnemonicRef = ref<HTMLElement | null>(null);
+
+const copyToClipboard = async () => {
+  if (walletMnemonicRef.value) {
+    const inputElement = (walletMnemonicRef.value as any).$el.querySelector('input');
+    if (inputElement) {
+      const textToCopy = inputElement.value;
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        await showToast('Copied to the clipboard!');
+      } catch (err) {
+        console.error('Failed to copy: ', err);
+      }
+    }
+  }
+};
+
+const showToast = async (message: string) => {
+  const toast = await toastController.create({
+    message: message,
+    duration: 2000,
+    position: 'top',
+  });
+  return toast.present();
+};
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/settings') {
