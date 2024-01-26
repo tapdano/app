@@ -23,6 +23,9 @@ import '@ionic/vue/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
+
 const app = createApp(App)
   .use(IonicVue)
   .use(router);

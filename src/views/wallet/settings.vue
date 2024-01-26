@@ -11,7 +11,8 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <p>Settings</p>
+        <h1>Settings</h1>
+        <ion-input v-model="walletMnemonic" label="Mnemonic"></ion-input>
         <ion-button color="danger" @click="deleteWallet">
           Delete Wallet
         </ion-button>
@@ -21,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonInput } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
@@ -32,6 +33,7 @@ const storage = new Storage();
 storage.create();
 
 const walletName = ref('');
+const walletMnemonic = ref('');
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/settings') {
@@ -48,6 +50,7 @@ watch(() => route.path, async (newPath) => {
     }
 
     walletName.value = wallets[currentIndex].name;
+    walletMnemonic.value = wallets[currentIndex].wallet.mnemonic;
   }
 }, { immediate: true });
 
@@ -68,12 +71,7 @@ const deleteWallet = async () => {
 
 <style scoped>
 #container {
-  text-align: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  margin: 20px;
 }
 
 ion-button[color="danger"] {

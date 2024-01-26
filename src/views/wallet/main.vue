@@ -11,14 +11,16 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
+        <h1>Main</h1>
         <PriceChart />
+        <ion-input v-model="walletAddress" label="Address"></ion-input>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonInput } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
@@ -30,6 +32,7 @@ const storage = new Storage();
 storage.create();
 
 const walletName = ref('');
+const walletAddress = ref('');
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/main') {
@@ -46,12 +49,13 @@ watch(() => route.path, async (newPath) => {
     }
 
     walletName.value = wallets[currentIndex].name;
+    walletAddress.value = wallets[currentIndex].wallet.address;
   }
 }, { immediate: true });
 </script>
 
 <style scoped>
 #container {
-  background-color: #FFF;
+  margin: 20px;
 }
 </style>

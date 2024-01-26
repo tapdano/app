@@ -1,15 +1,7 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content>
-      <div class="chart-container" :key="chartKey">
-        <chart-line :data="chartData" :options="options"></chart-line>
-      </div>
-    </ion-content>
-  </ion-page>
+  <div class="chart-container" :key="chartKey">
+    <chart-line :data="chartData" :options="options"></chart-line>
+  </div>
 </template>
 
 <script lang="ts">

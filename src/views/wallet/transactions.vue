@@ -11,7 +11,7 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <p>Transactions</p>
+        <h1>Transactions</h1>
       </div>
     </ion-content>
   </ion-page>
@@ -51,11 +51,6 @@ watch(() => route.path, async (newPath) => {
 
 <style scoped>
 #container {
-  text-align: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  margin: 20px;
 }
 </style>
