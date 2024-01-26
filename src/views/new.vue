@@ -95,7 +95,7 @@ const handleSubmit = async () => {
   const wallet = createWalletFromMnemonic(mnemonic);
 
   const wallets = (await storage.get('wallets')) || [];
-  const newIndex = wallets.length - 1;
+  const newIndex = wallets.length;
   wallets.push({ name, type, wallet });
 
   await storage.set('wallets', wallets);
