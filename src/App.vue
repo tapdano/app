@@ -36,7 +36,7 @@ import {
   IonRouterOutlet,
   IonSplitPane,
 } from '@ionic/vue';
-import { ref, onMounted, watch } from 'vue';
+import { ref, watch } from 'vue';
 import {
   walletOutline,
   walletSharp,
