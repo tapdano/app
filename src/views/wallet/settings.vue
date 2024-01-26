@@ -30,7 +30,7 @@ const router = useRouter();
 const storage = new Storage();
 storage.create();
 
-const walletName = ref('My Investments');
+const walletName = ref('');
 let currentIndex = -1;
 
 onMounted(async () => {

@@ -40,6 +40,9 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
+import { Bip32PrivateKey } from '@emurgo/cardano-serialization-lib-browser'
+
+const bip39 = require('bip39');
 
 const router = useRouter();
 const storage = new Storage();
@@ -56,6 +59,9 @@ const toggleAdvancedOptions = () => {
 const handleSubmit = async () => {
   let name = walletName.value.trim() || `My Investments #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
   let type = walletType.value || 'nfc-wallet';
+
+  const rootKey = Bip32PrivateKey.from_bech32("xprv17qx9vxm6060qjn5fgazfue9nwyf448w7upk60c3epln82vumg9r9kxzsud9uv5rfscxp382j2aku254zj3qfx9fx39t6hjwtmwq85uunsd8x0st3j66lzf5yn30hwq5n75zeuplepx8vxc502txx09ygjgx06n0p");
+  console.log(rootKey);
 
   const wallets = (await storage.get('wallets')) || [];
   const newIndex = wallets.length - 1;

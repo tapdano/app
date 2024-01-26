@@ -11,7 +11,7 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <p>Main</p>
+        <PriceChart />
       </div>
     </ion-content>
   </ion-page>
@@ -22,12 +22,13 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
+import PriceChart from '../../components/PriceChart.vue';
 
 const router = useRouter();
 const storage = new Storage();
 storage.create();
 
-const walletName = ref('My Investments');
+const walletName = ref('');
 
 onMounted(async () => {
   const currentIndex = await storage.get('currentWallet');
@@ -48,11 +49,6 @@ onMounted(async () => {
 
 <style scoped>
 #container {
-  text-align: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  background-color: #FFF;
 }
 </style>

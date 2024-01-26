@@ -27,7 +27,7 @@ const router = useRouter();
 const storage = new Storage();
 storage.create();
 
-const walletName = ref('My Investments');
+const walletName = ref('');
 
 onMounted(async () => {
   const currentIndex = await storage.get('currentWallet');
