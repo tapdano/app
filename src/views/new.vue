@@ -32,16 +32,32 @@
         </form>
       </div>
     </ion-content>
+
+    <ion-modal :is-open="showModal" @did-dismiss="showModal = false">
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Write NFC Wallet</ion-title>
+          <ion-buttons slot="primary">
+            <ion-button @click="showModal = false">Cancel</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-img src="/logo.png" style="width: 100%; max-width: 50%; height: auto; margin: 0 auto;"></ion-img>
+        <p style="text-align: center;">Approximate your NFC tag to continue</p>
+      </ion-content>
+    </ion-modal>
+
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
+import { IonButtons, IonContent, IonModal, IonImg, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
-import * as bip39 from 'bip39';
-import * as CardanoWasm from '@emurgo/cardano-serialization-lib-browser';
+import { createWallet } from '@/utils/CryptoUtils';
+import { WriteNFCTag } from '@/utils/NFCUtils';
 
 const router = useRouter();
 const storage = new Storage();
@@ -50,38 +66,7 @@ storage.create();
 const showAdvancedOptions = ref(false);
 const walletName = ref('');
 const walletType = ref('nfc-wallet');
-
-function harden(num: number) {
-  return 0x80000000 + num;
-}
-
-const createWalletFromMnemonic = (mnemonic: string) => {
-  const seed = bip39.mnemonicToSeedSync(mnemonic);
-  const rootKey = CardanoWasm.Bip32PrivateKey.from_bip39_entropy(
-    seed,
-    Buffer.from('')
-  );
-
-  const accountKey = rootKey
-    .derive(harden(1852)) // purpose
-    .derive(harden(1815)) // coin type (Cardano)
-    .derive(harden(0)); // account #0
-
-  const publicKey = accountKey.to_public();
-
-  const address = CardanoWasm.BaseAddress.new(
-    CardanoWasm.NetworkInfo.mainnet().network_id(),
-    CardanoWasm.StakeCredential.from_keyhash(publicKey.to_raw_key().hash()),
-    CardanoWasm.StakeCredential.from_keyhash(publicKey.to_raw_key().hash())
-  ).to_address().to_bech32();
-
-  return {
-    mnemonic,
-    address,
-    publicKey: publicKey.to_bech32(),
-    privateKey: rootKey.to_bech32(),
-  };
-}
+const showModal = ref(false);
 
 const toggleAdvancedOptions = () => {
   showAdvancedOptions.value = !showAdvancedOptions.value;
@@ -90,18 +75,36 @@ const toggleAdvancedOptions = () => {
 const handleSubmit = async () => {
   let name = walletName.value.trim() || `My Investments #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
   let type = walletType.value || 'nfc-wallet';
+  
+  const cryptoWallet = createWallet();
+  
+  try {
+    showModal.value = true;
+    await WriteNFCTag(cryptoWallet.entropy);
+    showModal.value = false;
 
-  const mnemonic = bip39.generateMnemonic();
-  const wallet = createWalletFromMnemonic(mnemonic);
+    const wallets = (await storage.get('wallets')) || [];
+    const newIndex = wallets.length;
+    wallets.push({
+      name,
+      type,
+      address: cryptoWallet.address,
+      publicKey: cryptoWallet.publicKey
+    });
 
-  const wallets = (await storage.get('wallets')) || [];
-  const newIndex = wallets.length;
-  wallets.push({ name, type, wallet });
+    await storage.set('wallets', wallets);
+    await storage.set('currentWallet', newIndex);
 
-  await storage.set('wallets', wallets);
-  await storage.set('currentWallet', newIndex);  
+    walletName.value = '';
+    walletType.value = 'nfc-wallet';
+    showAdvancedOptions.value = false;    
 
-  router.push('/wallet/main');
+    router.push('/wallet/main');
+  } catch (error) {
+    showModal.value = false;
+    console.error(error);
+    alert(error);
+  }
 };
 
 </script>

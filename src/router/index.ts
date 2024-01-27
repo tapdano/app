@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import WalletTabBar from '../components/WalletTabBar.vue';
-
 import { Storage } from '@ionic/storage';
 
 const storage = new Storage();
@@ -29,22 +27,16 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/settings.vue')
   },
   {
-    path: '/wallet',
-    component: WalletTabBar,
-    children: [
-      {
-        path: '/wallet/main',
-        component: () => import ('../views/wallet/main.vue')
-      },
-      {
-        path: '/wallet/transactions',
-        component: () => import ('../views/wallet/transactions.vue')
-      },
-      {
-        path: '/wallet/settings',
-        component: () => import ('../views/wallet/settings.vue')
-      }
-    ]
+    path: '/wallet/main',
+    component: () => import ('../views/wallet/main.vue')
+  },
+  {
+    path: '/wallet/transactions',
+    component: () => import ('../views/wallet/transactions.vue')
+  },
+  {
+    path: '/wallet/settings',
+    component: () => import ('../views/wallet/settings.vue')
   }
 ];
 

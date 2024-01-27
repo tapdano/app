@@ -14,6 +14,9 @@
         <h1>Transactions</h1>
       </div>
     </ion-content>
+
+    <WalletTabBar />
+
   </ion-page>
 </template>
 
@@ -22,6 +25,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
+import WalletTabBar from '../../components/WalletTabBar.vue';
 
 const router = useRouter();
 const route = useRoute();

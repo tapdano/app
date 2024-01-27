@@ -18,15 +18,18 @@
         </div>
       </div>
     </ion-content>
+
+    <WalletTabBar />
+
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonInput } from '@ionic/vue';
-import { toastController } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonInput, toastController } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
+import WalletTabBar from '../../components/WalletTabBar.vue';
 import PriceChart from '../../components/PriceChart.vue';
 
 const router = useRouter();
@@ -77,7 +80,7 @@ watch(() => route.path, async (newPath) => {
     }
 
     walletName.value = wallets[currentIndex].name;
-    walletAddress.value = wallets[currentIndex].wallet.address;
+    walletAddress.value = wallets[currentIndex].address;
   }
 }, { immediate: true });
 </script>

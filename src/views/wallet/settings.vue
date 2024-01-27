@@ -18,6 +18,9 @@
         </ion-button>
       </div>
     </ion-content>
+
+    <WalletTabBar />
+    
   </ion-page>
 </template>
 
@@ -27,6 +30,7 @@ import { toastController } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
+import WalletTabBar from '../../components/WalletTabBar.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -76,7 +80,7 @@ watch(() => route.path, async (newPath) => {
     }
 
     walletName.value = wallets[currentIndex].name;
-    walletMnemonic.value = wallets[currentIndex].wallet.mnemonic;
+    //walletMnemonic.value = wallets[currentIndex].wallet.mnemonic;
   }
 }, { immediate: true });
 
