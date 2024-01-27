@@ -11,7 +11,7 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <p>My Wallets</p>
+        <h1>Select a Wallet</h1>
         <ion-list>
           <ion-item v-for="(wallet, index) in wallets" :key="index" @click="selectWallet(index)">
             {{ (wallet as any).name }}

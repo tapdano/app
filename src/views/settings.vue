@@ -11,9 +11,9 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>App Settings</h1>
+        <h1>General Settings</h1>
+        <ion-label style="margin-right: 20px;">Dark Mode</ion-label>
         <ion-toggle @ionChange="toggleDarkMode" :checked="isDarkMode"></ion-toggle>
-        <ion-label style="margin-left: 20px;">Dark Mode</ion-label>
       </div>
     </ion-content>
   </ion-page>

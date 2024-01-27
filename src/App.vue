@@ -3,9 +3,9 @@
     <ion-split-pane content-id="main-content">
       <ion-menu content-id="main-content" type="overlay">
         <ion-content>
+          <ion-img src="/logo.png" style="width: 100%; max-width: 50%; height: auto; margin: 0 auto;"></ion-img>
           <ion-list id="inbox-list">
-            <ion-list-header>TapDano</ion-list-header>
-            <ion-note></ion-note>
+            <h1 class="logo-h1">TapDano</h1>
             <ion-menu-toggle :auto-hide="false" v-for="(p, i) in appPages" :key="i">
               <ion-item @click="selectedIndex = i" router-direction="root" :router-link="p.url" lines="none" :detail="false" class="hydrated" :class="{ selected: selectedIndex === i }">
                 <ion-icon aria-hidden="true" slot="start" :ios="p.iosIcon" :md="p.mdIcon"></ion-icon>
@@ -35,6 +35,7 @@ import {
   IonNote,
   IonRouterOutlet,
   IonSplitPane,
+  IonImg
 } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import {
@@ -87,38 +88,8 @@ ion-menu.md ion-content {
   --padding-bottom: 20px;
 }
 
-ion-menu.md ion-list {
-  padding: 20px 0;
-}
-
-ion-menu.md ion-note {
-  margin-bottom: 30px;
-}
-
-ion-menu.md ion-list-header,
-ion-menu.md ion-note {
-  padding-left: 10px;
-}
-
 ion-menu.md ion-list#inbox-list {
   border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
-}
-
-ion-menu.md ion-list#inbox-list ion-list-header {
-  font-size: 22px;
-  font-weight: 600;
-
-  min-height: 20px;
-}
-
-ion-menu.md ion-list#labels-list ion-list-header {
-  font-size: 16px;
-
-  margin-bottom: 18px;
-
-  color: #757575;
-
-  min-height: 26px;
 }
 
 ion-menu.md ion-item {
@@ -151,11 +122,6 @@ ion-menu.ios ion-list {
   padding: 20px 0 0 0;
 }
 
-ion-menu.ios ion-note {
-  line-height: 24px;
-  margin-bottom: 20px;
-}
-
 ion-menu.ios ion-item {
   --padding-start: 16px;
   --padding-end: 16px;
@@ -171,28 +137,16 @@ ion-menu.ios ion-item ion-icon {
   color: #73849a;
 }
 
-ion-menu.ios ion-list#labels-list ion-list-header {
-  margin-bottom: 8px;
-}
-
-ion-menu.ios ion-list-header,
-ion-menu.ios ion-note {
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-ion-menu.ios ion-note {
-  margin-bottom: 8px;
-}
-
-ion-note {
-  display: inline-block;
-  font-size: 16px;
-
-  color: var(--ion-color-medium-shade);
-}
-
 ion-item.selected {
   --color: var(--ion-color-primary);
+}
+
+.logo-h1 {
+  text-align: center;
+  margin: 0 0 40px 0;
+}
+
+.list-md {
+  padding-top: 0;
 }
 </style>
