@@ -5,8 +5,12 @@ export function harden(num: number) {
   return 0x80000000 + num;
 }
 
-export function createWallet() {
-  const mnemonic = bip39.generateMnemonic();
+export function validateMnemonic(mnemonic: string) {
+  return bip39.validateMnemonic(mnemonic);
+}
+
+export function createWallet(mnemonic: string | null) {
+  if (mnemonic == null) mnemonic = bip39.generateMnemonic();
   const entropy = bip39.mnemonicToEntropy(mnemonic);
   const seed = bip39.mnemonicToSeedSync(mnemonic);
   const rootKey = CardanoWasm.Bip32PrivateKey.from_bip39_entropy(

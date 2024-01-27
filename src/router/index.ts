@@ -16,11 +16,13 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/new',
-    component: () => import ('../views/new.vue')
+    component: () => import ('../views/new.vue'),
+    props: { route: 'new' }
   },
   {
     path: '/restore',
-    component: () => import ('../views/restore.vue')
+    component: () => import ('../views/new.vue'),
+    props: { route: 'restore' }
   },
   {
     path: '/settings',

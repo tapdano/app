@@ -5,7 +5,8 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
         </ion-buttons>
-        <ion-title>New</ion-title>
+        <ion-title v-if="route === 'new'">New</ion-title>
+        <ion-title v-if="route === 'restore'">Restore</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -14,6 +15,10 @@
         <form @submit.prevent="handleSubmit">
           <ion-item>
             <ion-input v-model="walletName" label="Name" placeholder="My Investments"></ion-input>
+          </ion-item>
+
+          <ion-item v-if="route === 'restore'">
+            <ion-textarea v-model="walletRecoveryPhrase" label="Recovery phrase" :label-placement="'stacked'"></ion-textarea>
           </ion-item>
 
           <div id="advanced-options" @click="toggleAdvancedOptions">
@@ -28,7 +33,7 @@
             </ion-item>
           </div>
 
-          <ion-button id="submit-button" expand="block" type="submit">Create a new wallet</ion-button>
+          <ion-button id="submit-button" expand="block" type="submit">{{ route === 'new' ? 'Create a new wallet' : 'Restore wallet' }}</ion-button>
         </form>
       </div>
     </ion-content>
@@ -52,12 +57,16 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonModal, IonImg, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
-import { ref } from 'vue';
+import { IonButtons, IonContent, IonModal, IonImg, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonTextarea, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
+import { ref, defineProps } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
-import { createWallet } from '@/utils/CryptoUtils';
+import { createWallet, validateMnemonic } from '@/utils/CryptoUtils';
 import { writeNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
+
+const props = defineProps({
+  route: String
+});
 
 const router = useRouter();
 const storage = new Storage();
@@ -65,6 +74,7 @@ storage.create();
 
 const showAdvancedOptions = ref(false);
 const walletName = ref('');
+const walletRecoveryPhrase = ref('');
 const walletType = ref('nfc-wallet');
 const showModal = ref(false);
 
@@ -78,10 +88,17 @@ const handleCancel = () => {
 };
 
 const handleSubmit = async () => {
-  let name = walletName.value.trim() || `My Investments #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-  let type = walletType.value || 'nfc-wallet';
-  
-  const cryptoWallet = createWallet();
+  let mnemonic: string | null = null;
+
+  if (props.route == 'restore') {
+    mnemonic = walletRecoveryPhrase.value;
+    if (!validateMnemonic(mnemonic)) {
+      alert('Recovery phrase invalid.');
+      return;
+    }
+  }
+
+  const cryptoWallet = createWallet(mnemonic);
   
   try {
     showModal.value = true;
@@ -90,6 +107,8 @@ const handleSubmit = async () => {
 
     const wallets = (await storage.get('wallets')) || [];
     const newIndex = wallets.length;
+    const name = walletName.value.trim() || `My Investments #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+    const type = walletType.value || 'nfc-wallet';
     wallets.push({
       name,
       type,
@@ -101,6 +120,7 @@ const handleSubmit = async () => {
     await storage.set('currentWallet', newIndex);
 
     walletName.value = '';
+    walletRecoveryPhrase.value = '';
     walletType.value = 'nfc-wallet';
     showAdvancedOptions.value = false;    
 
