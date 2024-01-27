@@ -54,6 +54,10 @@ import { entropyToMnemonic, validateMnemonic, createWallet } from '@/utils/Crypt
 import * as CardanoWasm from '@emurgo/cardano-serialization-lib-browser';
 import * as bip39 from 'bip39';
 import NFCModal from '@/components/NFCModal.vue';
+import { AppWallet } from '@meshsdk/core';
+
+const mnemonic = AppWallet.brew();
+console.log(mnemonic);
 
 const BLOCKFROST_API_KEY = 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
 const BLOCKFROST_API_URL = 'https://cardano-mainnet.blockfrost.io/api/v0';
