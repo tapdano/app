@@ -14,8 +14,12 @@
         <h1>ADA / USD</h1>
         <PriceChart />
         <div id="myWalletBox">
-          <ion-textarea ref="walletReceiveAddressRef" v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
-          <ion-textarea ref="walletStakingAddressRef" v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress, true)" :readonly="true"></ion-textarea>
+          <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
+          <ion-textarea v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress, true)" :readonly="true"></ion-textarea>
+        </div>
+        <div>
+          <h2>Wallet Balance:</h2>
+          <p>{{ walletBalance }} ADA</p>
         </div>
       </div>
     </ion-content>
@@ -26,25 +30,42 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonTextarea } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Storage } from '@ionic/storage';
-import { copyToClipboard } from '@/utils/ClipboardUtils';
-import { getCurrentWallet } from '@/utils/StorageUtils';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonTextarea } from '@ionic/vue';
 import WalletTabBar from '../../components/WalletTabBar.vue';
 import PriceChart from '../../components/PriceChart.vue';
+import { getCurrentWallet } from '@/utils/StorageUtils';
+import { copyToClipboard } from '@/utils/ClipboardUtils';
+
+const BLOCKFROST_API_KEY = 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
+const BLOCKFROST_API_URL = 'https://cardano-mainnet.blockfrost.io/api/v0';
+
+const walletBalance = ref(0);
+
+const fetchWalletBalance = async (address: string) => {
+  try {
+    const response = await fetch(`${BLOCKFROST_API_URL}/addresses/${address}`, {
+      headers: {
+        'project_id': BLOCKFROST_API_KEY
+      }
+    });
+    if (!response.ok) {
+      throw new Error('Erro na resposta da API');
+    }
+    const data = await response.json();
+    walletBalance.value = data.amount[0].quantity / 1000000;
+  } catch (error) {
+    console.error("Erro ao buscar o saldo da carteira:", error);
+  }
+};
 
 const router = useRouter();
 const route = useRoute();
-const storage = new Storage();
-storage.create();
 
 const walletName = ref('');
 const walletReceiveAddress = ref('');
-const walletReceiveAddressRef = ref<HTMLElement | null>(null);
 const walletStakingAddress = ref('');
-const walletStakingAddressRef = ref<HTMLElement | null>(null);
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/main') {
@@ -56,6 +77,7 @@ watch(() => route.path, async (newPath) => {
     walletName.value = currentWallet.name;
     walletReceiveAddress.value = currentWallet.baseAddr;
     walletStakingAddress.value = currentWallet.rewardAddr;
+    await fetchWalletBalance(currentWallet.baseAddr);
   }
 }, { immediate: true });
 </script>
