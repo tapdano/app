@@ -45,16 +45,14 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonTextarea, IonLabel, IonInput, IonItem, IonButton } from '@ionic/vue';
-import WalletTabBar from '../../components/WalletTabBar.vue';
-import PriceChart from '../../components/PriceChart.vue';
 import { getCurrentWallet } from '@/utils/StorageUtils';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { accessNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
 import { entropyToMnemonic, validateMnemonic, createWallet } from '@/utils/CryptoUtils';
-import * as CardanoWasm from '@emurgo/cardano-serialization-lib-browser';
-import * as bip39 from 'bip39';
-import NFCModal from '@/components/NFCModal.vue';
 import { AppWallet, BlockfrostProvider, Transaction } from '@meshsdk/core';
+import WalletTabBar from '@/components/WalletTabBar.vue';
+import PriceChart from '@/components/PriceChart.vue';
+import NFCModal from '@/components/NFCModal.vue';
 
 const BLOCKFROST_API_KEY = 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
 const BLOCKFROST_API_URL = 'https://cardano-mainnet.blockfrost.io/api/v0';
@@ -111,7 +109,7 @@ const getMnemonic = async () => {
     if (!validateMnemonic(mnemonic)) throw ('Entropy invalid.');
     const cryptoWallet = createWallet(mnemonic);
     if (cryptoWallet.baseAddr != currentWallet.baseAddr) throw ('Wrong Wallet.');
-    return cryptoWallet.mnemonic;
+    return cryptoWallet.mnemonic as string;
   } catch (error) {
     showModal.value = false;
     console.error(error);
@@ -126,6 +124,7 @@ const sendTransaction = async () => {
   }
 
   const mnemonic = await getMnemonic();
+  console.log('mnemonic='+mnemonic);
 
   const meshWallet = new AppWallet({
     networkId: 1,
@@ -137,18 +136,25 @@ const sendTransaction = async () => {
     },
   });
 
+  const baseAddress = meshWallet.getBaseAddress();
+  console.log('baseAddress='+baseAddress);
+
+  const paymentAddress = meshWallet.getPaymentAddress();
+  console.log('paymentAddress='+paymentAddress);
+
+  const rewardAddress = meshWallet.getRewardAddress();
+  console.log('rewardAddress='+rewardAddress);
+
   const tx = new Transaction({ initiator: meshWallet }).sendLovelace(
     destinationAddress.value,
     adaAmount.value + '000000'
   );
-  console.log('tx=' + tx);
 
+  console.log('aki 1');
   const unsignedTx = await tx.build();
-  console.log('unsignedTx=' + unsignedTx);
-
+  console.log('aki 2');
   const signedTx = await meshWallet.signTx(unsignedTx);
-  console.log('signedTx=' + signedTx);
-
+  console.log('aki 3');
   const txHash = await meshWallet.submitTx(signedTx);
   console.log(txHash);
 };

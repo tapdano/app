@@ -1,5 +1,6 @@
 import * as bip39 from 'bip39';
 import * as CardanoWasm from '@emurgo/cardano-serialization-lib-browser';
+import { AppWallet } from '@meshsdk/core';
 
 export function harden(num: number) {
   return 0x80000000 + num;
@@ -14,7 +15,8 @@ export function entropyToMnemonic(entropy: string) {
 }
 
 export function createWallet(mnemonic: string | null) {
-  if (mnemonic == null) mnemonic = bip39.generateMnemonic();
+  //if (mnemonic == null) mnemonic = bip39.generateMnemonic();
+  if (mnemonic == null) mnemonic = AppWallet.brew().join(' ');
   const entropy = bip39.mnemonicToEntropy(mnemonic);
   const rootKey = CardanoWasm.Bip32PrivateKey.from_bip39_entropy(
     Buffer.from(entropy, 'hex'),
