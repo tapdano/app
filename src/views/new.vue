@@ -91,7 +91,6 @@ const handleSubmit = async () => {
   }
 
   const cryptoWallet = createWallet(mnemonic);
-  console.log(cryptoWallet);
   
   try {
     showModal.value = true;

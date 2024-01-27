@@ -34,7 +34,7 @@ export function createWallet(mnemonic: string | null) {
   const stakeKey = accountKey
     .derive(2) // chimeric
     .derive(0)
-    .to_public();    
+    .to_public();
 
   // base address with staking key
   const baseAddr = CardanoWasm.BaseAddress.new(

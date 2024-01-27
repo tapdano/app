@@ -12,6 +12,16 @@
     <ion-content :fullscreen="true">
       <div id="container">
         <h1>Transactions</h1>
+        <div v-if="transactions.length === 0">
+          No transaction found.
+        </div>
+        <div v-else>
+          <ion-list>
+            <ion-item v-for="transaction in transactions" :key="transaction.tx_hash">
+              Transaction: {{ transaction.tx_hash }}
+            </ion-item>
+          </ion-list>
+        </div>
       </div>
     </ion-content>
 
@@ -21,19 +31,40 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Storage } from '@ionic/storage';
-import { getCurrentWallet } from '@/utils/StorageUtils';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonList } from '@ionic/vue';
 import WalletTabBar from '../../components/WalletTabBar.vue';
+import { getCurrentWallet } from '@/utils/StorageUtils';
+
+const BLOCKFROST_API_KEY = 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
+const BLOCKFROST_API_URL = 'https://cardano-mainnet.blockfrost.io/api/v0';
+
+interface Transaction {
+  tx_hash: string;
+}
 
 const router = useRouter();
 const route = useRoute();
-const storage = new Storage();
-storage.create();
-
 const walletName = ref('');
+const transactions = ref<Transaction[]>([]);
+
+const fetchTransactions = async (address: string) => {
+  try {
+    const response = await fetch(`${BLOCKFROST_API_URL}/addresses/${address}/transactions`, {
+      headers: {
+        'project_id': BLOCKFROST_API_KEY
+      }
+    });
+    if (!response.ok) {
+      throw new Error('API error');
+    }
+    const data = await response.json();
+    transactions.value = data;
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/transactions') {
@@ -43,6 +74,7 @@ watch(() => route.path, async (newPath) => {
       return;
     }
     walletName.value = currentWallet.name;
+    await fetchTransactions(currentWallet.baseAddr);
   }
 }, { immediate: true });
 </script>
