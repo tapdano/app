@@ -18,7 +18,7 @@
           </ion-item>
 
           <ion-item v-if="route === 'restore'">
-            <ion-textarea v-model="walletRecoveryPhrase" label="Recovery phrase" :label-placement="'stacked'"></ion-textarea>
+            <ion-textarea v-model="walletRecoveryPhrase" label="Recovery phrase" :label-placement="'stacked'" :auto-grow="true"></ion-textarea>
           </ion-item>
 
           <div id="advanced-options" @click="toggleAdvancedOptions">
