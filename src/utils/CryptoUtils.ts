@@ -9,6 +9,10 @@ export function validateMnemonic(mnemonic: string) {
   return bip39.validateMnemonic(mnemonic);
 }
 
+export function entropyToMnemonic(entropy: string) {
+  return bip39.entropyToMnemonic(entropy);
+}
+
 export function createWallet(mnemonic: string | null) {
   if (mnemonic == null) mnemonic = bip39.generateMnemonic();
   const entropy = bip39.mnemonicToEntropy(mnemonic);

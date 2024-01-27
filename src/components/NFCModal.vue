@@ -2,7 +2,7 @@
   <ion-modal :is-open="isOpen" @did-dismiss="handleDismiss">
     <ion-header>
       <ion-toolbar>
-        <ion-title>Write NFC Wallet</ion-title>
+        <ion-title>Approximate your tag</ion-title>
         <ion-buttons slot="primary">
           <ion-button @click="handleCancel">Cancel</ion-button>
         </ion-buttons>

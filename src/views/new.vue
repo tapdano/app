@@ -49,7 +49,7 @@ import { ref, defineProps } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { createWallet, validateMnemonic } from '@/utils/CryptoUtils';
-import { writeNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
+import { accessNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
 import NFCModal from '@/components/NFCModal.vue';
 
 const props = defineProps({
@@ -94,7 +94,7 @@ const handleSubmit = async () => {
   
   try {
     showModal.value = true;
-    await writeNFCTag(cryptoWallet.entropy);
+    await accessNFCTag(cryptoWallet.entropy);
     showModal.value = false;
 
     const wallets = (await storage.get('wallets')) || [];

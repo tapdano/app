@@ -25,6 +25,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
+import { getCurrentWallet } from '@/utils/StorageUtils';
 import WalletTabBar from '../../components/WalletTabBar.vue';
 
 const router = useRouter();
@@ -36,19 +37,12 @@ const walletName = ref('');
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/transactions') {
-    const currentIndex = await storage.get('currentWallet');
-    if (currentIndex === null) {
+    const currentWallet = await getCurrentWallet();
+    if (currentWallet == null) {
       router.push('/my-wallets');
       return;
     }
-
-    const wallets = await storage.get('wallets');
-    if (!wallets || !wallets[currentIndex]) {
-      router.push('/my-wallets');
-      return;
-    }
-
-    walletName.value = wallets[currentIndex].name;
+    walletName.value = currentWallet.name;
   }
 }, { immediate: true });
 </script>

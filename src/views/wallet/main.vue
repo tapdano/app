@@ -14,7 +14,7 @@
         <h1>ADA / USD</h1>
         <PriceChart />
         <div id="myWalletBox">
-          <ion-input ref="walletAddressRef" v-model="walletAddress" label="My Wallet Address" :label-placement="'stacked'" @click="copyToClipboard"></ion-input>
+          <ion-input ref="walletAddressRef" v-model="walletAddress" label="My Wallet Address" :label-placement="'stacked'" @click="() => copyToClipboard(walletAddress, true)"></ion-input>
         </div>
       </div>
     </ion-content>
@@ -25,10 +25,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonInput, toastController } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonInput } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
+import { copyToClipboard } from '@/utils/ClipboardUtils';
+import { getCurrentWallet } from '@/utils/StorageUtils';
 import WalletTabBar from '../../components/WalletTabBar.vue';
 import PriceChart from '../../components/PriceChart.vue';
 
@@ -41,46 +43,15 @@ const walletName = ref('');
 const walletAddress = ref('');
 const walletAddressRef = ref<HTMLElement | null>(null);
 
-const copyToClipboard = async () => {
-  if (walletAddressRef.value) {
-    const inputElement = (walletAddressRef.value as any).$el.querySelector('input');
-    if (inputElement) {
-      const textToCopy = inputElement.value;
-      try {
-        await navigator.clipboard.writeText(textToCopy);
-        await showToast('Copied to the clipboard!');
-      } catch (err) {
-        console.error('Failed to copy: ', err);
-      }
-    }
-  }
-};
-
-const showToast = async (message: string) => {
-  const toast = await toastController.create({
-    message: message,
-    duration: 2000,
-    position: 'top',
-  });
-  return toast.present();
-};
-
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/main') {
-    const currentIndex = await storage.get('currentWallet');
-    if (currentIndex === null) {
+    const currentWallet = await getCurrentWallet();
+    if (currentWallet == null) {
       router.push('/my-wallets');
       return;
     }
-
-    const wallets = await storage.get('wallets');
-    if (!wallets || !wallets[currentIndex]) {
-      router.push('/my-wallets');
-      return;
-    }
-
-    walletName.value = wallets[currentIndex].name;
-    walletAddress.value = wallets[currentIndex].address;
+    walletName.value = currentWallet.name;
+    walletAddress.value = currentWallet.address;
   }
 }, { immediate: true });
 </script>
