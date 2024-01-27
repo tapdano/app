@@ -75,7 +75,7 @@ export class AppWallet implements IInitiator, ISigner, ISubmitter {
   getPaymentAddress(accountIndex = 0): string {
     const account = this._wallet
       .getAccount(accountIndex, DEFAULT_PASSWORD);
-    return account.enterpriseAddress;
+    return account.baseAddress;
   }
 
   getRewardAddress(accountIndex = 0): string {
@@ -87,7 +87,7 @@ export class AppWallet implements IInitiator, ISigner, ISubmitter {
   getUsedAddress(accountIndex = 0): Address {
     const account = this._wallet
       .getAccount(accountIndex, DEFAULT_PASSWORD);
-    return toAddress(account.enterpriseAddress);
+    return toAddress(account.baseAddress);
   }
 
   getUsedCollateral(
@@ -100,7 +100,7 @@ export class AppWallet implements IInitiator, ISigner, ISubmitter {
     const account = this._wallet
       .getAccount(accountIndex, DEFAULT_PASSWORD);
     const utxos = await this._fetcher
-      .fetchAddressUTxOs(account.enterpriseAddress);
+      .fetchAddressUTxOs(account.baseAddress);
 
     return utxos.map((utxo) => toTxUnspentOutput(utxo));
   }
@@ -120,7 +120,7 @@ export class AppWallet implements IInitiator, ISigner, ISubmitter {
       const account = this._wallet
         .getAccount(accountIndex, DEFAULT_PASSWORD);
       const utxos = await this._fetcher
-        .fetchAddressUTxOs(account.enterpriseAddress);
+        .fetchAddressUTxOs(account.baseAddress);
 
       const newSignatures = this._wallet.signTx(
         accountIndex, DEFAULT_PASSWORD,
