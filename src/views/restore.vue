@@ -19,29 +19,6 @@
 
 <script setup lang="ts">
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
-import { ref, onMounted } from 'vue';
-
-onMounted(async () => {
-  try {
-    alert('onMounted');
-    if (("NDEFReader" in window)) {
-      const ndef = new (window.NDEFReader as any)();
-      await ndef.scan();
-      alert("> Scan started");
-
-      ndef.addEventListener("readingerror", () => {
-        alert("Argh! Cannot read data from the NFC tag. Try another one?");
-      });
-
-      ndef.addEventListener("reading", (event: any) => {
-        alert(`> Serial Number: ${ event.serialNumber }`);
-        alert(`> Records: (${ event.message.records.length })`);
-      });
-    }
-  } catch (error) {
-    alert("Argh! " + error);
-  }
-});
 </script>
 
 <style scoped>

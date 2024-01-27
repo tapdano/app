@@ -1,6 +1,9 @@
 import { Storage } from '@ionic/storage';
 
-export const WriteNFCTag = async (content: string) => {
+let globalNdefReader: any;
+let globalNdefReadHandler: any;
+
+export const writeNFCTag = async (content: string) => {
   return new Promise<void>(async (resolve, reject) => {
     try {
       const hostname = new URL(location.href).hostname;
@@ -21,21 +24,29 @@ export const WriteNFCTag = async (content: string) => {
         }
       }
 
-      const ndef = new (window.NDEFReader as any)();
-      await ndef.scan();
+      globalNdefReader = new (window.NDEFReader as any)();
 
-      const ndefReadHandler = async (event: any) => {
+      globalNdefReadHandler = async (event: any) => {
         if (event.message.records.length > 0) {
           if (!confirm("Warning: This tag is not empty!\nAre you sure you want to overwrite its content?")) return;
         }
-        await ndef.write(content);
-        ndef.removeEventListener("reading", ndefReadHandler);
+        await globalNdefReader.write(content);
+        globalNdefReader.removeEventListener("reading", globalNdefReadHandler);
         resolve();
       };
 
-      ndef.addEventListener("reading", ndefReadHandler);
+      globalNdefReader.addEventListener("reading", globalNdefReadHandler);
+      await globalNdefReader.scan();
     } catch (error) {
       reject(error);
     }
   });
 }
+
+export const cancelNFCTagReading = () => {
+  if (globalNdefReader) {
+    globalNdefReader.removeEventListener("reading", globalNdefReadHandler);
+    globalNdefReader = null;
+    globalNdefReadHandler = null;
+  }
+};

@@ -38,7 +38,7 @@
         <ion-toolbar>
           <ion-title>Write NFC Wallet</ion-title>
           <ion-buttons slot="primary">
-            <ion-button @click="showModal = false">Cancel</ion-button>
+            <ion-button @click="handleCancel">Cancel</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
@@ -57,7 +57,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { createWallet } from '@/utils/CryptoUtils';
-import { WriteNFCTag } from '@/utils/NFCUtils';
+import { writeNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
 
 const router = useRouter();
 const storage = new Storage();
@@ -72,6 +72,11 @@ const toggleAdvancedOptions = () => {
   showAdvancedOptions.value = !showAdvancedOptions.value;
 };
 
+const handleCancel = () => {
+  showModal.value = false;
+  cancelNFCTagReading();
+};
+
 const handleSubmit = async () => {
   let name = walletName.value.trim() || `My Investments #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
   let type = walletType.value || 'nfc-wallet';
@@ -80,7 +85,7 @@ const handleSubmit = async () => {
   
   try {
     showModal.value = true;
-    await WriteNFCTag(cryptoWallet.entropy);
+    await writeNFCTag(cryptoWallet.entropy);
     showModal.value = false;
 
     const wallets = (await storage.get('wallets')) || [];
