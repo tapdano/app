@@ -51,4 +51,8 @@ watch(() => route.path, async (newPath) => {
 #container {
   margin: 20px;
 }
+
+h1 {
+  text-align: center;
+}
 </style>

@@ -17,7 +17,6 @@
 
 <script setup lang="ts">
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonImg } from '@ionic/vue';
-import { defineProps } from 'vue';
 
 const props = defineProps({
   isOpen: Boolean

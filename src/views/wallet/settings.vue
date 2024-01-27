@@ -13,8 +13,12 @@
       <div id="container">
         <h1>Settings</h1>
         <ion-textarea v-show="isMnemonicVisible" v-model="walletMnemonic" label="Recovery phrase" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletMnemonic, true)" :readonly="true"></ion-textarea>
-        <ion-button @click="getRecoveryPhrase">Get Recovery phrase</ion-button>
-        <ion-button color="danger" @click="deleteWallet">Delete Wallet</ion-button>
+        <div style="text-align: center;margin-top: 20px;">
+          <ion-button @click="getRecoveryPhrase">Get Recovery phrase</ion-button>
+        </div>
+        <div style="text-align: center;">
+          <ion-button color="danger" @click="deleteWallet">Delete Wallet</ion-button>
+        </div>
       </div>
     </ion-content>
 
@@ -26,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonInput, IonTextarea } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonTextarea } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
@@ -81,7 +85,7 @@ const getRecoveryPhrase = async () => {
       return;
     }
     const cryptoWallet = createWallet(mnemonic);
-    if (cryptoWallet.address != currentWallet.address) {
+    if (cryptoWallet.baseAddr != currentWallet.baseAddr) {
       alert('Wrong Wallet.');
       return;
     }
@@ -112,6 +116,10 @@ const deleteWallet = async () => {
 <style scoped>
 #container {
   margin: 20px;
+}
+
+h1 {
+  text-align: center;
 }
 
 ion-button[color="danger"] {

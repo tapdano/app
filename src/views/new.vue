@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonTextarea, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
-import { ref, defineProps } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { createWallet, validateMnemonic } from '@/utils/CryptoUtils';
@@ -91,6 +91,7 @@ const handleSubmit = async () => {
   }
 
   const cryptoWallet = createWallet(mnemonic);
+  console.log(cryptoWallet);
   
   try {
     showModal.value = true;
@@ -104,8 +105,7 @@ const handleSubmit = async () => {
     wallets.push({
       name,
       type,
-      address: cryptoWallet.address,
-      publicKey: cryptoWallet.publicKey
+      ...cryptoWallet
     });
 
     await storage.set('wallets', wallets);
