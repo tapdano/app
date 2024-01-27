@@ -157,6 +157,10 @@ const sendTransaction = async () => {
   console.log('aki 3');
   const txHash = await meshWallet.submitTx(signedTx);
   console.log(txHash);
+
+  destinationAddress.value = '';
+  adaAmount.value = 0;
+  alert('Success! TxID: ' + txHash);
 };
 
 watch(() => route.path, async (newPath) => {
