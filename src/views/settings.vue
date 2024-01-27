@@ -11,23 +11,40 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <p>Settings</p>
+        <h1>App Settings</h1>
+        <ion-toggle @ionChange="toggleDarkMode" :checked="isDarkMode"></ion-toggle>
+        <ion-label style="margin-left: 20px;">Dark Mode</ion-label>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel } from '@ionic/vue';
+
+const isDarkMode = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+const toggleDarkMode = () => {
+  document.body.classList.toggle('dark', isDarkMode.value);
+};
+
+onMounted(() => {
+  toggleDarkMode();
+});
+
+onUnmounted(() => {
+  document.body.classList.remove('dark');
+});
 </script>
 
 <style scoped>
 #container {
+  margin: 20px;
   text-align: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+}
+
+h1 {
+  margin-bottom: 20px;
 }
 </style>
