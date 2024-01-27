@@ -38,31 +38,19 @@
       </div>
     </ion-content>
 
-    <ion-modal :is-open="showModal" @did-dismiss="showModal = false">
-      <ion-header>
-        <ion-toolbar>
-          <ion-title>Write NFC Wallet</ion-title>
-          <ion-buttons slot="primary">
-            <ion-button @click="handleCancel">Cancel</ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content class="ion-padding">
-        <ion-img src="/logo.png" style="width: 100%; max-width: 50%; height: auto; margin: 0 auto;"></ion-img>
-        <p style="text-align: center;">Approximate your NFC tag to continue</p>
-      </ion-content>
-    </ion-modal>
+    <NFCModal :is-open="showModal" @cancel="handleModalCancel" @dismiss="handleModalDismiss"></NFCModal>
 
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonModal, IonImg, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonTextarea, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonTextarea, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
 import { ref, defineProps } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { createWallet, validateMnemonic } from '@/utils/CryptoUtils';
 import { writeNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
+import NFCModal from '@/components/NFCModal.vue';
 
 const props = defineProps({
   route: String
@@ -78,13 +66,17 @@ const walletRecoveryPhrase = ref('');
 const walletType = ref('nfc-wallet');
 const showModal = ref(false);
 
-const toggleAdvancedOptions = () => {
-  showAdvancedOptions.value = !showAdvancedOptions.value;
-};
-
-const handleCancel = () => {
+const handleModalCancel = () => {
   showModal.value = false;
   cancelNFCTagReading();
+};
+
+const handleModalDismiss = () => {
+  showModal.value = false;
+};
+
+const toggleAdvancedOptions = () => {
+  showAdvancedOptions.value = !showAdvancedOptions.value;
 };
 
 const handleSubmit = async () => {
