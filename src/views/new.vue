@@ -99,7 +99,7 @@ const handleSubmit = async () => {
 
     const wallets = (await storage.get('wallets')) || [];
     const newIndex = wallets.length;
-    const name = walletName.value.trim() || `My Investments #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+    const name = walletName.value.trim() || `TapWallet #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
     const type = walletType.value || 'nfc-wallet';
     wallets.push({
       name,
