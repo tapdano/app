@@ -14,17 +14,24 @@
         <h1>ADA / USD</h1>
         <PriceChart />
         <div id="myWalletBox">
-          <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
-          <ion-textarea v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress, true)" :readonly="true"></ion-textarea>
+          <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'"
+            :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
+          <ion-textarea v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'"
+            :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress, true)" :readonly="true"></ion-textarea>
         </div>
         <div>
           <h2>Wallet Balance:</h2>
-          <p>{{ walletBalance }} ADA</p>
+          <div class="walletBalance">
+            <p>{{ walletBalance }} ADA</p>
+            <span>=</span>
+            <p class="usd">$ {{ (walletBalance * cardanoUsdPrice).toFixed(2) }}</p>
+          </div>
         </div>
         <div>
           <h2>Send ADA</h2>
           <ion-item>
-            <ion-input v-model="destinationAddress" type="text" label="Destination Address" :label-placement="'stacked'"></ion-input>
+            <ion-input v-model="destinationAddress" type="text" label="Destination Address"
+              :label-placement="'stacked'"></ion-input>
           </ion-item>
           <ion-item>
             <ion-input v-model="adaAmount" type="number" label="ADA Amount" :label-placement="'stacked'"></ion-input>
@@ -53,6 +60,7 @@ import { AppWallet, BlockfrostProvider, Transaction } from '@meshsdk/core';
 import WalletTabBar from '@/components/WalletTabBar.vue';
 import PriceChart from '@/components/PriceChart.vue';
 import NFCModal from '@/components/NFCModal.vue';
+import { wallet } from 'ionicons/icons';
 
 const BLOCKFROST_API_KEY = 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
 const BLOCKFROST_API_URL = 'https://cardano-mainnet.blockfrost.io/api/v0';
@@ -60,6 +68,7 @@ const BLOCKFROST_API_URL = 'https://cardano-mainnet.blockfrost.io/api/v0';
 const blockchainProvider = new BlockfrostProvider(BLOCKFROST_API_KEY);
 
 const walletBalance = ref(0);
+const cardanoUsdPrice = ref(0);
 
 const fetchWalletBalance = async (address: string) => {
   try {
@@ -77,6 +86,24 @@ const fetchWalletBalance = async (address: string) => {
     console.error(error);
   }
 };
+
+const getCardanoUsdPrice = async () => {
+  try {
+    if (walletBalance.value === 0) return;
+
+    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=cardano&vs_currencies=usd');
+
+    if (!response.ok) {
+      throw new Error('API error');
+    }
+
+    const data = await response.json();
+    cardanoUsdPrice.value = data.cardano.usd;
+  } catch (error) {
+    console.error(error);
+
+  }
+}
 
 const router = useRouter();
 const route = useRoute();
@@ -124,7 +151,7 @@ const sendTransaction = async () => {
   }
 
   const mnemonic = await getMnemonic();
-  console.log('mnemonic='+mnemonic);
+  console.log('mnemonic=' + mnemonic);
 
   const meshWallet = new AppWallet({
     networkId: 1,
@@ -137,13 +164,13 @@ const sendTransaction = async () => {
   });
 
   const baseAddress = meshWallet.getBaseAddress();
-  console.log('baseAddress='+baseAddress);
+  console.log('baseAddress=' + baseAddress);
 
   const paymentAddress = meshWallet.getPaymentAddress();
-  console.log('paymentAddress='+paymentAddress);
+  console.log('paymentAddress=' + paymentAddress);
 
   const rewardAddress = meshWallet.getRewardAddress();
-  console.log('rewardAddress='+rewardAddress);
+  console.log('rewardAddress=' + rewardAddress);
 
   const tx = new Transaction({ initiator: meshWallet }).sendLovelace(
     destinationAddress.value,
@@ -174,6 +201,7 @@ watch(() => route.path, async (newPath) => {
     walletReceiveAddress.value = currentWallet.baseAddr;
     walletStakingAddress.value = currentWallet.rewardAddr;
     await fetchWalletBalance(currentWallet.baseAddr);
+    await getCardanoUsdPrice();
   }
 }, { immediate: true });
 </script>
@@ -183,11 +211,21 @@ watch(() => route.path, async (newPath) => {
   margin: 20px;
 }
 
-#myWalletBox{
+#myWalletBox {
   margin: 20px 0;
 }
 
 h1 {
   text-align: center;
+}
+
+.walletBalance {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.walletBalance .usd {
+  color: #666;
 }
 </style>
