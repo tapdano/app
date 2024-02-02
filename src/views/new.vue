@@ -14,7 +14,7 @@
       <div id="container">
         <form @submit.prevent="handleSubmit">
           <ion-item>
-            <ion-input v-model="walletName" label="Name" placeholder="TapWallet name"></ion-input>
+            <ion-input v-model="walletName" label="Name" placeholder="TapWallet Name"></ion-input>
           </ion-item>
 
           <ion-item v-if="route === 'restore'">
