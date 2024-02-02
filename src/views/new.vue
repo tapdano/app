@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
         </ion-buttons>
-        <ion-title v-if="route === 'new'">New</ion-title>
+        <ion-title v-if="route === 'new'">New Wallet</ion-title>
         <ion-title v-if="route === 'restore'">Restore</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -14,7 +14,7 @@
       <div id="container">
         <form @submit.prevent="handleSubmit">
           <ion-item>
-            <ion-input v-model="walletName" label="Name" placeholder="My Investments"></ion-input>
+            <ion-input v-model="walletName" label="Name" placeholder="TapWallet name"></ion-input>
           </ion-item>
 
           <ion-item v-if="route === 'restore'">
