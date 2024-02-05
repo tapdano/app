@@ -34,7 +34,7 @@
               :label-placement="'stacked'"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input v-model="adaAmount" type="number" label="ADA Amount" :label-placement="'stacked'"></ion-input>
+            <ion-input v-model="adaAmount" type="text" label="ADA Amount" :label-placement="'stacked'"></ion-input>
           </ion-item>
           <ion-button @click="sendTransaction">Send</ion-button>
         </div>
@@ -190,6 +190,23 @@ const sendTransaction = async () => {
   alert('Success! TxID: ' + txHash);
 };
 
+const formatAdaAmount = (inputValue: any) => {
+  inputValue = inputValue.replace(/,/g, '');
+  inputValue = inputValue.replace(/\.(?=.*\.)/g, '').replace('.', ',');
+
+  var parts = inputValue.split(',');
+  parts[0] = parts[0].split('').reverse().join('').replace(/(\d{3})/g, '$1,').split('').reverse().join('').replace(/^,/, '');
+
+  if (parts.length > 1) {
+    parts[1] = parts[1].substring(0, 6);
+    inputValue = parts.join('.');
+  } else {
+    inputValue = parts[0];
+  }
+
+  return inputValue;
+}
+
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/main') {
     const currentWallet = await getCurrentWallet();
@@ -204,6 +221,11 @@ watch(() => route.path, async (newPath) => {
     await getCardanoUsdPrice();
   }
 }, { immediate: true });
+
+watch(adaAmount, (newValue) => {
+  const formattedValue = formatAdaAmount(newValue);
+  adaAmount.value = formattedValue;
+}, { immediate: false });
 </script>
 
 <style scoped>
