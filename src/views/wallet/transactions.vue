@@ -59,6 +59,7 @@ watch(() => route.path, async (newPath) => {
       const transactionsData = await fetchTransactions(currentWallet.baseAddr);
       transactions.value = transactionsData;
     } catch (error) {
+      transactions.value = [];
     }
   }
 }, { immediate: true });
