@@ -53,7 +53,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import { getCurrentWallet } from '@/utils/StorageUtils';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { accessNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
-import { entropyToMnemonic, validateMnemonic, createWallet, loadWallet, fetchAccountInfo } from '@/utils/CryptoUtils';
+import { entropyToMnemonic, decryptEntropy, validateMnemonic, createWallet, loadWallet, fetchAccountInfo } from '@/utils/CryptoUtils';
 import { Transaction } from '@meshsdk/core';
 import WalletTabBar from '@/components/WalletTabBar.vue';
 import PriceChart from '@/components/PriceChart.vue';
@@ -104,11 +104,12 @@ const getMnemonic = async () => {
   try {
     const currentWallet = await getCurrentWallet();
     showModal.value = true;
-    const entropy = await accessNFCTag() as string;
+    const encryptedEntropy = await accessNFCTag() as string;
+    const entropy = await decryptEntropy(encryptedEntropy, currentWallet.encriptionKey, currentWallet.iv);
     showModal.value = false;
     const mnemonic = entropyToMnemonic(entropy);
     if (!validateMnemonic(mnemonic)) throw ('Entropy invalid.');
-    const cryptoWallet = createWallet(mnemonic);
+    const cryptoWallet = await createWallet(mnemonic);
     if (cryptoWallet.baseAddr != currentWallet.baseAddr) throw ('Wrong Wallet.');
     return cryptoWallet.mnemonic as string;
   } catch (error) {

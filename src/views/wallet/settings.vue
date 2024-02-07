@@ -43,7 +43,7 @@ import { Storage } from '@ionic/storage';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { accessNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
 import { getCurrentWallet } from '@/utils/StorageUtils';
-import { entropyToMnemonic, validateMnemonic, createWallet } from '@/utils/CryptoUtils';
+import { entropyToMnemonic, decryptEntropy, validateMnemonic, createWallet } from '@/utils/CryptoUtils';
 import WalletTabBar from '../../components/WalletTabBar.vue';
 import NFCModal from '@/components/NFCModal.vue';
 
@@ -87,14 +87,15 @@ const getRecoveryPhrase = async () => {
   try {
     const currentWallet = await getCurrentWallet();
     showModal.value = true;
-    const entropy = await accessNFCTag() as string;
+    const encryptedEntropy = await accessNFCTag() as string;
+    const entropy = await decryptEntropy(encryptedEntropy, currentWallet.encriptionKey, currentWallet.iv);
     showModal.value = false;
     const mnemonic = entropyToMnemonic(entropy);
     if (!validateMnemonic(mnemonic)) {
       alert('Entropy invalid.');
       return;
     }
-    const cryptoWallet = createWallet(mnemonic);
+    const cryptoWallet = await createWallet(mnemonic);
     if (cryptoWallet.baseAddr != currentWallet.baseAddr) {
       alert('Wrong Wallet.');
       return;
