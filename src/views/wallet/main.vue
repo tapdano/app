@@ -24,8 +24,6 @@
         <div id="myWalletBox">
           <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'"
             :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
-          <ion-textarea v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'"
-            :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress, true)" :readonly="true"></ion-textarea>
         </div>
         <div>
           <h2>Send ADA</h2>
@@ -87,7 +85,6 @@ const route = useRoute();
 
 const walletName = ref('');
 const walletReceiveAddress = ref('');
-const walletStakingAddress = ref('');
 
 const destinationAddress = ref('');
 const adaAmount = ref(0);
@@ -171,7 +168,6 @@ watch(() => route.path, async (newPath) => {
     }
     walletName.value = currentWallet.name;
     walletReceiveAddress.value = currentWallet.baseAddr;
-    walletStakingAddress.value = currentWallet.rewardAddr;
 
     let balance = 0;
     try {
