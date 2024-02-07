@@ -11,21 +11,21 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>ADA / USD</h1>
+        <h1>ADA (${{ (cardanoUsdPrice).toFixed(2) }} USD)</h1>
         <PriceChart />
-        <div id="myWalletBox">
-          <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'"
-            :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
-          <ion-textarea v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'"
-            :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress, true)" :readonly="true"></ion-textarea>
-        </div>
         <div>
           <h2>Wallet Balance:</h2>
           <div class="walletBalance">
             <p>{{ walletBalance }} ADA</p>
             <span>=</span>
-            <p class="usd">$ {{ (walletBalance * cardanoUsdPrice).toFixed(2) }}</p>
+            <p class="usd">${{ (walletBalance * cardanoUsdPrice).toFixed(2) }} USD</p>
           </div>
+        </div>
+        <div id="myWalletBox">
+          <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'"
+            :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
+          <ion-textarea v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'"
+            :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress, true)" :readonly="true"></ion-textarea>
         </div>
         <div>
           <h2>Send ADA</h2>
@@ -208,6 +208,10 @@ h1 {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.walletBalance p{
+  margin: 0;
 }
 
 .walletBalance .usd {
