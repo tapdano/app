@@ -166,7 +166,7 @@ watch(() => route.path, async (newPath) => {
       router.push('/my-wallets');
       return;
     }
-    alert(currentWallet.entropy);
+
     walletName.value = currentWallet.name;
     walletReceiveAddress.value = currentWallet.baseAddr;
 
