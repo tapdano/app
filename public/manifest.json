@@ -1,0 +1,12 @@
+{
+  "name": "TapDano",
+  "start_url": "/",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "238x238"
+    }
+  ]
+}
