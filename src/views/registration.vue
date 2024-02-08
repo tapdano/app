@@ -18,13 +18,12 @@ import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { getRegistrationOptions, checkRegistrationResponse } from '@/utils/WebAuthNUtils';
 
-const router = useRouter();
-const storage = new Storage();
-storage.create();
-
 const elemError = ref('');
 
 async function startRegistrationProcess() {
+  const router = useRouter();
+  const storage = new Storage();
+  storage.create();
   elemError.value = '';
   try {
     const options = await getRegistrationOptions();
@@ -41,6 +40,8 @@ async function startRegistrationProcess() {
     elemError.value = `Error: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
+
+startRegistrationProcess();
 </script>
 
 <style scoped>

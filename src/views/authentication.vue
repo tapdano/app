@@ -18,13 +18,12 @@ import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { getAuthenticationOptions, checkAuthenticationResponse } from '@/utils/WebAuthNUtils';
 
-const router = useRouter();
-const storage = new Storage();
-storage.create();
-
 const elemError = ref('');
 
 async function startAuthenticationProcess() {
+  const router = useRouter();
+  const storage = new Storage();
+  storage.create();
   elemError.value = '';
   try {
     const options = await getAuthenticationOptions();
@@ -44,6 +43,8 @@ async function startAuthenticationProcess() {
     elemError.value = `Error: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
+
+startAuthenticationProcess();
 </script>
 
 <style scoped>
