@@ -2,7 +2,7 @@ import { generateRegistrationOptions, verifyRegistrationResponse } from '@simple
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from '@simplewebauthn/server';
 
 const rpName = 'TapDano';
-const rpID = 'localhost';
+const rpID = window.location.hostname;
 
 export async function getRegistrationOptions() {
   const options = await generateRegistrationOptions({
