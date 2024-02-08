@@ -31,43 +31,14 @@ import {
   IonToolbar,
 } from '@ionic/vue';
 import { startRegistration } from '@simplewebauthn/browser';
-import { generateRegistrationOptions, verifyRegistrationResponse } from '@simplewebauthn/server';
 import { Storage } from '@ionic/storage';
+import { getRegistrationOptions, checkRegistrationResponse } from '@/utils/WebAuthNUtils';
 
 const storage = new Storage();
 storage.create();
 
-const rpName = 'TapDano';
-const rpID = 'localhost';
-
 const elemSuccess = ref('');
 const elemError = ref('');
-
-async function getRegistrationOptions() {
-  const options = await generateRegistrationOptions({
-    rpName,
-    rpID,
-    userID: '1',
-    userName: 'TapDano Wallet',
-    attestationType: 'none',
-    authenticatorSelection: {
-      residentKey: 'preferred',
-      userVerification: 'preferred',
-      authenticatorAttachment: 'platform',
-    },
-  });
-  return options;
-}
-
-async function checkRegistrationResponse(attResp: any, expectedChallenge: string) {
-  const expectedOrigin = window.location.origin;
-  return await verifyRegistrationResponse({
-    response: attResp,
-    expectedChallenge,
-    expectedOrigin,
-    expectedRPID: rpID,
-  });
-}
 
 async function startRegistrationProcess() {
   elemSuccess.value = '';

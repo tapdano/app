@@ -31,36 +31,14 @@ import {
   IonToolbar,
 } from '@ionic/vue';
 import { startAuthentication } from '@simplewebauthn/browser';
-import { generateAuthenticationOptions, verifyAuthenticationResponse } from '@simplewebauthn/server';
 import { Storage } from '@ionic/storage';
+import { getAuthenticationOptions, checkAuthenticationResponse } from '@/utils/WebAuthNUtils';
 
 const storage = new Storage();
 storage.create();
 
-const rpName = 'TapDano';
-const rpID = 'localhost';
-
 const elemSuccess = ref('');
 const elemError = ref('');
-
-async function getAuthenticationOptions() {
-  const options = await generateAuthenticationOptions({
-    rpID,
-    userVerification: 'preferred',
-  });
-  return options;
-}
-
-async function checkAuthenticationResponse(response: any, expectedChallenge: string, authenticator: any) {
-  const expectedOrigin = window.location.origin;
-  return await verifyAuthenticationResponse({
-    response: response,
-    expectedChallenge,
-    expectedOrigin: expectedOrigin,
-    expectedRPID: rpID,
-    authenticator,
-  });
-}
 
 async function startAuthenticationProcess() {
   elemSuccess.value = '';
