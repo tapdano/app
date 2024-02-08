@@ -1,18 +1,9 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-menu-button color="primary"></ion-menu-button>
-        </ion-buttons>
-        <ion-title>Authentication</ion-title>
-      </ion-toolbar>
-    </ion-header>
     <ion-content :fullscreen="true">
       <div id="container">
         <h1>Authentication</h1>
         <button @click="startAuthenticationProcess">Begin Authentication</button>
-        <p id="success" style="color: green;">{{ elemSuccess }}</p>
         <p id="error" style="color: red;">{{ elemError }}</p>
       </div>
     </ion-content>
@@ -21,27 +12,19 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import {
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/vue';
+import { IonContent, IonPage } from '@ionic/vue';
 import { startAuthentication } from '@simplewebauthn/browser';
+import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { getAuthenticationOptions, checkAuthenticationResponse } from '@/utils/WebAuthNUtils';
 
+const router = useRouter();
 const storage = new Storage();
 storage.create();
 
-const elemSuccess = ref('');
 const elemError = ref('');
 
 async function startAuthenticationProcess() {
-  elemSuccess.value = '';
   elemError.value = '';
   try {
     const options = await getAuthenticationOptions();
@@ -51,8 +34,8 @@ async function startAuthenticationProcess() {
     if (verification.verified) {
       registrationInfo.counter = verification.authenticationInfo.newCounter;
       await storage.set('registrationInfo', registrationInfo);
-      await storage.set('authenticationInfo', verification.authenticationInfo);
-      elemSuccess.value = 'Success!';
+      sessionStorage.setItem('authenticationInfo', JSON.stringify(verification.authenticationInfo));
+      router.push('/');
     } else {
       elemError.value = 'Oh no, something went wrong!';
     }

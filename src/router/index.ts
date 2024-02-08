@@ -56,20 +56,25 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
+
+  if (to.path !== '/registration') {
+    const registrationInfo = await storage.get('registrationInfo') || null;
+    if (!registrationInfo) {
+      next('/registration');
+      return;
+    }
+  }
+
+  if (to.path !== '/authentication') {
+    const authenticationInfo = JSON.parse(sessionStorage.getItem('authenticationInfo') || 'null');
+    if (!authenticationInfo) {
+      next('/authentication');
+      return;
+    }
+  }
+
   if (to.path !== '/') {
     next();
-    return;
-  }
-
-  const registrationInfo = await storage.get('registrationInfo') || null;
-  if (!registrationInfo) {
-    next('/registration');
-    return;
-  }
-
-  const authenticationInfo = await storage.get('authenticationInfo') || null;
-  if (!authenticationInfo) {
-    next('/authentication');
     return;
   }
 
