@@ -5,13 +5,13 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
         </ion-buttons>
-        <ion-title>Registration</ion-title>
+        <ion-title>Authentication</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>Registration</h1>
-        <button @click="startRegistrationProcess">Begin Registration</button>
+        <h1>Authentication</h1>
+        <button @click="startAuthenticationProcess">Begin Authentication</button>
         <p id="success" style="color: green;">{{ elemSuccess }}</p>
         <p id="error" style="color: red;">{{ elemError }}</p>
       </div>
@@ -30,8 +30,8 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/vue';
-import { startRegistration } from '@simplewebauthn/browser';
-import { generateRegistrationOptions, verifyRegistrationResponse } from '@simplewebauthn/server';
+import { startAuthentication } from '@simplewebauthn/browser';
+import { generateAuthenticationOptions, verifyAuthenticationResponse } from '@simplewebauthn/server';
 import { Storage } from '@ionic/storage';
 
 const storage = new Storage();
@@ -43,41 +43,37 @@ const rpID = 'localhost';
 const elemSuccess = ref('');
 const elemError = ref('');
 
-async function getRegistrationOptions() {
-  const options = await generateRegistrationOptions({
-    rpName,
+async function getAuthenticationOptions() {
+  const options = await generateAuthenticationOptions({
     rpID,
-    userID: '1',
-    userName: 'TapDano Wallet',
-    attestationType: 'none',
-    authenticatorSelection: {
-      residentKey: 'preferred',
-      userVerification: 'preferred',
-      authenticatorAttachment: 'platform',
-    },
+    userVerification: 'preferred',
   });
   return options;
 }
 
-async function checkRegistrationResponse(attResp: any, expectedChallenge: string) {
+async function checkAuthenticationResponse(response: any, expectedChallenge: string, authenticator: any) {
   const expectedOrigin = window.location.origin;
-  return await verifyRegistrationResponse({
-    response: attResp,
+  return await verifyAuthenticationResponse({
+    response: response,
     expectedChallenge,
-    expectedOrigin,
+    expectedOrigin: expectedOrigin,
     expectedRPID: rpID,
+    authenticator,
   });
 }
 
-async function startRegistrationProcess() {
+async function startAuthenticationProcess() {
   elemSuccess.value = '';
   elemError.value = '';
   try {
-    const options = await getRegistrationOptions();
-    const attResp = await startRegistration(options);
-    const verification = await checkRegistrationResponse(attResp, options.challenge);
+    const options = await getAuthenticationOptions();
+    const attResp = await startAuthentication(options);
+    const registrationInfo = await storage.get('registrationInfo');
+    const verification = await checkAuthenticationResponse(attResp, options.challenge, registrationInfo);
     if (verification.verified) {
-      await storage.set('registrationInfo', verification.registrationInfo);
+      registrationInfo.counter = verification.authenticationInfo.newCounter;
+      await storage.set('registrationInfo', registrationInfo);
+      await storage.set('authenticationInfo', verification.authenticationInfo);
       elemSuccess.value = 'Success!';
     } else {
       elemError.value = 'Oh no, something went wrong!';

@@ -11,6 +11,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/registration.vue')
   },
   {
+    path: '/authentication',
+    component: () => import ('../views/authentication.vue')
+  },
+  {
     path: '/welcome',
     component: () => import ('../views/welcome.vue')
   },
@@ -57,9 +61,15 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
 
-  const auth = await storage.get('auth') || null;
-  if (!auth) {
+  const registrationInfo = await storage.get('registrationInfo') || null;
+  if (!registrationInfo) {
     next('/registration');
+    return;
+  }
+
+  const authenticationInfo = await storage.get('authenticationInfo') || null;
+  if (!authenticationInfo) {
+    next('/authentication');
     return;
   }
 
