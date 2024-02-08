@@ -57,12 +57,15 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
 
-  if (to.path !== '/registration') {
-    const registrationInfo = await storage.get('registrationInfo') || null;
-    if (!registrationInfo) {
-      next('/registration');
-      return;
-    }
+  if (to.path === '/registration') {
+    next();
+    return;
+  }
+
+  const registrationInfo = await storage.get('registrationInfo') || null;
+  if (!registrationInfo) {
+    next('/registration');
+    return;
   }
 
   if (to.path !== '/authentication') {
