@@ -8,5 +8,6 @@
       "type": "image/png",
       "sizes": "238x238"
     }
-  ]
+  ],
+  "background_color": "#000000"
 }
