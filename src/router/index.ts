@@ -7,6 +7,10 @@ storage.create();
 
 const routes: Array<RouteRecordRaw> = [
   {
+    path: '/registration',
+    component: () => import ('../views/registration.vue')
+  },
+  {
     path: '/welcome',
     component: () => import ('../views/welcome.vue')
   },
@@ -48,20 +52,28 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  if (to.path === '/') {
-    const wallets = await storage.get('wallets') || [];
-    if (wallets.length > 0) {
-      const currentIndex = await storage.get('currentWallet');
-      if (!(currentIndex===null) && wallets[currentIndex]) {
-        next('/wallet/main');
-      } else {
-        next('/my-wallets');
-      }
-    } else {
-      next('/welcome');
-    }
-  } else {
+  if (to.path !== '/') {
     next();
+    return;
+  }
+
+  const auth = await storage.get('auth') || null;
+  if (!auth) {
+    next('/registration');
+    return;
+  }
+
+  const wallets = await storage.get('wallets') || [];
+  if (wallets.length == 0) {
+    next('/welcome');
+    return;
+  }
+
+  const currentIndex = await storage.get('currentWallet');
+  if (!(currentIndex === null) && wallets[currentIndex]) {
+    next('/wallet/main');
+  } else {
+    next('/my-wallets');
   }
 });
 
