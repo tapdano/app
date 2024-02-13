@@ -26,9 +26,9 @@ async function startAuthenticationProcess() {
   storage.create();
   elemError.value = '';
   try {
-    const options = await getAuthenticationOptions();
-    const attResp = await startAuthentication(options);
     const registrationInfo = await storage.get('registrationInfo');
+    const options = await getAuthenticationOptions(registrationInfo.credentialID);
+    const attResp = await startAuthentication(options);
     const verification = await checkAuthenticationResponse(attResp, options.challenge, registrationInfo);
     if (verification.verified) {
       registrationInfo.counter = verification.authenticationInfo.newCounter;

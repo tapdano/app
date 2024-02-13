@@ -13,8 +13,8 @@ export async function getRegistrationOptions() {
     attestationType: 'none',
     authenticatorSelection: {
       residentKey: 'preferred',
-      userVerification: 'preferred',
-      authenticatorAttachment: 'platform',
+      userVerification: 'discouraged',
+      authenticatorAttachment: 'cross-platform',
     },
   });
   return options;
@@ -27,13 +27,18 @@ export async function checkRegistrationResponse(attResp: any, expectedChallenge:
     expectedChallenge,
     expectedOrigin,
     expectedRPID: rpID,
+    requireUserVerification: false
   });
 }
 
-export async function getAuthenticationOptions() {
+export async function getAuthenticationOptions(id: BufferSource) {
   const options = await generateAuthenticationOptions({
     rpID,
-    userVerification: 'preferred',
+    userVerification: 'discouraged',
+    allowCredentials: [{
+      id: id,
+      type: 'public-key'
+    }]
   });
   return options;
 }
@@ -46,5 +51,6 @@ export async function checkAuthenticationResponse(response: any, expectedChallen
     expectedOrigin: expectedOrigin,
     expectedRPID: rpID,
     authenticator,
+    requireUserVerification: false
   });
 }
