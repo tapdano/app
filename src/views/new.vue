@@ -90,11 +90,11 @@ const handleSubmit = async () => {
     }
   }
 
-  const cryptoWallet = createWallet(mnemonic);
+  const cryptoWallet = await createWallet(mnemonic);
   
   try {
     showModal.value = true;
-    await accessNFCTag(cryptoWallet.entropy);
+    await accessNFCTag(cryptoWallet.encryptedEntropy);
     showModal.value = false;
 
     const wallets = (await storage.get('wallets')) || [];
@@ -104,7 +104,10 @@ const handleSubmit = async () => {
     wallets.push({
       name,
       type,
-      ...cryptoWallet
+      baseAddr: cryptoWallet.baseAddr,
+      rewardAddr: cryptoWallet.rewardAddr,
+      encriptionKey: cryptoWallet.encriptionKey,
+      iv: cryptoWallet.iv
     });
 
     await storage.set('wallets', wallets);

@@ -7,6 +7,14 @@ storage.create();
 
 const routes: Array<RouteRecordRaw> = [
   {
+    path: '/registration',
+    component: () => import ('../views/registration.vue')
+  },
+  {
+    path: '/authentication',
+    component: () => import ('../views/authentication.vue')
+  },
+  {
     path: '/welcome',
     component: () => import ('../views/welcome.vue')
   },
@@ -48,20 +56,42 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  if (to.path === '/') {
-    const wallets = await storage.get('wallets') || [];
-    if (wallets.length > 0) {
-      const currentIndex = await storage.get('currentWallet');
-      if (!(currentIndex===null) && wallets[currentIndex]) {
-        next('/wallet/main');
-      } else {
-        next('/my-wallets');
-      }
-    } else {
-      next('/welcome');
-    }
-  } else {
+
+  if (to.path === '/registration') {
     next();
+    return;
+  }
+
+  const registrationInfo = await storage.get('registrationInfo') || null;
+  if (!registrationInfo) {
+    next('/registration');
+    return;
+  }
+
+  if (to.path !== '/authentication') {
+    const authenticationInfo = JSON.parse(sessionStorage.getItem('authenticationInfo') || 'null');
+    if (!authenticationInfo) {
+      next('/authentication');
+      return;
+    }
+  }
+
+  if (to.path !== '/') {
+    next();
+    return;
+  }
+
+  const wallets = await storage.get('wallets') || [];
+  if (wallets.length == 0) {
+    next('/welcome');
+    return;
+  }
+
+  const currentIndex = await storage.get('currentWallet');
+  if (!(currentIndex === null) && wallets[currentIndex]) {
+    next('/wallet/main');
+  } else {
+    next('/my-wallets');
   }
 });
 

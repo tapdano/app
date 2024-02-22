@@ -12,6 +12,12 @@
     <ion-content :fullscreen="true">
       <div id="container">
         <h1>Settings</h1>
+        <div id="myWalletBox">
+          <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'"
+            :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
+          <ion-textarea v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'"
+            :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress, true)" :readonly="true"></ion-textarea>
+        </div>
         <ion-textarea v-show="isMnemonicVisible" v-model="walletMnemonic" label="Recovery phrase" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletMnemonic, true)" :readonly="true"></ion-textarea>
         <div style="text-align: center;margin-top: 20px;">
           <ion-button @click="getRecoveryPhrase">Get Recovery phrase</ion-button>
@@ -37,7 +43,7 @@ import { Storage } from '@ionic/storage';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { accessNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
 import { getCurrentWallet } from '@/utils/StorageUtils';
-import { entropyToMnemonic, validateMnemonic, createWallet } from '@/utils/CryptoUtils';
+import { entropyToMnemonic, decryptEntropy, validateMnemonic, createWallet } from '@/utils/CryptoUtils';
 import WalletTabBar from '../../components/WalletTabBar.vue';
 import NFCModal from '@/components/NFCModal.vue';
 
@@ -48,6 +54,8 @@ storage.create();
 
 const walletName = ref('');
 const walletMnemonic = ref('');
+const walletReceiveAddress = ref('');
+const walletStakingAddress = ref('');
 const showModal = ref(false);
 const isMnemonicVisible = ref(false);
 
@@ -68,6 +76,8 @@ watch(() => route.path, async (newPath) => {
       return;
     }
     walletName.value = currentWallet.name;
+    walletReceiveAddress.value = currentWallet.baseAddr;
+    walletStakingAddress.value = currentWallet.rewardAddr;
     walletMnemonic.value = '';
     isMnemonicVisible.value = false;
   }
@@ -77,14 +87,15 @@ const getRecoveryPhrase = async () => {
   try {
     const currentWallet = await getCurrentWallet();
     showModal.value = true;
-    const entropy = await accessNFCTag() as string;
+    const encryptedEntropy = await accessNFCTag() as string;
+    const entropy = await decryptEntropy(encryptedEntropy, currentWallet.encriptionKey, currentWallet.iv);
     showModal.value = false;
     const mnemonic = entropyToMnemonic(entropy);
     if (!validateMnemonic(mnemonic)) {
       alert('Entropy invalid.');
       return;
     }
-    const cryptoWallet = createWallet(mnemonic);
+    const cryptoWallet = await createWallet(mnemonic);
     if (cryptoWallet.baseAddr != currentWallet.baseAddr) {
       alert('Wrong Wallet.');
       return;
