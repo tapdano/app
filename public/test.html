@@ -19,6 +19,7 @@
         }
       });
       console.log(arrayBufferToHex(ret.response.signature));
+      document.write('<h1>' + arrayBufferToHex(ret.response.signature) + '</h1>');
       alert(arrayBufferToHex(ret.response.signature));
     } catch (e) {
       console.error(e);
