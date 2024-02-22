@@ -19,10 +19,10 @@
         }
       });
       console.log(arrayBufferToHex(ret.response.signature));
-      document.write('<h1>' + arrayBufferToHex(ret.response.signature) + '</h1>');
-      alert(arrayBufferToHex(ret.response.signature));
+      document.write('<h1>' + arrayBufferToHex(ret.response.signature) + '</h1><br /><br /><br />');
     } catch (e) {
       console.error(e);
+      document.write('<h1>Error: ' + e.message + '</h1>');
     }
   };
   const StrToHex = function(s) {
