@@ -56,7 +56,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-
+  /*
   if (to.path === '/registration') {
     next();
     return;
@@ -75,7 +75,8 @@ router.beforeEach(async (to, from, next) => {
       return;
     }
   }
-
+  */
+ 
   if (to.path !== '/') {
     next();
     return;

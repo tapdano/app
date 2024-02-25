@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dynamic-v4';
+const CACHE_NAME = 'dynamic-v5';
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing.');
