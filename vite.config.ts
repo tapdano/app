@@ -8,6 +8,9 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    hmr: false
+  },
   plugins: [
     nodePolyfills(),
     wasm(),

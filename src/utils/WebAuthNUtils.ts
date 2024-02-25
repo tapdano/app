@@ -37,6 +37,7 @@ export async function getAuthenticationOptions(id: BufferSource) {
     userVerification: 'discouraged',
     allowCredentials: [{
       id: id,
+      transports: ['nfc'],
       type: 'public-key'
     }]
   });

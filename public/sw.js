@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dynamic-v2';
+const CACHE_NAME = 'dynamic-v4';
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing.');
@@ -21,7 +21,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.url.startsWith(self.location.origin)) {
+  event.respondWith(fetch(event.request));
+  /*
+  const isLocalhost = event.request.url.includes('localhost');
+  if (event.request.url.startsWith(self.location.origin) && !isLocalhost) {
     event.respondWith(
       caches.match(event.request).then(response => {
         return response || fetch(event.request).then(fetchRes => {
@@ -35,4 +38,5 @@ self.addEventListener('fetch', (event) => {
   } else {
     event.respondWith(fetch(event.request));
   }
+  */
 });
