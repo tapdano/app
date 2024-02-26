@@ -28,6 +28,13 @@ async function startAuthenticationProcess() {
   try {
     const registrationInfo = await storage.get('registrationInfo');
     const options = await getAuthenticationOptions(registrationInfo.credentialID);
+    /*
+    options.allowCredentials = [{
+      id: 'OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OQ',
+      "transports": ['nfc'],
+      type: 'public-key'
+    }];
+    */
     const attResp = await startAuthentication(options);
     const verification = await checkAuthenticationResponse(attResp, options.challenge, registrationInfo);
     if (verification.verified) {
