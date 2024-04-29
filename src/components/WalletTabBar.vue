@@ -6,8 +6,13 @@
     </ion-tab-button>
 
     <ion-tab-button tab="transactions" href="/wallet/transactions">
-      <ion-icon :icon="library" />
+      <ion-icon :icon="cash" />
       <ion-label>Transactions</ion-label>
+    </ion-tab-button>
+
+    <ion-tab-button tab="assets" href="/wallet/assets">
+      <ion-icon :icon="diamond" />
+      <ion-label>Assets</ion-label>
     </ion-tab-button>
 
     <ion-tab-button tab="settings" href="/wallet/settings">
@@ -20,7 +25,7 @@
 <script lang="ts">
   import { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonLabel, IonIcon } from '@ionic/vue';
 
-  import { walletOutline, settingsOutline, radio, library, search } from 'ionicons/icons';
+  import { walletOutline, settingsOutline, radio, cash, diamond, search } from 'ionicons/icons';
 
   export default {
     name: 'WalletTabBar',
@@ -29,7 +34,8 @@
       return {
         walletOutline,
         radio,
-        library,
+        cash,
+        diamond,
         search,
         settingsOutline
       };
