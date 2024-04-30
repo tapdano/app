@@ -9,6 +9,8 @@
 </head>
 <body>
 <script>
+  const MAX_TRIES = 5;
+  let TRIES = 0;
   const execCmd = async function() {
     try {
       const ret = await navigator.credentials.get({
@@ -26,9 +28,15 @@
       });
       console.log(arrayBufferToHex(ret.response.signature));
       document.body.appendChild(Object.assign(document.createElement('h1'), {textContent: arrayBufferToHex(ret.response.signature)}));
+      TRIES = 0;
     } catch (e) {
       console.error(e);
-      document.body.appendChild(Object.assign(document.createElement('h1'), {textContent: 'Error: ' + e.message}));
+      TRIES++;
+      if (TRIES == MAX_TRIES) {
+        document.body.appendChild(Object.assign(document.createElement('h1'), {textContent: 'Error: ' + e.message}));
+      } else {
+        execCmd();
+      }
     }
   };
   const StrToHex = function(s) {
