@@ -9,7 +9,7 @@
 </head>
 <body>
 <script>
-  const MAX_TRIES = 5;
+  const MAX_TRIES = 1;
   let TRIES = 0;
   const execCmd = async function() {
     try {
@@ -33,6 +33,7 @@
       console.error(e);
       TRIES++;
       if (TRIES == MAX_TRIES) {
+        TRIES = 0;
         document.body.appendChild(Object.assign(document.createElement('h1'), {textContent: 'Error: ' + e.message}));
       } else {
         execCmd();
