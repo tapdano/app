@@ -95,7 +95,7 @@ const handleSubmit = async () => {
   
   try {
     showModal.value = true;
-    //await accessNFCTag(cryptoWallet.encryptedEntropy);
+    //await accessNFCTag(cryptoWallet.encryptedEntropy); 
     showModal.value = false;
 
     const wallets = (await storage.get('wallets')) || [];
