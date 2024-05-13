@@ -5,10 +5,16 @@
   "display": "standalone",
   "icons": [
     {
-      "src": "logo.png",
+      "src": "logo-black.png",
       "type": "image/png",
       "sizes": "238x238",
       "purpose": "any"
+    },
+    {
+      "src": "logo-black.png",
+      "type": "image/png",
+      "sizes": "238x238",
+      "purpose": "maskable"
     }
   ],
   "background_color": "#000000",

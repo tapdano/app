@@ -1,19 +1,17 @@
 #container {
-  height: 100%;
   padding: 20px;
 }
 
 .list-md {
-  padding: 0 10px;
-  border-radius: 5px;
+  padding:0;
+  background: transparent;
+  margin-bottom: -10px;
 }
 
 ion-item {
-  margin-top: 10px;
   margin-bottom: 10px;
-  padding: 4px;
+  padding: 2px;
   background-color: #333;
-  color: #fff;
   border-radius: 5px;
 }
 

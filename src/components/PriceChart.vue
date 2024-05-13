@@ -125,7 +125,7 @@ onMounted(checkCache);
 
 <style>
 .chart-outline {
-  padding: 4px;
+  padding: 2px;
   background-color: #333;
   border-radius: 5px;
 }

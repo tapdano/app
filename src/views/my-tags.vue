@@ -9,9 +9,9 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <div id="container">
-        <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
-        <div v-else>
+      <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
+      <div v-else>
+        <div id="container">
           <div v-if="tags.length === 0" class="no-items-message">No Tags here! Tap below to add your first Tag.</div>
           <div v-else>
             <ion-list>

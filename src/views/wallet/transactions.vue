@@ -10,15 +10,17 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <div id="container">
-        <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
-        <div v-else-if="transactions.length === 0" class="no-items-message">Your transaction list is empty!</div>
-        <div v-else>
-          <ion-list>
-            <ion-item v-for="transaction in transactions" :key="transaction.tx_hash">
-              <p>Transaction: <a :href="`https://cardanoscan.io/transaction/${transaction.tx_hash}`" target="_blank">{{ transaction.tx_hash }}</a></p>
-            </ion-item>
-          </ion-list>
+      <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
+      <div v-else>
+        <div id="container">
+          <div v-if="transactions.length === 0" class="no-items-message">Your transaction list is empty!</div>
+          <div v-else>
+            <ion-list>
+              <ion-item v-for="transaction in transactions" :key="transaction.tx_hash">
+                <p>Transaction: <a :href="`https://cardanoscan.io/transaction/${transaction.tx_hash}`" target="_blank">{{ transaction.tx_hash }}</a></p>
+              </ion-item>
+            </ion-list>
+          </div>
         </div>
       </div>
     </ion-content>

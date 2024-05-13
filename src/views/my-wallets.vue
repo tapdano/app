@@ -9,9 +9,9 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <div id="container">
-        <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
-        <div v-else>
+      <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
+      <div v-else>
+        <div id="container">
           <div v-if="wallets.length === 0" class="no-items-message">Start your journey! Create or Restore a Wallet to begin.</div>
           <div v-else>
             <ion-list>
