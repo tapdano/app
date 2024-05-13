@@ -11,13 +11,15 @@
     <ion-content :fullscreen="true">
       <div id="container">
         <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
-        <div v-else-if="wallets.length === 0" class="no-items-message">Start your journey! Create or Restore a Wallet to begin.</div>
         <div v-else>
-          <ion-list>
-            <ion-item v-for="(wallet, index) in wallets" :key="index" @click="selectWallet(index)">
-              {{ (wallet as any).name }}
-            </ion-item>
-          </ion-list>
+          <div v-if="wallets.length === 0" class="no-items-message">Start your journey! Create or Restore a Wallet to begin.</div>
+          <div v-else>
+            <ion-list>
+              <ion-item v-for="(wallet, index) in wallets" :key="index" @click="selectWallet(index)">
+                {{ (wallet as any).name }}
+              </ion-item>
+            </ion-list>
+          </div>
           <div id="buttons-box">
             <ion-button expand="block" @click="$router.push('/new-wallet')">Create a new wallet</ion-button>
             <ion-button expand="block" @click="$router.push('/restore-wallet')" fill="outline">Restore wallet</ion-button>

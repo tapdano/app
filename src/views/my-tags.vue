@@ -11,13 +11,15 @@
     <ion-content :fullscreen="true">
       <div id="container">
         <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
-        <div v-else-if="tags.length === 0" class="no-items-message">No Tags here! Tap below to add your first Tag.</div>
         <div v-else>
-          <ion-list>
-            <ion-item v-for="(tag, index) in tags" :key="index" @click="selectTag(index)">
-              {{ (tag as any).name }}
-            </ion-item>
-          </ion-list>
+          <div v-if="tags.length === 0" class="no-items-message">No Tags here! Tap below to add your first Tag.</div>
+          <div v-else>
+            <ion-list>
+              <ion-item v-for="(tag, index) in tags" :key="index" @click="selectTag(index)">
+                {{ (tag as any).name }}
+              </ion-item>
+            </ion-list>
+          </div>
           <div id="buttons-box">
             <ion-button expand="block" @click="$router.push('/new-tag')">Add a Tag</ion-button>
           </div>
