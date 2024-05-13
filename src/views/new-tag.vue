@@ -4,9 +4,10 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
+          <ion-back-button color="primary"></ion-back-button>
         </ion-buttons>
-        <ion-title v-if="route === 'new'">New Wallet</ion-title>
-        <ion-title v-if="route === 'restore'">Restore</ion-title>
+        <ion-title v-if="route === 'new'">New Tag</ion-title>
+        <ion-title v-if="route === 'restore'">Restore Tag</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -44,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonTextarea, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonTextarea, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
@@ -94,7 +95,7 @@ const handleSubmit = async () => {
   
   try {
     showModal.value = true;
-    await accessNFCTag(cryptoWallet.encryptedEntropy);
+    //await accessNFCTag(cryptoWallet.encryptedEntropy);
     showModal.value = false;
 
     const wallets = (await storage.get('wallets')) || [];
@@ -106,8 +107,8 @@ const handleSubmit = async () => {
       type,
       baseAddr: cryptoWallet.baseAddr,
       rewardAddr: cryptoWallet.rewardAddr,
-      encriptionKey: cryptoWallet.encriptionKey,
-      iv: cryptoWallet.iv
+      //encriptionKey: cryptoWallet.encriptionKey,
+      //iv: cryptoWallet.iv
     });
 
     await storage.set('wallets', wallets);
@@ -125,7 +126,6 @@ const handleSubmit = async () => {
     alert(error);
   }
 };
-
 </script>
 
 <style scoped>

@@ -7,14 +7,6 @@ storage.create();
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/registration',
-    component: () => import ('../views/registration.vue')
-  },
-  {
-    path: '/authentication',
-    component: () => import ('../views/authentication.vue')
-  },
-  {
     path: '/welcome',
     component: () => import ('../views/welcome.vue')
   },
@@ -23,18 +15,14 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/my-wallets.vue')
   },
   {
-    path: '/new',
-    component: () => import ('../views/new.vue'),
+    path: '/new-wallet',
+    component: () => import ('../views/new-wallet.vue'),
     props: { route: 'new' }
   },
   {
-    path: '/restore',
-    component: () => import ('../views/new.vue'),
+    path: '/restore-wallet',
+    component: () => import ('../views/new-wallet.vue'),
     props: { route: 'restore' }
-  },
-  {
-    path: '/settings',
-    component: () => import ('../views/settings.vue')
   },
   {
     path: '/wallet/main',
@@ -51,6 +39,24 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/wallet/settings',
     component: () => import ('../views/wallet/settings.vue')
+  },
+  {
+    path: '/my-tags',
+    component: () => import ('../views/my-tags.vue')
+  },
+  {
+    path: '/new-tag',
+    component: () => import ('../views/new-tag.vue'),
+    props: { route: 'new' }
+  },
+  {
+    path: '/restore-tag',
+    component: () => import ('../views/new-tag.vue'),
+    props: { route: 'restore' }
+  },
+  {
+    path: '/settings',
+    component: () => import ('../views/settings.vue')
   }
 ];
 

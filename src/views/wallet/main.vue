@@ -4,6 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
+          <ion-back-button default-href="/my-wallets" color="primary"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ walletName }}</ion-title>
       </ion-toolbar>
@@ -39,8 +40,6 @@
       </div>
     </ion-content>
 
-    <NFCModal :is-open="showModal" @cancel="handleModalCancel" @dismiss="handleModalDismiss"></NFCModal>
-
     <WalletTabBar />
 
   </ion-page>
@@ -49,15 +48,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonTextarea, IonInput, IonItem, IonButton } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonTextarea, IonInput, IonItem, IonButton } from '@ionic/vue';
 import { getCurrentWallet } from '@/utils/StorageUtils';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
-import { accessNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
-import { entropyToMnemonic, decryptEntropy, validateMnemonic, createWallet, loadWallet, fetchAccountInfo } from '@/utils/CryptoUtils';
+import { loadWallet, fetchAccountInfo } from '@/utils/CryptoUtils';
 import { Transaction } from '@meshsdk/core';
 import WalletTabBar from '@/components/WalletTabBar.vue';
 import PriceChart from '@/components/PriceChart.vue';
-import NFCModal from '@/components/NFCModal.vue';
 
 const walletBalance = ref(0);
 const cardanoUsdPrice = ref(0);
@@ -89,58 +86,34 @@ const walletReceiveAddress = ref('');
 const destinationAddress = ref('');
 const adaAmount = ref(0);
 
-const showModal = ref(false);
-
-const handleModalCancel = () => {
-  showModal.value = false;
-  cancelNFCTagReading();
-};
-
-const handleModalDismiss = () => {
-  showModal.value = false;
-};
-
-const getMnemonic = async () => {
-  try {
-    const currentWallet = await getCurrentWallet();
-    showModal.value = true;
-    const encryptedEntropy = await accessNFCTag() as string;
-    const entropy = await decryptEntropy(encryptedEntropy, currentWallet.encriptionKey, currentWallet.iv);
-    showModal.value = false;
-    const mnemonic = entropyToMnemonic(entropy);
-    if (!validateMnemonic(mnemonic)) throw ('Entropy invalid.');
-    const cryptoWallet = await createWallet(mnemonic);
-    if (cryptoWallet.baseAddr != currentWallet.baseAddr) throw ('Wrong Wallet.');
-    return cryptoWallet.mnemonic as string;
-  } catch (error) {
-    showModal.value = false;
-    console.error(error);
-    throw error;
-  }
-};
-
 const sendTransaction = async () => {
   if (!destinationAddress.value || adaAmount.value <= 0) {
     alert('Please fill in all fields correctly.');
     return;
   }
 
-  const mnemonic = await getMnemonic();
+  if (!confirm('Confirm transaction submission?')) return;
 
-  const wallet = loadWallet(mnemonic);
+  try {
+    const currentWallet = await getCurrentWallet();
+    const wallet = loadWallet(currentWallet.mnemonic);
 
-  const tx = new Transaction({ initiator: wallet }).sendLovelace(
-    destinationAddress.value,
-    adaAmount.value + '000000'
-  );
+    const tx = new Transaction({ initiator: wallet }).sendLovelace(
+      destinationAddress.value,
+      adaAmount.value + '000000'
+    );
 
-  const unsignedTx = await tx.build();
-  const signedTx = await wallet.signTx(unsignedTx);
-  const txHash = await wallet.submitTx(signedTx);
+    const unsignedTx = await tx.build();
+    const signedTx = await wallet.signTx(unsignedTx);
+    const txHash = await wallet.submitTx(signedTx);
 
-  destinationAddress.value = '';
-  adaAmount.value = 0;
-  alert('Success! TxID: ' + txHash);
+    destinationAddress.value = '';
+    adaAmount.value = 0;
+    alert('Success! TxID: ' + txHash);
+  } catch (error) {
+    console.error(error);
+    alert(error);
+  }
 };
 
 const formatAdaAmount = (inputValue: any) => {
@@ -190,16 +163,8 @@ watch(adaAmount, (newValue) => {
 </script>
 
 <style scoped>
-#container {
-  margin: 20px;
-}
-
 #myWalletBox {
   margin: 20px 0;
-}
-
-h1 {
-  text-align: center;
 }
 
 .walletBalance {

@@ -4,36 +4,32 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
+          <ion-back-button default-href="/my-wallets" color="primary"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ walletName }}</ion-title>
       </ion-toolbar>
     </ion-header>
-
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>Transactions</h1>
-        <div v-if="transactions.length === 0">
-          No transaction found.
-        </div>
+        <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
+        <div v-else-if="transactions.length === 0" class="no-items-message">Your transaction list is empty!</div>
         <div v-else>
           <ion-list>
             <ion-item v-for="transaction in transactions" :key="transaction.tx_hash">
-              Transaction: <a :href="`https://cardanoscan.io/transaction/${transaction.tx_hash}`" target="_blank">{{ transaction.tx_hash }}</a><br />
+              <p>Transaction: <a :href="`https://cardanoscan.io/transaction/${transaction.tx_hash}`" target="_blank">{{ transaction.tx_hash }}</a></p>
             </ion-item>
           </ion-list>
         </div>
       </div>
     </ion-content>
-
     <WalletTabBar />
-
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonItem, IonList } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonBackButton, IonTitle, IonToolbar, IonItem, IonList } from '@ionic/vue';
 import WalletTabBar from '../../components/WalletTabBar.vue';
 import { getCurrentWallet } from '@/utils/StorageUtils';
 import { fetchTransactions } from '@/utils/CryptoUtils';
@@ -46,9 +42,11 @@ const router = useRouter();
 const route = useRoute();
 const walletName = ref('');
 const transactions = ref<Transaction[]>([]);
+const loading = ref(true);
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/transactions') {
+    loading.value = true;
     const currentWallet = await getCurrentWallet();
     if (currentWallet == null) {
       router.push('/my-wallets');
@@ -61,16 +59,10 @@ watch(() => route.path, async (newPath) => {
     } catch (error) {
       transactions.value = [];
     }
+    loading.value = false;
   }
 }, { immediate: true });
 </script>
 
 <style scoped>
-#container {
-  margin: 20px;
-}
-
-h1 {
-  text-align: center;
-}
 </style>

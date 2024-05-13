@@ -23,8 +23,6 @@
     "@ionic/vue": "^7.0.0",
     "@ionic/vue-router": "^7.0.0",
     "@meshsdk/core": "file:packages/mesh",
-    "@simplewebauthn/browser": "^9.0.1",
-    "@simplewebauthn/server": "^9.0.1",
     "bip39": "^3.1.0",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.1",

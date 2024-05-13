@@ -11,9 +11,8 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>General Settings</h1>
         <ion-label style="margin-right: 20px;">Dark Mode</ion-label>
-        <ion-toggle @ionChange="toggleDarkMode" :checked="isDarkMode"></ion-toggle>
+        <ion-toggle @ionChange="toggleDarkMode" :checked="isDarkMode" :disabled="true"></ion-toggle>
       </div>
     </ion-content>
   </ion-page>
@@ -40,11 +39,6 @@ onUnmounted(() => {
 
 <style scoped>
 #container {
-  margin: 20px;
   text-align: center;
-}
-
-h1 {
-  margin-bottom: 20px;
 }
 </style>

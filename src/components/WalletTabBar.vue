@@ -22,23 +22,14 @@
   </ion-tab-bar>
 </template>
 
-<script lang="ts">
-  import { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonLabel, IonIcon } from '@ionic/vue';
-
-  import { walletOutline, settingsOutline, radio, cash, diamond, search } from 'ionicons/icons';
-
-  export default {
-    name: 'WalletTabBar',
-    components: { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonLabel, IonIcon },
-    data() {
-      return {
-        walletOutline,
-        radio,
-        cash,
-        diamond,
-        search,
-        settingsOutline
-      };
-    },
-  };
+<script setup lang="ts">
+import { IonTabBar, IonTabButton, IonLabel, IonIcon } from '@ionic/vue';
+import { walletOutline, settingsOutline, cash, diamond } from 'ionicons/icons';
 </script>
+
+<style scoped>
+ion-tab-bar {
+  -webkit-box-shadow: 0 -2px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12);
+  box-shadow: 0 -2px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12);
+}
+</style>

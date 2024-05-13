@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, onMounted } from 'vue';
 import { Storage } from '@ionic/storage';
 import {
   IonApp,
@@ -29,18 +30,17 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonListHeader,
   IonMenu,
   IonMenuToggle,
-  IonNote,
   IonRouterOutlet,
   IonSplitPane,
   IonImg
 } from '@ionic/vue';
-import { ref, watch } from 'vue';
 import {
   walletOutline,
   walletSharp,
+  cardOutline,
+  cardSharp,
   settingsOutline,
   settingsSharp
 } from 'ionicons/icons';
@@ -52,11 +52,17 @@ const storage = new Storage();
 storage.create();
 
 const appPages = ref([
-  {
+{
     title: 'My Wallets',
     url: '/my-wallets',
     iosIcon: walletOutline,
     mdIcon: walletSharp,
+  },
+  {
+    title: 'My Tags',
+    url: '/my-tags',
+    iosIcon: cardOutline,
+    mdIcon: cardSharp,
   },
   {
     title: 'Settings',
@@ -71,8 +77,14 @@ const path = '/' + window.location.pathname.split('/')[1];
 if (path !== undefined) {
   selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
 }
+
 watch(() => route.path, async (newPath) => {
   selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(newPath.toLowerCase()) != -1);
+});
+
+onMounted(() => {
+  const loadingScreen = document.getElementById('loading-screen');
+  if (loadingScreen) loadingScreen.style.display = 'none';
 });
 </script>
 

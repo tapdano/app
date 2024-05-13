@@ -4,14 +4,13 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
+          <ion-back-button default-href="/my-wallets" color="primary"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ walletName }}</ion-title>
       </ion-toolbar>
     </ion-header>
-
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>Settings</h1>
         <div id="myWalletBox">
           <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'"
             :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
@@ -27,25 +26,18 @@
         </div>
       </div>
     </ion-content>
-
-    <NFCModal :is-open="showModal" @cancel="handleModalCancel" @dismiss="handleModalDismiss"></NFCModal>
-
     <WalletTabBar />
-
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonTextarea } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton, IonTextarea } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
-import { accessNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
 import { getCurrentWallet } from '@/utils/StorageUtils';
-import { entropyToMnemonic, decryptEntropy, validateMnemonic, createWallet } from '@/utils/CryptoUtils';
 import WalletTabBar from '../../components/WalletTabBar.vue';
-import NFCModal from '@/components/NFCModal.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -56,17 +48,7 @@ const walletName = ref('');
 const walletMnemonic = ref('');
 const walletReceiveAddress = ref('');
 const walletStakingAddress = ref('');
-const showModal = ref(false);
 const isMnemonicVisible = ref(false);
-
-const handleModalCancel = () => {
-  showModal.value = false;
-  cancelNFCTagReading();
-};
-
-const handleModalDismiss = () => {
-  showModal.value = false;
-};
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/settings') {
@@ -86,24 +68,9 @@ watch(() => route.path, async (newPath) => {
 const getRecoveryPhrase = async () => {
   try {
     const currentWallet = await getCurrentWallet();
-    showModal.value = true;
-    const encryptedEntropy = await accessNFCTag() as string;
-    const entropy = await decryptEntropy(encryptedEntropy, currentWallet.encriptionKey, currentWallet.iv);
-    showModal.value = false;
-    const mnemonic = entropyToMnemonic(entropy);
-    if (!validateMnemonic(mnemonic)) {
-      alert('Entropy invalid.');
-      return;
-    }
-    const cryptoWallet = await createWallet(mnemonic);
-    if (cryptoWallet.baseAddr != currentWallet.baseAddr) {
-      alert('Wrong Wallet.');
-      return;
-    }
-    walletMnemonic.value = cryptoWallet.mnemonic;
+    walletMnemonic.value = currentWallet.mnemonic;
     isMnemonicVisible.value = true;
   } catch (error) {
-    showModal.value = false;
     console.error(error);
     alert(error);
   }
@@ -125,14 +92,6 @@ const deleteWallet = async () => {
 </script>
 
 <style scoped>
-#container {
-  margin: 20px;
-}
-
-h1 {
-  text-align: center;
-}
-
 ion-button[color="danger"] {
   --background: #f1453d;
 }

@@ -8,7 +8,7 @@
       "src": "logo.png",
       "type": "image/png",
       "sizes": "238x238",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "background_color": "#000000",

@@ -5,22 +5,21 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
         </ion-buttons>
-        <ion-title>My Wallets</ion-title>
+        <ion-title>My Tags</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
       <div id="container">
         <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
-        <div v-else-if="wallets.length === 0" class="no-items-message">Start your journey! Create or Restore a Wallet to begin.</div>
+        <div v-else-if="tags.length === 0" class="no-items-message">No Tags here! Tap below to add your first Tag.</div>
         <div v-else>
           <ion-list>
-            <ion-item v-for="(wallet, index) in wallets" :key="index" @click="selectWallet(index)">
-              {{ (wallet as any).name }}
+            <ion-item v-for="(tag, index) in tags" :key="index" @click="selectTag(index)">
+              {{ (tag as any).name }}
             </ion-item>
           </ion-list>
           <div id="buttons-box">
-            <ion-button expand="block" @click="$router.push('/new-wallet')">Create a new wallet</ion-button>
-            <ion-button expand="block" @click="$router.push('/restore-wallet')" fill="outline">Restore wallet</ion-button>
+            <ion-button expand="block" @click="$router.push('/new-tag')">Add a Tag</ion-button>
           </div>
         </div>
       </div>
@@ -39,25 +38,25 @@ storage.create();
 
 const router = useRouter();
 const route = useRoute();
-const wallets = ref([]);
+const tags = ref([]);
 const loading = ref(true);
 
 const load = async () => {
   loading.value = true;
-  const storedWallets = await storage.get('wallets') || [];
-  wallets.value = storedWallets;
+  const storedTags = await storage.get('tags') || [];
+  tags.value = storedTags;
   loading.value = false;
 };
 
 watch(() => route.path, async (newPath) => {
-  if (newPath === '/my-wallets') {
+  if (newPath === '/my-tags') {
     await load();
   }
 }, { immediate: true });
 
-const selectWallet = async (index: number) => {
-  await storage.set('currentWallet', index);
-  router.push('/wallet/main');
+const selectTag = async (index: number) => {
+  await storage.set('currentTag', index);
+  router.push('/tag/main');
 };
 </script>
 

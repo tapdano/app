@@ -2,20 +2,22 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>Welcome to<br />TapDano Wallet</h1>
-        <ion-button expand="block" @click="$router.push('/new')">Create a new wallet</ion-button>
-        <ion-button expand="block" @click="$router.push('/restore')" fill="outline">Restore wallet</ion-button>
+        <h1>Welcome to<br />TapDano</h1>
+        <ion-button expand="block" @click="$router.push('/my-wallets')">My Wallets</ion-button>
+        <ion-button expand="block" @click="$router.push('/my-tags')">My Tags</ion-button>
+        <ion-button expand="block" @click="$router.push('/settings')" fill="outline">Settings</ion-button>
       </div>
     </ion-content>
   </ion-page>
 </template>
  
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
+import { IonButtons, IonContent, IonPage, IonButton } from '@ionic/vue';
 </script>
 
 <style scoped>
 #container {
+  height: auto;
   text-align: center;
   position: absolute;
   left: 0;
@@ -30,7 +32,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 }
 
 #container ion-button {
-  padding: 5px 20px;
+  padding: 5px 0px;
   min-height: 50px;
 }
 </style>
