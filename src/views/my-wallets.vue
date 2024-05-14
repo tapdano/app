@@ -21,8 +21,8 @@
             </ion-list>
           </div>
           <div id="buttons-box">
-            <ion-button expand="block" @click="$router.push('/new-wallet')">Create a new wallet</ion-button>
-            <ion-button expand="block" @click="$router.push('/restore-wallet')" fill="outline">Restore wallet</ion-button>
+            <ion-button expand="block" @click="$router.push('/new-wallet')">Create a new Wallet</ion-button>
+            <ion-button expand="block" @click="$router.push('/restore-wallet')" fill="outline">Restore Wallet</ion-button>
           </div>
         </div>
       </div>

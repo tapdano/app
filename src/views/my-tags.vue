@@ -16,12 +16,12 @@
           <div v-else>
             <ion-list>
               <ion-item v-for="(tag, index) in tags" :key="index" @click="selectTag(index)">
-                {{ (tag as any).info }}
+                V:{{ (tag as TagParser).TagVersion }} - PublicKey: {{ (tag as TagParser).PublicKey?.slice(0, 16).toUpperCase() }}...
               </ion-item>
             </ion-list>
           </div>
           <div id="buttons-box">
-            <ion-button expand="block" @click="addTag">Add a Tag</ion-button>
+            <ion-button expand="block" @click="addTagEvent">Add a Tag</ion-button>
           </div>
         </div>
       </div>
@@ -36,6 +36,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonButton } from '@ionic/vue';
 import { Storage } from '@ionic/storage';
 import NFCModal from '@/components/NFCModal.vue';
+import { TagParser } from '@/utils/TagParser';
+import { addTag } from '@/utils/StorageUtils';
 
 const storage = new Storage();
 storage.create();
@@ -53,19 +55,24 @@ const load = async () => {
   loading.value = false;
 };
 
-const addTag = async () => {
+const addTagEvent = async () => {
   try {
     if (!nfcModal.value) return;
-    let tagInfo = await nfcModal.value.ExecuteCommand("00A00000");
-    if (tagInfo.substring(0, 4) != '5444') {
+
+    const cmd = "00A00000";
+    const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
+
+    if (tag.TagID != '5444') {
       alert('Unknow Tag. Please use a TapDano Tag.');
+      return;
     }
-    if (tagInfo.substring(8, 10) == '00') {
-      router.push('/new-tag');
+
+    if (!tag.Burned) {
+      router.push('/choose-tag');
     } else {
-      alert('Tag alredy burn');
+      await addTag(tag);
+      router.replace('/tag/main');
     }
-    //tagInfo = await nfcModal.value.ExecuteCommand("00A200000165");
   } catch (error) {
     if (error) {
       console.error(error);

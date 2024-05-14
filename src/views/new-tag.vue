@@ -13,25 +13,18 @@
     <ion-content :fullscreen="true">
       <div id="container">
         <form @submit.prevent="handleSubmit">
-          <ion-item>
-            <ion-input v-model="walletName" label="Name" placeholder="TapWallet Name"></ion-input>
-          </ion-item>
 
           <ion-item v-if="route === 'restore'">
-            <ion-textarea v-model="walletRecoveryPhrase" label="Recovery phrase" :label-placement="'stacked'" :auto-grow="true"></ion-textarea>
+            <ion-textarea v-model="tagPrivateKey" label="Private Key" :label-placement="'stacked'" :auto-grow="true"></ion-textarea>
           </ion-item>
 
-          <div id="advanced-options" @click="toggleAdvancedOptions">
-            <span class="link-style">Advanced Options</span>
-          </div>
-          <div v-show="showAdvancedOptions">
-            <ion-item>
-              <ion-select v-model="walletType" label="Type">
-                <ion-select-option value="nfc-wallet">NFC Wallet</ion-select-option>
-                <ion-select-option value="nfc-authentication">NFC Authentication</ion-select-option>
-              </ion-select>
-            </ion-item>
-          </div>
+          <ion-item>
+            <ion-select v-model="tagType" label="Type">
+              <ion-select-option value="soulbound" v-if="route === 'new'">SoulBound</ion-select-option>
+              <ion-select-option value="onetime">One-Time Extract</ion-select-option>
+              <ion-select-option value="extractable">Extractable</ion-select-option>
+            </ion-select>
+          </ion-item>
 
           <ion-button id="submit-button" expand="block" type="submit">{{ route === 'new' ? 'Create a new Tag' : 'Restore Tag' }}</ion-button>
         </form>
@@ -42,77 +35,67 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonTextarea, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonTextarea, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
+import { ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import NFCModal from '@/components/NFCModal.vue';
+import { TagParser } from '@/utils/TagParser';
+import { addTag } from '@/utils/StorageUtils';
 
 const props = defineProps({
   route: String
 });
 
 const router = useRouter();
+const routeP = useRoute();
 const storage = new Storage();
 storage.create();
 
-const showAdvancedOptions = ref(false);
-const walletName = ref('');
-const walletRecoveryPhrase = ref('');
-const walletType = ref('nfc-wallet');
+const tagPrivateKey = ref('');
+const tagType = ref(props.route === 'new' ? 'soulbound' : 'onetime');
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
-
-const toggleAdvancedOptions = () => {
-  showAdvancedOptions.value = !showAdvancedOptions.value;
-};
 
 const handleSubmit = async () => {
   try {
     if (!nfcModal.value) return;
-
-    //if (props.route == 'restore') {
-
-    const tagInfo = await nfcModal.value.ExecuteCommand("00A10000");
-
-    if (tagInfo.length != 128) {
-      alert(tagInfo);
+    if (props.route == 'restore' && tagPrivateKey.value.length != 64) {
+      alert('The Private Key must have 64 characters.');
       return;
     }
 
-    const tags = (await storage.get('tags')) || [];
-    const newIndex = tags.length;
-    tags.push({
-      info: tagInfo
-    });
+    let cmd = '00A10000';
+    cmd += (props.route == 'new') ? '02' : '34'; //data length
+    cmd += (props.route == 'new') ? '01' : '02'; //action
+    if (tagType.value == 'soulbound')   cmd += '01';
+    if (tagType.value == 'onetime')     cmd += '02';
+    if (tagType.value == 'extractable') cmd += '03';
+    if (props.route == 'restore') cmd += tagPrivateKey.value;
 
-    await storage.set('tags', tags);
-    await storage.set('currentTag', newIndex);
+    const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
 
-    walletName.value = '';
-    walletRecoveryPhrase.value = '';
-    walletType.value = 'nfc-wallet';
-    showAdvancedOptions.value = false;    
+    if (tag.TagID != '5444') {
+      alert('Unknow Tag. Please use a TapDano Tag.');
+      return;
+    }
 
-    router.push('/tag/main');
+    await addTag(tag);
+    router.replace('/tag/main');
   } catch (error) {
     console.error(error);
     alert(error);
   }
 }
+
+watch(() => routeP.path, async (newPath) => {
+  if ((newPath === '/new-tag') || (newPath === '/restore-tag')) {
+    tagPrivateKey.value = '';
+    tagType.value = props.route === 'new' ? 'soulbound' : 'onetime';
+  }
+}, { immediate: true });
 </script>
 
 <style scoped>
-#advanced-options {
-  margin: 20px 0;
-  align-items: center;
-  font-size: 12px;
-  text-align: right;
-}
-
-.link-style {
-  text-decoration: underline;
-}
-
 #submit-button {
   margin-top: 20px;
 }

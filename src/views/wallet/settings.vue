@@ -54,7 +54,7 @@ watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/settings') {
     const currentWallet = await getCurrentWallet();
     if (currentWallet == null) {
-      router.push('/my-wallets');
+      router.replace('/my-wallets');
       return;
     }
     walletName.value = currentWallet.name;

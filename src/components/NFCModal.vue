@@ -41,10 +41,25 @@ const handleAgain = () => {
 }
 
 const ExecuteCommand = async (command: string): Promise<string> => {
+  console.log('ExecuteCommand:' + command);
   return new Promise<string>(async (resolve, reject) => {
     try {
       commandReject = reject;
       isOpen.value = true;
+
+      const hostname = new URL(location.href).hostname;
+      const isLocal = (hostname == 'localhost');
+
+      if (isLocal) {
+        isOpen.value = false;
+        let result = '';
+        if (command.startsWith('00A00000')) result = '5444010000';
+        if (command.startsWith('00A10000')) result = '544401000101005147A101F631472917695143BCAF5CE36AB325EC82C46E5AE08806C128F955E9';
+        if (command.startsWith('00A20000')) result = 'c759157198d5608802224b7b3bbc6ad0673f627282806852bbc1f02d50364dac193bf1abec58edcebca09b911a08365181e9ff4c2959597825d97499c63e4902';
+        if (command.startsWith('00A30000')) result = '5444010000';
+        resolve(result);
+        return;
+      }
 
       globalNdefReader = new window.NDEFReader();
       let isFirstRead = true;

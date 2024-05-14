@@ -13,18 +13,25 @@
       <div id="container">
         <div>
           <h2>Tag Info:</h2>
-          <p>{{ tagInfo }}</p>
+          <div class="tag-info">
+            <div v-for="(value, key) in tagInfo" :key="key" class="tag-info-item">
+              <span class="tag-key">{{ key }}:</span> 
+              <span class="tag-value">{{ value }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </ion-content>
+    <TagTabBar />
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
 import { getCurrentTag } from '@/utils/StorageUtils';
+import TagTabBar from '@/components/TagTabBar.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -37,10 +44,34 @@ watch(() => route.path, async (newPath) => {
       router.push('/my-tags');
       return;
     }
-    tagInfo.value = currentTag.info;
+    console.log(currentTag);
+    tagInfo.value = currentTag;
   }
 }, { immediate: true });
 </script>
 
 <style scoped>
+#container {
+  padding: 16px;
+}
+
+.tag-info {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.tag-info-item {
+  margin-bottom: 8px;
+}
+
+.tag-key {
+  font-weight: bold;
+  color: #333;
+}
+
+.tag-value {
+  color: #666;
+}
 </style>

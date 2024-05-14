@@ -45,6 +45,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/my-tags.vue')
   },
   {
+    path: '/choose-tag',
+    component: () => import ('../views/choose-tag.vue')
+  },
+  {
     path: '/new-tag',
     component: () => import ('../views/new-tag.vue'),
     props: { route: 'new' }
@@ -57,6 +61,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/tag/main',
     component: () => import ('../views/tag/main.vue')
+  },
+  {
+    path: '/tag/settings',
+    component: () => import ('../views/tag/settings.vue')
   },
   {
     path: '/settings',
