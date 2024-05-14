@@ -128,6 +128,7 @@ onMounted(checkCache);
   padding: 2px;
   background-color: #333;
   border-radius: 5px;
+  margin-bottom: 10px;
 }
 
 .chart-container {

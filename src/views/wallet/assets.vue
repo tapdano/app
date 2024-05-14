@@ -84,4 +84,8 @@ watch(() => route.path, async (newPath) => {
 </script>
 
 <style scoped>
+ion-button {
+  display: block;
+  height: 50px;
+}
 </style>

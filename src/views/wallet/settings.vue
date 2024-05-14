@@ -11,19 +11,17 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <div id="container">
-        <div id="myWalletBox">
-          <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'"
-            :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
-          <ion-textarea v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'"
-            :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress, true)" :readonly="true"></ion-textarea>
-        </div>
-        <ion-textarea v-show="isMnemonicVisible" v-model="walletMnemonic" label="Recovery phrase" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletMnemonic, true)" :readonly="true"></ion-textarea>
-        <div style="text-align: center;margin-top: 20px;">
-          <ion-button @click="getRecoveryPhrase">Get Recovery phrase</ion-button>
-        </div>
-        <div style="text-align: center;">
-          <ion-button color="danger" @click="deleteWallet">Delete Wallet</ion-button>
-        </div>
+        <ion-item>
+          <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress)" :readonly="true"></ion-textarea>
+        </ion-item>
+        <ion-item>
+          <ion-textarea v-model="walletStakingAddress" label="Staking Address" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletStakingAddress)" :readonly="true"></ion-textarea>
+        </ion-item>
+        <ion-item v-if="isMnemonicVisible">
+          <ion-textarea v-model="walletMnemonic" label="Recovery phrase" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(walletMnemonic)" :readonly="true"></ion-textarea>
+        </ion-item>
+        <ion-button @click="getRecoveryPhrase">Get Recovery phrase</ion-button>
+        <ion-button color="danger" @click="deleteWallet">Delete Wallet</ion-button>
       </div>
     </ion-content>
     <WalletTabBar />
@@ -31,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton, IonTextarea } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton, IonTextarea, IonItem } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
@@ -94,5 +92,11 @@ const deleteWallet = async () => {
 <style scoped>
 ion-button[color="danger"] {
   --background: #f1453d;
+}
+
+ion-button {
+  display: block;
+  margin-top: 20px;
+  height: 60px;
 }
 </style>

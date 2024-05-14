@@ -21,7 +21,6 @@
           <ion-item>
             <ion-select v-model="tagType" label="Type">
               <ion-select-option value="soulbound" v-if="route === 'new'">SoulBound</ion-select-option>
-              <ion-select-option value="onetime">One-Time Extract</ion-select-option>
               <ion-select-option value="extractable">Extractable</ion-select-option>
             </ion-select>
           </ion-item>
@@ -53,7 +52,7 @@ const storage = new Storage();
 storage.create();
 
 const tagPrivateKey = ref('');
-const tagType = ref(props.route === 'new' ? 'soulbound' : 'onetime');
+const tagType = ref(props.route === 'new' ? 'soulbound' : 'extractable');
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 const handleSubmit = async () => {
@@ -68,8 +67,7 @@ const handleSubmit = async () => {
     cmd += (props.route == 'new') ? '02' : '34'; //data length
     cmd += (props.route == 'new') ? '01' : '02'; //action
     if (tagType.value == 'soulbound')   cmd += '01';
-    if (tagType.value == 'onetime')     cmd += '02';
-    if (tagType.value == 'extractable') cmd += '03';
+    if (tagType.value == 'extractable') cmd += '02';
     if (props.route == 'restore') cmd += tagPrivateKey.value;
 
     const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
@@ -82,15 +80,17 @@ const handleSubmit = async () => {
     await addTag(tag);
     router.replace('/tag/main');
   } catch (error) {
-    console.error(error);
-    alert(error);
+    if (error) {
+      console.error(error);
+      alert(error);
+    }
   }
 }
 
 watch(() => routeP.path, async (newPath) => {
   if ((newPath === '/new-tag') || (newPath === '/restore-tag')) {
     tagPrivateKey.value = '';
-    tagType.value = props.route === 'new' ? 'soulbound' : 'onetime';
+    tagType.value = props.route === 'new' ? 'soulbound' : 'extractable';
   }
 }, { immediate: true });
 </script>

@@ -11,6 +11,7 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <div id="container">
+        <ion-button color="danger" @click="lockTag">Lock Tag</ion-button>
         <ion-button color="danger" @click="deleteTag">Delete Tag</ion-button>
         <ion-button color="danger" @click="formatTag">Format Tag</ion-button>
       </div>
@@ -25,7 +26,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPag
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
-import { getCurrentTag, deleteTagByPublicKey } from '@/utils/StorageUtils';
+import { getCurrentTag, deleteTagByPublicKey, addTag } from '@/utils/StorageUtils';
 import TagTabBar from '../../components/TagTabBar.vue';
 import NFCModal from '@/components/NFCModal.vue';
 import { TagParser } from '@/utils/TagParser';
@@ -47,6 +48,17 @@ watch(() => route.path, async (newPath) => {
   }
 }, { immediate: true });
 
+const lockTag = async () => {
+  if (!nfcModal.value) return;
+  const confirmation = confirm('Are you sure you want to LOCK this Tag?');
+  if (confirmation) {
+    const cmd = "00A40000";
+    const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
+    await addTag(tag);
+    router.replace('/tag/main');
+  }
+}
+
 const deleteTag = async () => {
   const confirmation = confirm('Are you sure you want to DELETE this Tag?');
   if (confirmation) {
@@ -62,9 +74,6 @@ const formatTag = async () => {
   if (confirmation) {
     const cmd = "00A30000";
     const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
-
-    console.log(tag);
-
     const currentTag = await getCurrentTag();
     await deleteTagByPublicKey(currentTag.PublicKey);
     router.replace('/my-tags');
@@ -75,5 +84,11 @@ const formatTag = async () => {
 <style scoped>
 ion-button[color="danger"] {
   --background: #f1453d;
+}
+
+ion-button {
+  display: block;
+  margin-bottom: 20px;
+  height: 60px;
 }
 </style>

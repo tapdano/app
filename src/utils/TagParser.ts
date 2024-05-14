@@ -1,11 +1,11 @@
-type TagType = "soulbound" | "onetime" | "extractable";
+type TagType = "soulbound" | "extractable";
 
 export class TagParser {
   TagID: string;
   TagVersion: string;
   Burned: boolean;
   Type?: TagType;
-  Extracted?: boolean;
+  ExtractLocked?: boolean;
   PublicKey?: string;
   PrivateKey?: string;
 
@@ -15,7 +15,7 @@ export class TagParser {
     this.Burned = input.slice(8, 10) === "01";
     if (this.Burned) {
       this.Type = this.parseType(input.slice(10, 12));
-      this.Extracted = input.slice(12, 14) === "01";
+      this.ExtractLocked = input.slice(12, 14) === "01";
       this.PublicKey = input.slice(14, 78);
       this.PrivateKey = this.extractPrivateKey(input.slice(78));
     }
@@ -26,8 +26,6 @@ export class TagParser {
       case "01":
         return "soulbound";
       case "02":
-        return "onetime";
-      case "03":
         return "extractable";
       default:
         return undefined;

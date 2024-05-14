@@ -12,28 +12,22 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
-        <h1>ADA (${{ (cardanoUsdPrice).toFixed(2) }} USD)</h1>
         <PriceChart />
-        <div>
-          <h2>Wallet Balance:</h2>
-          <div class="walletBalance">
-            <p>{{ walletBalance }} ADA</p>
-            <span>=</span>
-            <p class="usd">${{ (walletBalance * cardanoUsdPrice).toFixed(2) }} USD</p>
-          </div>
-        </div>
-        <div id="myWalletBox">
+        <ion-item>
+          <h4>Balance: {{ walletBalance.toFixed(2) }} ADA (${{ (walletBalance * cardanoUsdPrice).toFixed(2) }} USD)</h4>
+        </ion-item>
+        <ion-item>
           <ion-textarea v-model="walletReceiveAddress" label="Receive Address" :label-placement="'stacked'"
-            :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress, true)" :readonly="true"></ion-textarea>
-        </div>
-        <div>
+            :auto-grow="true" @click="() => copyToClipboard(walletReceiveAddress)" :readonly="true"></ion-textarea>
+        </ion-item>
+        <div id="boxSend">
           <h2>Send ADA</h2>
           <ion-item>
             <ion-input v-model="destinationAddress" type="text" label="Destination Address"
               :label-placement="'stacked'"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input v-model="adaAmount" type="text" label="ADA Amount" :label-placement="'stacked'"></ion-input>
+            <ion-input v-model="adaAmount" type="number" label="ADA Amount" :label-placement="'stacked'"></ion-input>
           </ion-item>
           <ion-button @click="sendTransaction">Send</ion-button>
         </div>
@@ -163,21 +157,25 @@ watch(adaAmount, (newValue) => {
 </script>
 
 <style scoped>
-#myWalletBox {
-  margin: 20px 0;
+#boxSend {
+  background-color: #1E1E1E;
+  padding: 20px;
+  border-radius: 5px;
+  border: 3px dashed #ff696169;
+  margin-top: 20px;
 }
 
-.walletBalance {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+#boxSend h2 {
+  margin: 0 0 20px;
+  text-align: center;
 }
 
-.walletBalance p{
-  margin: 0;
+#boxSend ion-item {
+  background-color: #333;
 }
 
-.walletBalance .usd {
-  color: #666;
+#boxSend ion-button {
+  display: block;
+  height: 50px;
 }
 </style>
