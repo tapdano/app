@@ -6,7 +6,7 @@ export function hexStringToArrayBuffer(hexString: string) {
   return byteArray.buffer;
 }
 
-export function dataViewToHexString(dataView: DataView) {
+export function dataViewToHexString(dataView: DataView): string {
   let hexString = '';
   for (let i = 0; i < dataView.byteLength; i++) {
     const byte = dataView.getUint8(i);

@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button default-href="/my-wallets" color="primary"></ion-back-button>
+          <ion-back-button color="primary" default-href="/my-wallets"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ walletName }}</ion-title>
       </ion-toolbar>

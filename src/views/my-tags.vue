@@ -16,7 +16,7 @@
           <div v-else>
             <ion-list>
               <ion-item v-for="(tag, index) in tags" :key="index" @click="selectTag(index)">
-                {{ (tag as any).name }}
+                {{ (tag as any).info }}
               </ion-item>
             </ion-list>
           </div>
@@ -56,20 +56,21 @@ const load = async () => {
 const addTag = async () => {
   try {
     if (!nfcModal.value) return;
-
     let tagInfo = await nfcModal.value.ExecuteCommand("00A00000");
-    alert(tagInfo);
-
-    tagInfo = await nfcModal.value.ExecuteCommand("00A10000");
-    alert(tagInfo);
-
-    tagInfo = await nfcModal.value.ExecuteCommand("00A200000165");
-    alert(tagInfo);
-
-    //router.push('/new-tag');
+    if (tagInfo.substring(0, 4) != '5444') {
+      alert('Unknow Tag. Please use a TapDano Tag.');
+    }
+    if (tagInfo.substring(8, 10) == '00') {
+      router.push('/new-tag');
+    } else {
+      alert('Tag alredy burn');
+    }
+    //tagInfo = await nfcModal.value.ExecuteCommand("00A200000165");
   } catch (error) {
-    console.error(error);
-    alert(error);
+    if (error) {
+      console.error(error);
+      alert(error);
+    }
   }
 };
 

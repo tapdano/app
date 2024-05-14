@@ -4,13 +4,12 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary"></ion-back-button>
+          <ion-back-button color="primary" default-href="/my-tags"></ion-back-button>
         </ion-buttons>
         <ion-title v-if="route === 'new'">New Tag</ion-title>
         <ion-title v-if="route === 'restore'">Restore Tag</ion-title>
       </ion-toolbar>
     </ion-header>
-
     <ion-content :fullscreen="true">
       <div id="container">
         <form @submit.prevent="handleSubmit">
@@ -34,10 +33,11 @@
             </ion-item>
           </div>
 
-          <ion-button id="submit-button" expand="block" type="submit">{{ route === 'new' ? 'Create a new wallet' : 'Restore wallet' }}</ion-button>
+          <ion-button id="submit-button" expand="block" type="submit">{{ route === 'new' ? 'Create a new Tag' : 'Restore Tag' }}</ion-button>
         </form>
       </div>
     </ion-content>
+    <NFCModal ref="nfcModal"></NFCModal>
   </ion-page>
 </template>
 
@@ -46,7 +46,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPag
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
-import { createWallet, validateMnemonic } from '@/utils/CryptoUtils';
+import NFCModal from '@/components/NFCModal.vue';
 
 const props = defineProps({
   route: String
@@ -60,57 +60,48 @@ const showAdvancedOptions = ref(false);
 const walletName = ref('');
 const walletRecoveryPhrase = ref('');
 const walletType = ref('nfc-wallet');
+const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 const toggleAdvancedOptions = () => {
   showAdvancedOptions.value = !showAdvancedOptions.value;
 };
 
 const handleSubmit = async () => {
-  let mnemonic: string | null = null;
+  try {
+    if (!nfcModal.value) return;
 
-  if (props.route == 'restore') {
-    mnemonic = walletRecoveryPhrase.value;
-    if (!validateMnemonic(mnemonic)) {
-      alert('Recovery phrase invalid.');
+    //if (props.route == 'restore') {
+
+    const tagInfo = await nfcModal.value.ExecuteCommand("00A10000");
+
+    if (tagInfo.length != 128) {
+      alert(tagInfo);
       return;
     }
-  }
 
-  const cryptoWallet = await createWallet(mnemonic);
-  
-  try {
-    const wallets = (await storage.get('wallets')) || [];
-    const newIndex = wallets.length;
-    const name = walletName.value.trim() || `TapWallet #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-    const type = walletType.value || 'nfc-wallet';
-    wallets.push({
-      name,
-      type,
-      baseAddr: cryptoWallet.baseAddr,
-      rewardAddr: cryptoWallet.rewardAddr
+    const tags = (await storage.get('tags')) || [];
+    const newIndex = tags.length;
+    tags.push({
+      info: tagInfo
     });
 
-    await storage.set('wallets', wallets);
-    await storage.set('currentWallet', newIndex);
+    await storage.set('tags', tags);
+    await storage.set('currentTag', newIndex);
 
     walletName.value = '';
     walletRecoveryPhrase.value = '';
     walletType.value = 'nfc-wallet';
     showAdvancedOptions.value = false;    
 
-    router.push('/wallet/main');
+    router.push('/tag/main');
   } catch (error) {
     console.error(error);
     alert(error);
   }
-};
+}
 </script>
 
 <style scoped>
-#container {
-  margin: 20px;
-}
-
 #advanced-options {
   margin: 20px 0;
   align-items: center;

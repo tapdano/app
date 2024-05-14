@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary"></ion-back-button>
+          <ion-back-button color="primary" default-href="/my-wallets"></ion-back-button>
         </ion-buttons>
         <ion-title v-if="route === 'new'">New Wallet</ion-title>
         <ion-title v-if="route === 'restore'">Restore Wallet</ion-title>

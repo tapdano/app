@@ -21,14 +21,16 @@ import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonCo
 import { dataViewToHexString, hexStringToArrayBuffer } from '@/utils/StringUtils';
 
 const isOpen = ref(false);
-let globalNdefReader: NDEFReader | null;
-let globalNdefReadHandler: any;
-let commandReject: ((reason?: any) => void) | null = null;
+let globalNdefReader: NDEFReader | null = null;
+let globalNdefReadHandler: ((event: NDEFReadingEvent) => Promise<void>) | null = null;
+let commandReject: ((reason?: Error) => void) | null = null;
 
 const handleCancel = () => {
   cancelNFCTagReading();
   isOpen.value = false;
-  commandReject && commandReject(new Error('Operation cancelled by user'));;
+  if (commandReject) {
+    commandReject();
+  }
 }
 
 const handleAgain = () => {
@@ -38,8 +40,8 @@ const handleAgain = () => {
   }, 500);
 }
 
-const ExecuteCommand = async (command: string): Promise<string | null> => {
-  return new Promise(async (resolve, reject) => {
+const ExecuteCommand = async (command: string): Promise<string> => {
+  return new Promise<string>(async (resolve, reject) => {
     try {
       commandReject = reject;
       isOpen.value = true;
@@ -47,7 +49,7 @@ const ExecuteCommand = async (command: string): Promise<string | null> => {
       globalNdefReader = new window.NDEFReader();
       let isFirstRead = true;
 
-      globalNdefReadHandler = async (event: any) => {
+      globalNdefReadHandler = async (event: NDEFReadingEvent) => {
         if (isFirstRead && globalNdefReader) {
           await globalNdefReader.write({
             records: [{ recordType: "unknown", data: hexStringToArrayBuffer(command) }],
@@ -57,14 +59,14 @@ const ExecuteCommand = async (command: string): Promise<string | null> => {
           return;
         }
 
-        let readContent: string | null = null;
+        let readContent: string = '';
         if (event.message.records.length > 0) {
           const record = event.message.records[0];
           if (record.recordType === "text") {
             const textDecoder = new TextDecoder(record.encoding);
             readContent = textDecoder.decode(record.data);
           } else if (record.recordType === "unknown") {
-            readContent = dataViewToHexString(record.data);
+            readContent = dataViewToHexString(record.data as DataView);
           }
         }
 
@@ -73,21 +75,21 @@ const ExecuteCommand = async (command: string): Promise<string | null> => {
         resolve(readContent);
       };
 
-      globalNdefReader.addEventListener("reading", globalNdefReadHandler);
+      globalNdefReader.addEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
       await globalNdefReader.scan();
     } catch (error) {
-      reject(error);
+      reject(error as Error);
       isOpen.value = false;
     }
   });
-};
+}
 
 const cancelNFCTagReading = () => {
-  if (globalNdefReader) {
-    globalNdefReader.removeEventListener("reading", globalNdefReadHandler);
-    globalNdefReader = null;
+  if (globalNdefReader && globalNdefReadHandler) {
+    globalNdefReader.removeEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
     globalNdefReadHandler = null;
   }
+  globalNdefReader = null;
 }
 
 defineExpose({ ExecuteCommand });

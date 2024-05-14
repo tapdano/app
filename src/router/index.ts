@@ -55,6 +55,10 @@ const routes: Array<RouteRecordRaw> = [
     props: { route: 'restore' }
   },
   {
+    path: '/tag/main',
+    component: () => import ('../views/tag/main.vue')
+  },
+  {
     path: '/settings',
     component: () => import ('../views/settings.vue')
   }
