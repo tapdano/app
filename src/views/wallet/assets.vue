@@ -9,17 +9,17 @@
         <ion-title>{{ walletName }}</ion-title>
       </ion-toolbar>
     </ion-header>
-
     <ion-content :fullscreen="true">
-      <div id="container">
-        <div style="text-align: center;margin-top: 20px;">
-          <ion-button @click="mintAsset">Mint Asset</ion-button>
+      <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
+      <div v-else>
+        <div id="container">
+          <div style="text-align: center;margin-top: 20px;">
+            <ion-button @click="mintAsset">Mint Asset</ion-button>
+          </div>
         </div>
       </div>
     </ion-content>
-
     <WalletTabBar />
-
   </ion-page>
 </template>
 
@@ -29,13 +29,14 @@ import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
 import WalletTabBar from '../../components/WalletTabBar.vue';
 import { getCurrentWallet } from '@/utils/StorageUtils';
-import { loadWallet } from '@/utils/CryptoUtils';
+import { loadWallet, fetchWalletAssets, fetchAssetMetadata } from '@/utils/CryptoUtils';
 import { Transaction, ForgeScript } from '@meshsdk/core';
 import type { Mint, AssetMetadata } from '@meshsdk/core';
 
 const router = useRouter();
 const route = useRoute();
 const walletName = ref('');
+const loading = ref(true);
 
 const mintAsset = async () => {
   try {
@@ -72,13 +73,20 @@ const mintAsset = async () => {
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/assets') {
+    loading.value = true;
     const currentWallet = await getCurrentWallet();
     if (currentWallet == null) {
       router.push('/my-wallets');
       return;
     }
     walletName.value = currentWallet.name;
-    //load here
+    const assets = await fetchWalletAssets(currentWallet.baseAddr);
+    console.log(assets);
+    for (let i = 0; i < assets.length; i++) {
+      const asset = await fetchAssetMetadata(assets[i].unit);
+      console.log(asset);
+    }
+    loading.value = false;
   }
 }, { immediate: true });
 </script>

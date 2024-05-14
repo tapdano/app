@@ -36,6 +36,14 @@ export function fetchAccountInfo(address: string) {
   return blockchainProvider.fetchAccountInfo(address);
 }
 
+export function fetchWalletAssets(address: string) {
+  return blockchainProvider.fetchWalletAssets(address);
+}
+
+export function fetchAssetMetadata(asset: string) {
+  return blockchainProvider.fetchAssetMetadata(asset);
+}
+
 export async function fetchTransactions(address: string) {
   const response = await fetch(`${BLOCKFROST_API_URL}/addresses/${address}/transactions`, {
     headers: {

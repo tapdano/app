@@ -67,6 +67,36 @@ export class BlockfrostProvider implements IFetcher, IListener, ISubmitter {
     }
   }
 
+  async fetchWalletAssets(address: string): Promise<{ unit: string, quantity: string }[]> {
+    const rewardAddress = address.startsWith('addr')
+      ? resolveRewardAddress(address)
+      : address;
+
+    const url = `accounts/${rewardAddress}/addresses/assets`;
+
+    const paginateAssets = async (
+      page = 1,
+      assets: { unit: string; quantity: string }[] = []
+    ): Promise<{ unit: string, quantity: string }[]> => {
+      const { data, status } = await this._axiosInstance.get(
+        `${url}?page=${page}`
+      );
+
+      if (status === 200)
+        return data.length > 0
+          ? paginateAssets(page + 1, [...assets, ...data])
+          : assets;
+
+      throw parseHttpError(data);
+    };
+
+    try {
+      return await paginateAssets();
+    } catch (error) {
+      throw parseHttpError(error);
+    }
+  };
+
   private resolveScriptRef = async (
     scriptHash
   ): Promise<string | undefined> => {
