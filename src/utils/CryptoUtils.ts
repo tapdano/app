@@ -1,6 +1,5 @@
 import { AppWallet, BlockfrostProvider } from '@meshsdk/core';
 import * as bip39 from 'bip39';
-import { generateKey, exportKey, importKey, encryptText, decryptText } from './AESUtils';
 
 const BLOCKFROST_API_KEY = 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
 const BLOCKFROST_API_URL = 'https://cardano-mainnet.blockfrost.io/api/v0';

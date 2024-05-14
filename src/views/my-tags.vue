@@ -21,11 +21,12 @@
             </ion-list>
           </div>
           <div id="buttons-box">
-            <ion-button expand="block" @click="$router.push('/new-tag')">Add a Tag</ion-button>
+            <ion-button expand="block" @click="addTag">Add a Tag</ion-button>
           </div>
         </div>
       </div>
     </ion-content>
+    <NFCModal ref="nfcModal"></NFCModal>
   </ion-page>
 </template>
 
@@ -34,6 +35,7 @@ import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonButton } from '@ionic/vue';
 import { Storage } from '@ionic/storage';
+import NFCModal from '@/components/NFCModal.vue';
 
 const storage = new Storage();
 storage.create();
@@ -42,12 +44,33 @@ const router = useRouter();
 const route = useRoute();
 const tags = ref([]);
 const loading = ref(true);
+const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 const load = async () => {
   loading.value = true;
   const storedTags = await storage.get('tags') || [];
   tags.value = storedTags;
   loading.value = false;
+};
+
+const addTag = async () => {
+  try {
+    if (!nfcModal.value) return;
+
+    let tagInfo = await nfcModal.value.ExecuteCommand("00A00000");
+    alert(tagInfo);
+
+    tagInfo = await nfcModal.value.ExecuteCommand("00A10000");
+    alert(tagInfo);
+
+    tagInfo = await nfcModal.value.ExecuteCommand("00A200000165");
+    alert(tagInfo);
+
+    //router.push('/new-tag');
+  } catch (error) {
+    console.error(error);
+    alert(error);
+  }
 };
 
 watch(() => route.path, async (newPath) => {

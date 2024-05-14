@@ -38,9 +38,6 @@
         </form>
       </div>
     </ion-content>
-
-    <NFCModal :is-open="showModal" @cancel="handleModalCancel" @dismiss="handleModalDismiss"></NFCModal>
-
   </ion-page>
 </template>
 
@@ -50,8 +47,6 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { createWallet, validateMnemonic } from '@/utils/CryptoUtils';
-import { accessNFCTag, cancelNFCTagReading } from '@/utils/NFCUtils';
-import NFCModal from '@/components/NFCModal.vue';
 
 const props = defineProps({
   route: String
@@ -65,16 +60,6 @@ const showAdvancedOptions = ref(false);
 const walletName = ref('');
 const walletRecoveryPhrase = ref('');
 const walletType = ref('nfc-wallet');
-const showModal = ref(false);
-
-const handleModalCancel = () => {
-  showModal.value = false;
-  cancelNFCTagReading();
-};
-
-const handleModalDismiss = () => {
-  showModal.value = false;
-};
 
 const toggleAdvancedOptions = () => {
   showAdvancedOptions.value = !showAdvancedOptions.value;
@@ -94,10 +79,6 @@ const handleSubmit = async () => {
   const cryptoWallet = await createWallet(mnemonic);
   
   try {
-    showModal.value = true;
-    //await accessNFCTag(cryptoWallet.encryptedEntropy); 
-    showModal.value = false;
-
     const wallets = (await storage.get('wallets')) || [];
     const newIndex = wallets.length;
     const name = walletName.value.trim() || `TapWallet #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
@@ -106,9 +87,7 @@ const handleSubmit = async () => {
       name,
       type,
       baseAddr: cryptoWallet.baseAddr,
-      rewardAddr: cryptoWallet.rewardAddr,
-      //encriptionKey: cryptoWallet.encriptionKey,
-      //iv: cryptoWallet.iv
+      rewardAddr: cryptoWallet.rewardAddr
     });
 
     await storage.set('wallets', wallets);
@@ -121,7 +100,6 @@ const handleSubmit = async () => {
 
     router.push('/wallet/main');
   } catch (error) {
-    showModal.value = false;
     console.error(error);
     alert(error);
   }
