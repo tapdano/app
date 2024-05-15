@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dynamic-v17';
+const CACHE_NAME = 'dynamic-v18';
 const CACHE_FILES = [];
 
 self.addEventListener('message', (event) => {
