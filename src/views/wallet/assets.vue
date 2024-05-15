@@ -99,17 +99,22 @@ watch(() => route.path, async (newPath) => {
       return;
     }
     walletName.value = currentWallet.name;
-    const walletAssets = await fetchWalletAssets(currentWallet.baseAddr);
-    const assetPromises = walletAssets.map(async (asset) => {
-      const metadata = await fetchAssetMetadata(asset.unit);
-      return {
-        ...asset,
-        ...metadata
-      };
-    });
-    const wAssets = await Promise.all(assetPromises);
-    assets.value = wAssets;
-    console.log(wAssets);
+    try {
+      const walletAssets = await fetchWalletAssets(currentWallet.baseAddr);
+      const wAssets = [];
+      for (const asset of walletAssets) {
+        try {
+          const metadata = await fetchAssetMetadata(asset.unit);
+          wAssets.push({
+            ...asset,
+            ...metadata
+          });
+        } catch (error) {
+        }
+      }
+      assets.value = wAssets;
+    } catch (error) {
+    }
     loading.value = false;
   }
 }, { immediate: true });
