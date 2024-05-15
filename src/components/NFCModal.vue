@@ -12,7 +12,9 @@
       <ion-img src="/logo.png" class="logo"></ion-img>
       <p class="txt">Approximate your TapDano Tag</p>
       <div class="progress-circle" :class="{'progress-50': progress === 1, 'progress-100': progress === 2}">
-        <span>{{ progress }}/2</span>
+        <div class="content">
+          <span>{{ progress }}/2</span>
+        </div>
       </div>
     </ion-content>
   </ion-modal>
@@ -54,7 +56,7 @@ const ExecuteCommand = async (command: string): Promise<string> => {
       const isLocal = (hostname == 'localhost');
 
       if (isLocal) {
-        isOpen.value = false;
+        //isOpen.value = false;
         let result = '';
         if (command.startsWith('00A00000')) result = '5444010000';
         if (command.startsWith('00A10000')) result = '544401000101015147A101F631472917695143BCAF5CE36AB325EC82C46E5AE08806C128F955E9';
@@ -140,6 +142,11 @@ defineExpose({ ExecuteCommand });
   justify-content: center;
   align-items: center;
   font-size: 1.5em;
+  transform: rotate(45deg);
+}
+
+.progress-circle .content {
+  transform: rotate(-45deg);
 }
 
 .progress-circle.progress-50 {
