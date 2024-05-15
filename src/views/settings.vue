@@ -8,13 +8,18 @@
         <ion-title>Settings</ion-title>
       </ion-toolbar>
     </ion-header>
+
     <ion-content :fullscreen="true">
       <div id="container">
-        <ion-label style="margin-right: 20px;">Dark Mode</ion-label>
-        <ion-toggle @ionChange="toggleDarkMode" :checked="isDarkMode" :disabled="true"></ion-toggle>
-      </div>
-      <div id="cache-info" style="text-align: center; margin-top: 20px;" v-if="cacheName">
-        <ion-label>Version Build: {{ cacheName }}</ion-label>
+        <ion-item>
+          <ion-toggle @ionChange="toggleDarkMode" :checked="isDarkMode" :disabled="true">Dark Mode</ion-toggle>
+        </ion-item>
+        <ion-item>
+          <ion-label>Cache Name: {{ cacheName }}</ion-label>
+        </ion-item>
+        <div id="update-container">
+          <ion-button @click="checkForUpdate" expand="block">Check for Updates</ion-button>
+        </div>
       </div>
     </ion-content>
   </ion-page>
@@ -22,7 +27,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem } from '@ionic/vue';
 
 const isDarkMode = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 const cacheName = ref<string | null>(null);
@@ -51,6 +56,22 @@ const getCacheName = async (): Promise<string> => {
   }
 };
 
+const checkForUpdate = () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then((registration) => {
+      if (registration) {
+        registration.update().then(() => {
+          console.log('Service Worker checked for updates.');
+        }).catch((error) => {
+          console.error('Error checking for Service Worker updates:', error);
+        });
+      } else {
+        console.error('No Service Worker registration found.');
+      }
+    });
+  }
+};
+
 onMounted(async () => {
   toggleDarkMode();
   
@@ -67,7 +88,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-#container {
+#update-container {
   text-align: center;
+  margin-top: 20px;
 }
 </style>
