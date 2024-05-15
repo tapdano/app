@@ -71,8 +71,8 @@ function notifyUpdate() {
   updateDiv.style.textAlign = 'center';
   updateDiv.style.padding = '1em';
   updateDiv.innerHTML = `
-    <p>Uma nova atualização está disponível. Deseja atualizar agora?</p>
-    <button id="refresh" style="margin: 0 1em; padding: 0.5em 1em; background-color: #007bff; color: #fff; border: none; border-radius: 4px;">Atualizar</button>
+    <p>A new update is available. Do you want to update now?</p>
+    <button id="refresh" style="margin: 0 1em; padding: 1em 2em; background-color: #007bff; color: #fff; border: none; border-radius: 4px;">Update</button>
   `;
   document.body.appendChild(updateDiv);
 
