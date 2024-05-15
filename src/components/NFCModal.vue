@@ -11,6 +11,9 @@
     <ion-content class="ion-padding">
       <ion-img src="/logo.png" class="logo"></ion-img>
       <p class="txt">Approximate your TapDano Tag</p>
+      <div class="progress-circle" :class="{'progress-50': progress === 1, 'progress-100': progress === 2}">
+        <span>{{ progress }}/2</span>
+      </div>
     </ion-content>
   </ion-modal>
 </template>
@@ -21,6 +24,8 @@ import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonCo
 import { dataViewToHexString, hexStringToArrayBuffer } from '@/utils/StringUtils';
 
 const isOpen = ref(false);
+const progress = ref(0);
+
 let globalNdefReader: NDEFReader | null = null;
 let globalNdefReadHandler: ((event: NDEFReadingEvent) => Promise<void>) | null = null;
 let commandReject: ((reason?: Error) => void) | null = null;
@@ -31,13 +36,11 @@ const handleCancel = () => {
   if (commandReject) {
     commandReject();
   }
+  progress.value = 0;
 }
 
 const handleAgain = () => {
-  isOpen.value = false;
-  setTimeout(() => {
-    isOpen.value = true;
-  }, 500);
+  progress.value = 1;
 }
 
 const ExecuteCommand = async (command: string): Promise<string> => {
@@ -86,8 +89,11 @@ const ExecuteCommand = async (command: string): Promise<string> => {
         }
 
         cancelNFCTagReading();
-        isOpen.value = false;
-        resolve(readContent);
+        progress.value = 2;
+        setTimeout(() => {
+          isOpen.value = false;
+          resolve(readContent);
+        }, 500);
       };
 
       globalNdefReader.addEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
@@ -95,6 +101,7 @@ const ExecuteCommand = async (command: string): Promise<string> => {
     } catch (error) {
       reject(error as Error);
       isOpen.value = false;
+      progress.value = 0;
     }
   });
 }
@@ -120,5 +127,32 @@ defineExpose({ ExecuteCommand });
 
 .txt {
   text-align: center;
+}
+
+.progress-circle {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 10px solid lightgray;
+  margin: 40px auto 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5em;
+}
+
+.progress-circle.progress-50 {
+  border-top-color: green;
+  border-right-color: green;
+  transition: border-color 0.5s;
+}
+
+.progress-circle.progress-100 {
+  border-top-color: green;
+  border-right-color: green;
+  border-bottom-color: green;
+  border-left-color: green;
+  transition: border-color 0.5s;
 }
 </style>
