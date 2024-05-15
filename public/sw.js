@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dynamic-v10';
+const CACHE_NAME = 'dynamic-v11';
 const CACHE_FILES = [];
 
 self.addEventListener('install', (event) => {
