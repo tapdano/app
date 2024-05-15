@@ -14,6 +14,9 @@
       <div id="container">
         <PriceChart />
         <ion-item>
+          <h4>ADA Price: ${{ (cardanoUsdPrice).toFixed(2) }} USD</h4>
+        </ion-item>
+        <ion-item>
           <h4>Balance: {{ walletBalance.toFixed(2) }} ADA (${{ (walletBalance * cardanoUsdPrice).toFixed(2) }} USD)</h4>
         </ion-item>
         <ion-item>
@@ -177,5 +180,6 @@ watch(adaAmount, (newValue) => {
 #boxSend ion-button {
   display: block;
   height: 50px;
+  margin-top: 20px;
 }
 </style>

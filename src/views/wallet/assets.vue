@@ -15,19 +15,18 @@
       </div>
       <div v-else>
         <div id="container">
-          <div style="text-align: center;margin-top: 20px;">
-            <ion-button @click="mintAsset">Mint Asset</ion-button>
-          </div>
           <div v-if="assets.length > 0" class="assets-container">
-            <div v-for="asset in assets" :key="asset.soulBoundId" class="asset-item">
+            <div v-for="asset in assets" :key="asset.unit" class="asset-item">
               <img :src="formatIpfsUrl(asset.image)" :alt="asset.name" class="asset-image" />
               <h2>{{ asset.name }}</h2>
+              <p>ID: {{ asset.unit }}</p>
+              <p>Quantity: {{ asset.quantity }}</p>
+              <p>SoulBoundId: {{ asset.soulBoundId }}</p>
               <p>{{ asset.description }}</p>
             </div>
           </div>
-          <div v-else>
-            <p>No assets found.</p>
-          </div>
+          <div v-else class="no-items-message">No assets found!</div>
+          <ion-button @click="mintAsset">Mint Asset</ion-button>
         </div>
       </div>
     </ion-content>
@@ -46,6 +45,8 @@ import { Transaction, ForgeScript } from '@meshsdk/core';
 import type { Mint, AssetMetadata } from '@meshsdk/core';
 
 interface Asset {
+  unit: string;
+  quantity: string;
   soulBoundId: string;
   name: string;
   image: string;
@@ -101,12 +102,16 @@ watch(() => route.path, async (newPath) => {
     }
     walletName.value = currentWallet.name;
     const walletAssets = await fetchWalletAssets(currentWallet.baseAddr);
-    walletAssets.push(walletAssets[0]);
     const assetPromises = walletAssets.map(async (asset) => {
       const metadata = await fetchAssetMetadata(asset.unit);
-      return metadata;
+      return {
+        ...asset,
+        ...metadata
+      };
     });
-    assets.value = await Promise.all(assetPromises);
+    const wAssets = await Promise.all(assetPromises);
+    assets.value = wAssets;
+    console.log(wAssets);
     loading.value = false;
   }
 }, { immediate: true });
@@ -120,13 +125,14 @@ const formatIpfsUrl = (url: string) => {
 ion-button {
   display: block;
   height: 50px;
+  margin-top: 20px;
 }
 
 .assets-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: 20px;
+  margin: 20px 0 0 0;
 }
 
 .asset-item {

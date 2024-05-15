@@ -44,7 +44,6 @@ watch(() => route.path, async (newPath) => {
       router.push('/my-tags');
       return;
     }
-    console.log(currentTag);
     tagInfo.value = currentTag;
   }
 }, { immediate: true });
