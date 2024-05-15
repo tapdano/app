@@ -93,3 +93,39 @@ function updateServiceWorker() {
 navigator.serviceWorker.addEventListener('controllerchange', () => {
   window.location.reload();
 });
+
+let deferredPrompt: any;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallPromotion();
+});
+
+function showInstallPromotion() {
+  const installDiv = document.createElement('div');
+  installDiv.className = 'install-promotion';
+  installDiv.style.position = 'fixed';
+  installDiv.style.bottom = '0';
+  installDiv.style.width = '100%';
+  installDiv.style.backgroundColor = '#ffcc00';
+  installDiv.style.color = '#000';
+  installDiv.style.textAlign = 'center';
+  installDiv.style.padding = '1em';
+  installDiv.innerHTML = `
+    <p>Install our app for a better experience.</p>
+    <button id="install" style="margin: 0 1em; padding: 1em 2em; background-color: #007bff; color: #fff; border: none; border-radius: 4px;">Install</button>
+  `;
+  document.body.appendChild(installDiv);
+
+  const installButton = document.getElementById('install');
+  if (installButton) {
+    installButton.addEventListener('click', () => {
+      installDiv.style.display = 'none';
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult: any) => {
+        //(choiceResult.outcome === 'accepted')
+        deferredPrompt = null;
+      });
+    });
+  }
+}
