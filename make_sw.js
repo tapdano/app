@@ -15,7 +15,9 @@ function listFiles(dir, baseDir, fileList = []) {
     if (statSync(filePath).isDirectory()) {
       listFiles(filePath, baseDir, fileList);
     } else {
-      fileList.push('/' + relative(baseDir, filePath));
+      if (!filePath.toLowerCase().includes('sw.js')) {
+        fileList.push('/' + relative(baseDir, filePath));
+      }
     }
   });
   return fileList;
