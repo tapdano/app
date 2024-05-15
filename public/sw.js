@@ -1,9 +1,11 @@
-const CACHE_NAME = 'dynamic-v13';
+const CACHE_NAME = 'dynamic-v14';
 const CACHE_FILES = [];
 
 self.addEventListener('message', (event) => {
   if (event.data.action === 'skipWaiting') {
     self.skipWaiting();
+  } else if (event.data.action === 'getCacheName') {
+    event.ports[0].postMessage(CACHE_NAME);
   }
 });
 
