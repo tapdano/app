@@ -58,6 +58,12 @@ const getCacheName = async (): Promise<string> => {
 
 const checkForUpdate = () => {
   if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then(registration => {
+      if (registration && registration.waiting) {
+        registration.waiting.postMessage({ action: 'skipWaiting' });
+      }
+    });
+    /*
     navigator.serviceWorker.getRegistration().then((registration) => {
       if (registration) {
         registration.update().then(() => {
@@ -69,6 +75,7 @@ const checkForUpdate = () => {
         console.error('No Service Worker registration found.');
       }
     });
+    */
   }
 };
 
