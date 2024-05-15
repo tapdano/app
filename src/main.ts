@@ -42,8 +42,57 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then((registration) => {
       console.log('Service Worker registered with scope:', registration.scope);
+      
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Nova atualização encontrada
+              notifyUpdate();
+            }
+          });
+        }
+      });
     }, (err) => {
       console.log('Service Worker registration failed:', err);
     });
   });
 }
+
+function notifyUpdate() {
+  const updateDiv = document.createElement('div');
+  updateDiv.className = 'update-notification';
+  updateDiv.style.position = 'fixed';
+  updateDiv.style.bottom = '0';
+  updateDiv.style.width = '100%';
+  updateDiv.style.backgroundColor = '#ffcc00';
+  updateDiv.style.color = '#000';
+  updateDiv.style.textAlign = 'center';
+  updateDiv.style.padding = '1em';
+  updateDiv.innerHTML = `
+    <p>Uma nova atualização está disponível. Deseja atualizar agora?</p>
+    <button id="refresh" style="margin: 0 1em; padding: 0.5em 1em; background-color: #007bff; color: #fff; border: none; border-radius: 4px;">Atualizar</button>
+  `;
+  document.body.appendChild(updateDiv);
+
+  const refreshButton = document.getElementById('refresh');
+  if (refreshButton) {
+    refreshButton.addEventListener('click', () => {
+      updateServiceWorker();
+    });
+  }
+}
+
+function updateServiceWorker() {
+  navigator.serviceWorker.getRegistration().then(registration => {
+    if (registration && registration.waiting) {
+      // Envia uma mensagem ao Service Worker esperando
+      registration.waiting.postMessage({ action: 'skipWaiting' });
+    }
+  });
+}
+
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  window.location.reload();
+});

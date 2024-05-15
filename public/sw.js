@@ -1,5 +1,11 @@
-const CACHE_NAME = 'dynamic-v11';
+const CACHE_NAME = 'dynamic-v12';
 const CACHE_FILES = [];
+
+self.addEventListener('message', (event) => {
+  if (event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
