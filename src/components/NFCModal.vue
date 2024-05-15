@@ -56,7 +56,7 @@ const ExecuteCommand = async (command: string): Promise<string> => {
       const isLocal = (hostname == 'localhost');
 
       if (isLocal) {
-        //isOpen.value = false;
+        isOpen.value = false;
         let result = '';
         if (command.startsWith('00A00000')) result = '5444010000';
         if (command.startsWith('00A10000')) result = '544401000101015147A101F631472917695143BCAF5CE36AB325EC82C46E5AE08806C128F955E9';
