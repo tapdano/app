@@ -37,6 +37,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/wallet/assets.vue')
   },
   {
+    path: '/wallet/assets/mint',
+    component: () => import ('../views/wallet/assets-mint.vue')
+  },
+  {
     path: '/wallet/settings',
     component: () => import ('../views/wallet/settings.vue')
   },
