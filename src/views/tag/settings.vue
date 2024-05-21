@@ -12,7 +12,7 @@
     <ion-content :fullscreen="true">
       <div id="container">
         <ion-button color="danger" @click="lockTag">Lock Tag</ion-button>
-        <ion-button color="danger" @click="deleteTag">Delete Tag</ion-button>
+        <!--<ion-button color="danger" @click="deleteTag">Delete Tag</ion-button>-->
         <ion-button color="danger" @click="formatTag">Format Tag</ion-button>
       </div>
     </ion-content>

@@ -11,9 +11,9 @@
     <ion-content class="ion-padding">
       <ion-img src="/logo.png" class="logo"></ion-img>
       <p class="txt">Approximate your TapDano Tag</p>
-      <div class="progress-circle" :class="{'progress-50': progress === 1, 'progress-100': progress === 2}">
+      <div class="progress-circle" :class="{'progress-50': progress === 1 && progressTotal === 2, 'progress-100': (progress === 2) || (progress === 1 && progressTotal === 1)}">
         <div class="content">
-          <span>{{ progress }}/2</span>
+          <span>{{ progress }}/{{ progressTotal }}</span>
         </div>
       </div>
     </ion-content>
@@ -27,6 +27,7 @@ import { dataViewToHexString, hexStringToArrayBuffer } from '@/utils/StringUtils
 
 const isOpen = ref(false);
 const progress = ref(0);
+const progressTotal = ref(2);
 
 let globalNdefReader: NDEFReader | null = null;
 let globalNdefReadHandler: ((event: NDEFReadingEvent) => Promise<void>) | null = null;
@@ -38,18 +39,19 @@ const handleCancel = () => {
   if (commandReject) {
     commandReject();
   }
-  progress.value = 0;
 }
 
 const handleAgain = () => {
-  progress.value = 1;
+  progress.value++;
 }
 
-const ExecuteCommand = async (command: string): Promise<string> => {
+const ExecuteCommand = async (command?: string): Promise<string> => {
   console.log('ExecuteCommand:' + command);
   return new Promise<string>(async (resolve, reject) => {
     try {
       commandReject = reject;
+      progress.value = 0;
+      progressTotal.value = command ? 2 : 1;
       isOpen.value = true;
 
       const hostname = new URL(location.href).hostname;
@@ -58,7 +60,10 @@ const ExecuteCommand = async (command: string): Promise<string> => {
       if (isLocal) {
         isOpen.value = false;
         let result = '';
-        if (command.startsWith('00A00000')) result = '5444010000';
+        if (!command) {
+          resolve('5444010000');
+          return;
+        }
         if (command.startsWith('00A10000')) result = '544401000101015147A101F631472917695143BCAF5CE36AB325EC82C46E5AE08806C128F955E9';
         if (command.startsWith('00A20000')) result = '';
         if (command.startsWith('00A30000')) result = '5444010000';
@@ -67,12 +72,12 @@ const ExecuteCommand = async (command: string): Promise<string> => {
       }
 
       globalNdefReader = new window.NDEFReader();
-      let isFirstRead = true;
+      let isFirstRead = (command != undefined);
 
       globalNdefReadHandler = async (event: NDEFReadingEvent) => {
         if (isFirstRead && globalNdefReader) {
           await globalNdefReader.write({
-            records: [{ recordType: "unknown", data: hexStringToArrayBuffer(command) }],
+            records: [{ recordType: "unknown", data: hexStringToArrayBuffer(command as string) }],
           });
           isFirstRead = false;
           handleAgain();
@@ -91,7 +96,7 @@ const ExecuteCommand = async (command: string): Promise<string> => {
         }
 
         cancelNFCTagReading();
-        progress.value = 2;
+        progress.value++;
         setTimeout(() => {
           isOpen.value = false;
           resolve(readContent);
@@ -103,7 +108,6 @@ const ExecuteCommand = async (command: string): Promise<string> => {
     } catch (error) {
       reject(error as Error);
       isOpen.value = false;
-      progress.value = 0;
     }
   });
 }

@@ -12,6 +12,7 @@
       <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
       <div v-else>
         <div id="container">
+          <!--
           <div v-if="tags.length === 0" class="no-items-message">No Tags here! Tap below to add your first Tag.</div>
           <div v-else>
             <ion-list>
@@ -20,8 +21,9 @@
               </ion-item>
             </ion-list>
           </div>
+          -->
           <div id="buttons-box">
-            <ion-button expand="block" @click="addTagEvent">Add a Tag</ion-button>
+            <ion-button expand="block" @click="addTagEvent">Scan a Tag</ion-button>
           </div>
         </div>
       </div>
@@ -59,8 +61,7 @@ const addTagEvent = async () => {
   try {
     if (!nfcModal.value) return;
 
-    const cmd = "00A00000";
-    const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
+    const tag = new TagParser(await nfcModal.value.ExecuteCommand());
 
     if (tag.TagID != '5444') {
       alert('Unknow Tag. Please use a TapDano Tag.');
