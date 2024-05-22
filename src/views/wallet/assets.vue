@@ -20,7 +20,7 @@
             </div>
           </div>
           <div v-else class="no-items-message">No assets found!</div>
-          <ion-button @click="navigateToMint">Mint Asset</ion-button>
+          <ion-button @click="navigateToMint">Mint SoulBound Asset</ion-button>
         </div>
       </div>
     </ion-content>
@@ -89,7 +89,7 @@ watch(() => route.path, async (newPath) => {
 }, { immediate: true });
 
 const formatIpfsUrl = (url: string) => {
-  return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  return url?.replace('ipfs://', 'https://ipfs.io/ipfs/');
 };
 </script>
 

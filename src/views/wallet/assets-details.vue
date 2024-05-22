@@ -20,7 +20,6 @@
           <p>{{ asset?.onchain_metadata.description }}</p>
           <div class="buttons-box">
             <ion-button @click="viewOnExplorer">View on Explorer</ion-button>
-            <!--<ion-button @click="saveOnTag">Save on Tag</ion-button>-->
           </div>
         </div>
       </div>
@@ -48,16 +47,12 @@ const viewOnExplorer = () => {
   window.open(explorerUrl, '_blank');
 };
 
-const saveOnTag = () => {
-};
-
 watch(() => route.path, async (newPath) => {
   if (newPath.startsWith('/wallet/assets/') && newPath != '/wallet/assets/mint') {
     loading.value = true;
     try {
       const unit = route.params.unit as string;
       const assetFull = await fetchAssetFull(unit);
-      console.log(assetFull);
       asset.value = assetFull;
     } catch (error) {
       console.log(error);

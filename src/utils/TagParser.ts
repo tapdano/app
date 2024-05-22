@@ -11,6 +11,7 @@ export class TagParser {
   PinLocked?: boolean;
   PublicKey?: string;
   PrivateKey?: string;
+  PolicyId?: string;
   TwoFactorKey?: string;
   LastSignature?: string;
 
@@ -28,9 +29,10 @@ export class TagParser {
       } else {
         this.PublicKey = input.slice(16, 80).toUpperCase();
       }
+      this.PolicyId = input.slice(80, 136).toUpperCase();
       if (!this.PinLocked) {
-        this.TwoFactorKey = input.slice(80, 144).toUpperCase();
-        this.LastSignature = input.slice(144, 272).toUpperCase();
+        this.TwoFactorKey = input.slice(136, 200).toUpperCase();
+        this.LastSignature = input.slice(200, 328).toUpperCase();
       }
     }
   }

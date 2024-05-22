@@ -247,6 +247,10 @@ export class Transaction {
     return this;
   }
 
+  getPolicyIdFromForgeScript(forgeScript: string): string {
+    return deserializeNativeScript(forgeScript).hash().to_hex();
+  }
+
   @Checkpoint()
   redeemValue(options: {
     value: UTxO, script: PlutusScript | UTxO,
