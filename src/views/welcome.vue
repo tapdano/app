@@ -4,7 +4,7 @@
       <div id="container">
         <h1>Welcome to<br />TapDano</h1>
         <ion-button expand="block" @click="$router.push('/my-wallets')">My Wallets</ion-button>
-        <ion-button expand="block" @click="$router.push('/my-tags')">My Tags</ion-button>
+        <ion-button expand="block" @click="$router.push('/my-tags')">Tag Manager</ion-button>
         <ion-button expand="block" @click="$router.push('/settings')" fill="outline">Settings</ion-button>
       </div>
     </ion-content>

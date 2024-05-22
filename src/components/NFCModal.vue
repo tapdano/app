@@ -46,7 +46,6 @@ const handleAgain = () => {
 }
 
 const ExecuteCommand = async (command?: string): Promise<string> => {
-  console.log('ExecuteCommand:' + command);
   return new Promise<string>(async (resolve, reject) => {
     try {
       commandReject = reject;

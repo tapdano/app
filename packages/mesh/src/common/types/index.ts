@@ -3,6 +3,7 @@ export * from './AccountInfo';
 export * from './Action';
 export * from './Asset';
 export * from './AssetExtended';
+export * from './AssetFull';
 export * from './AssetMetadata';
 export * from './BlockInfo';
 export * from './Data';

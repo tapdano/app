@@ -59,7 +59,7 @@ const appPages = ref([
     mdIcon: walletSharp,
   },
   {
-    title: 'My Tags',
+    title: 'Tag Manager',
     url: '/my-tags',
     iosIcon: cardOutline,
     mdIcon: cardSharp,

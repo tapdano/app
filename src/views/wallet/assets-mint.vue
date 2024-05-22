@@ -12,23 +12,24 @@
     <ion-content :fullscreen="true">
       <div id="mint-form">
         <ion-item>
-          <ion-label position="floating">Name</ion-label>
-          <ion-input v-model="form.name"></ion-input>
+          <ion-input v-model="form.name" label="Name"></ion-input>
         </ion-item>
         <ion-item>
-          <ion-label position="floating">Image URL</ion-label>
-          <ion-input v-model="form.image"></ion-input>
+          <ion-input v-model="form.image" label="Image URL"></ion-input>
         </ion-item>
         <ion-item>
-          <ion-label position="floating">SoulBoundId</ion-label>
-          <ion-input v-model="form.soulBoundId"></ion-input>
+          <ion-input v-model="form.description" label="Description"></ion-input>
         </ion-item>
         <ion-item>
-          <ion-label position="floating">Description</ion-label>
-          <ion-input v-model="form.description"></ion-input>
+          <div class="input-container">
+            <!--<ion-input v-model="form.soulBoundId" label="SoulBoundId"></ion-input>-->
+            <ion-textarea v-model="form.soulBoundId" label="SoulBoundId" :label-placement="'stacked'" :auto-grow="true"></ion-textarea>
+            <ion-button @click="scanTag">Scan a Tag</ion-button>
+          </div>
         </ion-item>
         <ion-button @click="mintAsset">Mint Asset</ion-button>
       </div>
+      <NFCModal ref="nfcModal" />
     </ion-content>
   </ion-page>
 </template>
@@ -36,11 +37,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonLabel, IonInput, IonButton } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonTextarea, IonInput, IonButton } from '@ionic/vue';
 import { getCurrentWallet } from '@/utils/StorageUtils';
 import { loadWallet } from '@/utils/CryptoUtils';
 import { Transaction, ForgeScript } from '@meshsdk/core';
 import type { Mint, AssetMetadata } from '@meshsdk/core';
+import NFCModal from '@/components/NFCModal.vue';
+import { TagParser } from '@/utils/TagParser';
 
 const router = useRouter();
 const route = useRoute();
@@ -49,17 +52,37 @@ const walletName = ref('');
 const form = ref({
   name: 'TapDano Token',
   image: 'ipfs://QmRzicpReutwCkM6aotuKjErFCUD213DpwPq6ByuzMJaua',
-  soulBoundId: '',  // Este será preenchido dinamicamente abaixo
+  soulBoundId: '',
   description: 'This NFT was minted by TapDano (https://tapdano.com).'
 });
+
+const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
+
+const scanTag = async () => {
+  try {
+    if (nfcModal.value) {
+      const tagContent = await nfcModal.value.ExecuteCommand();
+      const tag = new TagParser(tagContent);
+      form.value.soulBoundId = tag.PublicKey || '';
+    }
+  } catch (error) {
+    console.error(error);
+    alert(error);
+  }
+};
 
 const mintAsset = async () => {
   try {
     const currentWallet = await getCurrentWallet();
     const wallet = loadWallet(currentWallet.mnemonic);
     const tx = new Transaction({ initiator: wallet });
+    const forgeScript = ForgeScript.withOneSignature(currentWallet.baseAddr);
+    
+    console.log(forgeScript);
+    return;
+    
     tx.mintAsset(
-      ForgeScript.withOneSignature(currentWallet.baseAddr),
+      forgeScript,
       {
         assetName: form.value.name,
         assetQuantity: '1',
@@ -94,7 +117,6 @@ watch(() => route.path, async (newPath) => {
       return;
     }
     walletName.value = currentWallet.name;
-    form.value.soulBoundId = currentWallet.baseAddr.slice(0, 64);
   }
 }, { immediate: true });
 </script>
@@ -108,5 +130,21 @@ ion-button {
 
 #mint-form {
   padding: 20px;
+}
+
+ion-item .input-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+ion-item .input-container ion-textarea {
+  flex: 1;
+  margin-right: 10px;
+}
+
+ion-item .input-container ion-button{
+  margin: 20px 0;
+  height: 40px;
 }
 </style>

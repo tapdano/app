@@ -23,14 +23,14 @@ export class TagParser {
       this.ExtractLocked = input.slice(12, 14) === "01";
       this.PinLocked = input.slice(14, 16) === "01";
       if (this.Type == "extractable" && !this.ExtractLocked && !this.PinLocked) {
-        this.PrivateKey = input.slice(16, 80);
-        this.PublicKey = this.calculatePublicKey(this.PrivateKey);
+        this.PrivateKey = input.slice(16, 80).toUpperCase();
+        this.PublicKey = this.calculatePublicKey(this.PrivateKey).toUpperCase();
       } else {
-        this.PublicKey = input.slice(16, 80);
+        this.PublicKey = input.slice(16, 80).toUpperCase();
       }
       if (!this.PinLocked) {
-        this.TwoFactorKey = input.slice(80, 144);
-        this.LastSignature = input.slice(144, 272);
+        this.TwoFactorKey = input.slice(80, 144).toUpperCase();
+        this.LastSignature = input.slice(144, 272).toUpperCase();
       }
     }
   }

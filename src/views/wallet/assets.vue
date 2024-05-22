@@ -14,13 +14,9 @@
       <div v-else>
         <div id="container">
           <div v-if="assets.length > 0" class="assets-container">
-            <div v-for="asset in assets" :key="asset.unit" class="asset-item">
+            <div v-for="asset in assets" :key="asset.unit" class="asset-item" @click="navigateToAssetDetails(asset)">
               <img :src="formatIpfsUrl(asset.image)" :alt="asset.name" class="asset-image" />
               <h2>{{ asset.name }}</h2>
-              <p>ID: {{ asset.unit }}</p>
-              <p>Quantity: {{ asset.quantity }}</p>
-              <p>SoulBoundId: {{ asset.soulBoundId }}</p>
-              <p>{{ asset.description }}</p>
             </div>
           </div>
           <div v-else class="no-items-message">No assets found!</div>
@@ -57,6 +53,10 @@ const assets = ref<Asset[]>([]);
 
 const navigateToMint = () => {
   router.push('/wallet/assets/mint');
+};
+
+const navigateToAssetDetails = (asset: Asset) => {
+  router.push({ path: `/wallet/assets/${asset.unit}`, query: { asset: JSON.stringify(asset) } });
 };
 
 watch(() => route.path, async (newPath) => {
@@ -103,7 +103,7 @@ ion-button {
 .assets-container {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-between;
   margin: 20px 0 0 0;
 }
 
@@ -113,16 +113,13 @@ ion-button {
   padding: 20px;
   margin: 10px;
   text-align: center;
-  max-width: 200px;
+  width: calc(50% - 20px);
+  cursor: pointer;
 }
 
 .asset-image {
   width: 100%;
   height: auto;
   border-radius: 10px;
-}
-
-.asset-item p {
-  font-size: 0.8em;
 }
 </style>

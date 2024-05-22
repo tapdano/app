@@ -13,6 +13,7 @@ import type {
   AccountInfo,
   Asset,
   AssetMetadata,
+  AssetFull,
   BlockInfo,
   NativeScript,
   PlutusScript,
@@ -82,10 +83,11 @@ export class BlockfrostProvider implements IFetcher, IListener, ISubmitter {
         `${url}?page=${page}`
       );
 
-      if (status === 200)
+      if (status === 200) {
         return data.length > 0
           ? paginateAssets(page + 1, [...assets, ...data])
           : assets;
+      }
 
       throw parseHttpError(data);
     };
@@ -196,6 +198,24 @@ export class BlockfrostProvider implements IFetcher, IListener, ISubmitter {
       return await paginateAddresses<{ address: string; quantity: string }>();
     } catch (error) {
       return [];
+    }
+  }
+
+  async fetchAssetFull(asset: string): Promise<AssetFull> {
+    try {
+      const { policyId, assetName } = parseAssetUnit(asset);
+      const { data, status } = await this._axiosInstance.get(
+        `assets/${policyId}${assetName}`
+      );
+
+      if (status === 200)
+        return <AssetFull>{
+          ...data,
+        };
+
+      throw parseHttpError(data);
+    } catch (error) {
+      throw parseHttpError(error);
     }
   }
 
