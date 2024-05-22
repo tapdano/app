@@ -56,7 +56,7 @@ const navigateToMint = () => {
 };
 
 const navigateToAssetDetails = (asset: Asset) => {
-  router.push({ path: `/wallet/assets/${asset.unit}`, query: { asset: JSON.stringify(asset) } });
+  router.push({ path: `/wallet/assets/${asset.unit}` });
 };
 
 watch(() => route.path, async (newPath) => {
@@ -104,7 +104,6 @@ ion-button {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  margin: 20px 0 0 0;
 }
 
 .asset-item {

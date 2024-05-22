@@ -5,20 +5,23 @@
         <ion-buttons slot="start">
           <ion-back-button color="primary" default-href="/wallet/assets"></ion-back-button>
         </ion-buttons>
-        <ion-title>{{ asset.name }}</ion-title>
+        <ion-title>{{ asset?.onchain_metadata.name }}</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
       <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
       <div v-else>
         <div id="container">
-          <img :src="formatIpfsUrl(asset.image)" :alt="asset.name" class="asset-detail-image" />
-          <h2>{{ asset.name }}</h2>
-          <p>ID: {{ asset.unit }}</p>
-          <p>Quantity: {{ asset.quantity }}</p>
-          <p>SoulBoundId: {{ asset.soulBoundId }}</p>
-          <p>{{ asset.description }}</p>
-          <ion-button @click="viewOnExplorer">View on Explorer</ion-button>
+          <img :src="formatIpfsUrl(asset?.onchain_metadata.image)" :alt="asset?.onchain_metadata.name" class="asset-detail-image" />
+          <h2>{{ asset?.onchain_metadata.name }}</h2>
+          <p class="small">{{ asset?.fingerprint }}</p>
+          <p>Quantity: {{ asset?.quantity }}</p>
+          <p>SoulBoundId: {{ asset?.onchain_metadata.soulBoundId }}</p>
+          <p>{{ asset?.onchain_metadata.description }}</p>
+          <div class="buttons-box">
+            <ion-button @click="viewOnExplorer">View on Explorer</ion-button>
+            <!--<ion-button @click="saveOnTag">Save on Tag</ion-button>-->
+          </div>
         </div>
       </div>
     </ion-content>
@@ -30,26 +33,32 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonBackButton, IonButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
 import { fetchAssetFull } from '@/utils/CryptoUtils';
+import { AssetFull } from '@meshsdk/core';
 
 const route = useRoute();
 const loading = ref(true);
-const asset = ref(JSON.parse(route.query.asset as string));
+const asset = ref<AssetFull>();
 
 const formatIpfsUrl = (url: string) => {
   return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
 };
 
 const viewOnExplorer = () => {
-  const explorerUrl = `https://cexplorer.io/asset/${asset.value.fingerprint}`;
+  const explorerUrl = `https://cexplorer.io/asset/${asset.value?.fingerprint}`;
   window.open(explorerUrl, '_blank');
+};
+
+const saveOnTag = () => {
 };
 
 watch(() => route.path, async (newPath) => {
   if (newPath.startsWith('/wallet/assets/') && newPath != '/wallet/assets/mint') {
     loading.value = true;
     try {
-      const assetFull = await fetchAssetFull(asset.value.unit);
-      asset.value.fingerprint = assetFull.fingerprint;
+      const unit = route.params.unit as string;
+      const assetFull = await fetchAssetFull(unit);
+      console.log(assetFull);
+      asset.value = assetFull;
     } catch (error) {
       console.log(error);
       alert(error);
@@ -64,6 +73,20 @@ watch(() => route.path, async (newPath) => {
   width: 100%;
   height: auto;
   border-radius: 10px;
-  margin-bottom: 20px;
+}
+
+.small{
+  margin-top: -10px;
+  font-size: 0.9em;
+}
+
+.buttons-box {
+  text-align: center;
+}
+
+ion-button {
+  display: block;
+  margin-bottom: 10px;
+  height: 40px;
 }
 </style>

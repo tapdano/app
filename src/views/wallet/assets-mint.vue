@@ -53,7 +53,7 @@ const form = ref({
   name: 'TapDano Token',
   image: 'ipfs://QmRzicpReutwCkM6aotuKjErFCUD213DpwPq6ByuzMJaua',
   soulBoundId: '',
-  description: 'This NFT was minted by TapDano (https://tapdano.com).'
+  description: 'Minted by TapDano.com'
 });
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
@@ -77,10 +77,6 @@ const mintAsset = async () => {
     const wallet = loadWallet(currentWallet.mnemonic);
     const tx = new Transaction({ initiator: wallet });
     const forgeScript = ForgeScript.withOneSignature(currentWallet.baseAddr);
-    
-    console.log(forgeScript);
-    return;
-    
     tx.mintAsset(
       forgeScript,
       {

@@ -1,4 +1,4 @@
-import { AppWallet, BlockfrostProvider } from '@meshsdk/core';
+import { AppWallet, AssetFull, BlockfrostProvider } from '@meshsdk/core';
 import * as bip39 from 'bip39';
 
 const BLOCKFROST_API_KEY = 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
@@ -44,7 +44,7 @@ export function fetchAssetMetadata(asset: string) {
   return blockchainProvider.fetchAssetMetadata(asset);
 }
 
-export function fetchAssetFull(asset: string) {
+export function fetchAssetFull(asset: string): Promise<AssetFull> {
   return blockchainProvider.fetchAssetFull(asset);
 }
 
