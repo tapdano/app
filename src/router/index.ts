@@ -71,6 +71,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/tag/main.vue')
   },
   {
+    path: '/tag/signing',
+    component: () => import ('../views/tag/signing.vue')
+  },
+  {
     path: '/tag/settings',
     component: () => import ('../views/tag/settings.vue')
   },

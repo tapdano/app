@@ -5,6 +5,11 @@
       <ion-label>Main</ion-label>
     </ion-tab-button>
 
+    <ion-tab-button tab="signing" href="/tag/signing">
+      <ion-icon :icon="keyOutline" />
+      <ion-label>Signing</ion-label>
+    </ion-tab-button>
+
     <ion-tab-button tab="settings" href="/tag/settings">
       <ion-icon :icon="settingsOutline" />
       <ion-label>Settings</ion-label>
@@ -14,5 +19,5 @@
 
 <script setup lang="ts">
 import { IonTabBar, IonTabButton, IonLabel, IonIcon } from '@ionic/vue';
-import { cardOutline, settingsOutline } from 'ionicons/icons';
+import { cardOutline, keyOutline, settingsOutline } from 'ionicons/icons';
 </script>

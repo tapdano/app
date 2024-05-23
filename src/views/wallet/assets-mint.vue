@@ -94,7 +94,7 @@ const mintAsset = async () => {
 };
 
 function hexToBase64(hexString: string) {
-  const hex24 = hexString.slice(0, 24);
+  const hex24 = hexString.slice(0, 48);
   let bytes = [];
   for (let i = 0; i < hex24.length; i += 2) {
     bytes.push(parseInt(hex24.substr(i, 2), 16));

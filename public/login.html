@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login with TapDano</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #121212;
+      color: #ffffff;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #1e88e5;
+      border: none;
+      border-radius: 5px;
+      color: #ffffff;
+    }
+
+    .content {
+      white-space: pre-wrap;
+      font-family: monospace;
+      background-color: #1e1e1e;
+      padding: 10px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      max-width: 100%;
+      overflow-x: auto;
+      word-wrap: break-word;
+      box-sizing: border-box;
+      display: none;
+    }
+
+    .content img{
+      width: 100%;
+    }
+  </style>
+  <script src="noble-ed25519.js"></script>
+</head>
+
+<body>
+  <button id="loginButton">Login with TapDano</button>
+  <div id="contentArea" class="content">
+    <h1>Response:</h1>
+    <div id="responseContent"></div>
+    <h1>Asset data:</h1>
+    <div id="assetContent"></div>
+    <img id="imgAsset" />
+  </div>
+  <script>
+    async function generateRandom256BitHex() {
+      const array = new Uint8Array(32);
+      crypto.getRandomValues(array);
+      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    function formatIpfsUrl(url) {
+      return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+    }
+
+    document.getElementById('loginButton').addEventListener('click', async () => {
+      const challenge = await generateRandom256BitHex();
+      const message = {
+        challenge: challenge,
+        action: 'LOGIN'
+      };
+      const messageString = JSON.stringify(message);
+      const messageHash = await sha256(messageString);
+
+      // Store the hash in localStorage as not used
+      localStorage.setItem(messageHash, 'not_used');
+
+      const encodedMessage = encodeURIComponent(messageString);
+      const clientUrl = encodeURIComponent('https://192.168.15.56:9000/login.html');
+      const redirectUrl = `https://192.168.15.56:9000/tag/signing?message=${encodedMessage}&client=${clientUrl}`;
+
+      window.location.href = redirectUrl;
+    });
+
+    // Function to parse the query string
+    function getQueryStringParameter(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    function hexToBase64(hexString) {
+      const bytes = [];
+      for (let i = 0; i < hexString.length; i += 2) {
+        bytes.push(parseInt(hexString.substr(i, 2), 16));
+      }
+      const byteString = String.fromCharCode(...bytes);
+      const base64String = btoa(byteString);
+      return base64String;
+    }
+
+    function stringToHex(str) {
+      let hexString = '';
+      for (let i = 0; i < str.length; i++) {
+        hexString += str.charCodeAt(i).toString(16).padStart(2, '0');
+      }
+      return hexString;
+    }
+
+    async function checkResponse() {
+      const response = getQueryStringParameter('response');
+      if (response) {
+        document.getElementById('loginButton').style.display = 'none';
+        const contentArea = document.getElementById('contentArea');
+        const responseContent = document.getElementById('responseContent');
+        const assetContent = document.getElementById('assetContent');
+        const imgAsset = document.getElementById('imgAsset');
+        contentArea.style.display = 'block';
+        try {
+          const parsedResponse = JSON.parse(decodeURIComponent(response));
+          const messageHash = parsedResponse.messageHash;
+
+          localStorage.setItem(messageHash, 'not_used');
+
+          const publicKey = parsedResponse.publicKey;
+          const signature = parsedResponse.signature;
+
+          const isSignatureValid = await nobleEd25519.verify(signature, messageHash, publicKey);
+
+          if (isSignatureValid && localStorage.getItem(messageHash) === 'not_used') {
+            localStorage.setItem(messageHash, 'used');
+            responseContent.textContent = JSON.stringify(parsedResponse, null, 2);
+
+            const policyId = parsedResponse.policyId.toLowerCase();
+            const apiKey = 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
+            const url = `https://cardano-mainnet.blockfrost.io/api/v0/assets/${policyId}${stringToHex(hexToBase64(publicKey.slice(0, 48).toLowerCase()))}`;
+
+            try {
+              const response = await fetch(url, {
+                headers: {
+                  'project_id': apiKey
+                }
+              });
+              const result = await response.json();
+              assetContent.textContent = JSON.stringify(result, null, 2);
+              imgAsset.src = formatIpfsUrl(result.onchain_metadata.image);
+            } catch (error) {
+              console.error('Erro ao chamar a API da Blockfrost:', error);
+            }
+
+
+          } else {
+            responseContent.textContent = 'Invalid signature or reused response received.';
+          }
+
+        } catch (e) {
+          console.error(e);
+          responseContent.textContent = 'Error parsing response JSON';
+        }
+      }
+    }
+    checkResponse();
+  </script>
+</body>
+
+</html>
