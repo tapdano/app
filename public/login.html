@@ -91,8 +91,10 @@
       localStorage.setItem(messageHash, 'not_used');
 
       const encodedMessage = encodeURIComponent(messageString);
-      const clientUrl = encodeURIComponent('https://192.168.15.56:9000/login.html');
-      const redirectUrl = `https://192.168.15.56:9000/tag/signing?message=${encodedMessage}&client=${clientUrl}`;
+      let url = new URL(location.href);
+      
+      const clientUrl = encodeURIComponent(url.protocol + '//' + url.host + '/login.html');
+      const redirectUrl = url.protocol + '//' + url.host + `/tag/signing?message=${encodedMessage}&client=${clientUrl}`;
 
       window.location.href = redirectUrl;
     });
