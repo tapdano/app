@@ -10,6 +10,7 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <div id="container">
+        <h2>Here you can manage your TapDano Tag, set it up, protect it, view linked assets, sign data, and much more.</h2>
         <div id="buttons-box">
           <ion-button expand="block" @click="addTagEvent">Scan a Tag</ion-button>
         </div>
