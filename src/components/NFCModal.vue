@@ -29,6 +29,9 @@ const isOpen = ref(false);
 const progress = ref(0);
 const progressTotal = ref(2);
 
+const useWebNFC = (window.NDEFReader != undefined);
+const AUTHN_MAX_TRIES = 3;
+let AUTHN_TRIES = 0;
 let globalNdefReader: NDEFReader | null = null;
 let globalNdefReadHandler: ((event: NDEFReadingEvent) => Promise<void>) | null = null;
 let commandReject: ((reason?: Error) => void) | null = null;
@@ -50,52 +53,82 @@ const ExecuteCommand = async (command?: string): Promise<string> => {
     try {
       commandReject = reject;
       progress.value = 0;
-      progressTotal.value = command ? 2 : 1;
       isOpen.value = true;
 
-      const hostname = new URL(location.href).hostname;
-      const isLocal = (hostname == 'localhost');
-
-      if (isLocal) {
-        isOpen.value = false;
-        resolve('5444010001020100C5751BE5E0766EA436728F3B808049E16D0E11D2134219B4DC011C4849385095000000000000000000000000000000000000000000000000000000009C10A6C1A67896DF90F9B2A1326367E2A3D73C96E7667DEC407D3375A1BA8A7C00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000');
-        return;
-      }
-
-      globalNdefReader = new window.NDEFReader();
-      let isFirstRead = (command != undefined);
-
-      globalNdefReadHandler = async (event: NDEFReadingEvent) => {
-        if (isFirstRead && globalNdefReader) {
-          await globalNdefReader.write({
-            records: [{ recordType: "unknown", data: hexStringToArrayBuffer(command as string) }],
-          });
-          isFirstRead = false;
-          handleAgain();
-          return;
-        }
-
-        let readContent: string = '';
-        if (event.message.records.length > 0) {
-          const record = event.message.records[0];
-          if (record.recordType === "text") {
-            const textDecoder = new TextDecoder(record.encoding);
-            readContent = textDecoder.decode(record.data);
-          } else if (record.recordType === "unknown") {
-            readContent = dataViewToHexString(record.data as DataView);
-          }
-        }
-
+      const sendResolve = (content: string) => {
         cancelNFCTagReading();
         progress.value++;
         setTimeout(() => {
           isOpen.value = false;
-          resolve(readContent);
+          resolve(content);
         }, 500);
       };
 
-      globalNdefReader.addEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
-      await globalNdefReader.scan();
+      if (useWebNFC) {
+        progressTotal.value = command ? 2 : 1;
+
+        globalNdefReader = new window.NDEFReader();
+        let isFirstRead = (command != undefined);
+
+        globalNdefReadHandler = async (event: NDEFReadingEvent) => {
+          if (isFirstRead && globalNdefReader) {
+            await globalNdefReader.write({
+              records: [{ recordType: "unknown", data: hexStringToArrayBuffer(command as string) }],
+            });
+            isFirstRead = false;
+            handleAgain();
+            return;
+          }
+
+          let readContent: string = '';
+          if (event.message.records.length > 0) {
+            const record = event.message.records[0];
+            if (record.recordType === "text") {
+              const textDecoder = new TextDecoder(record.encoding);
+              readContent = textDecoder.decode(record.data);
+            } else if (record.recordType === "unknown") {
+              readContent = dataViewToHexString(record.data as DataView);
+            }
+          }
+
+          sendResolve(readContent);
+        };
+
+        globalNdefReader.addEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
+        await globalNdefReader.scan();
+      } else { //WebAuthN
+        progressTotal.value = 1;
+        AUTHN_TRIES = 0;
+        command = command ? command : '0000';
+        const execWebAuthN = async function() {
+          try {
+            const ret = await navigator.credentials.get({
+              publicKey: {
+                allowCredentials: [{
+                  id: StrToHex(command),
+                  type: "public-key",
+                  transports: ["nfc"]
+                }],
+                challenge: crypto.getRandomValues(new Uint8Array(32)),
+                rpId: window.location.hostname,
+                userVerification: "discouraged",
+                timeout: 60000
+              }
+            });
+            const content = arrayBufferToHex((ret as any).response.signature);
+            sendResolve(content);
+          } catch (e) {
+            console.error(e);
+            AUTHN_TRIES++;
+            if (AUTHN_TRIES == AUTHN_MAX_TRIES) {
+              throw e;
+            } else {
+              execWebAuthN();
+            }
+          }
+        }
+        execWebAuthN();
+      }
     } catch (error) {
       reject(error as Error);
       isOpen.value = false;
@@ -104,11 +137,21 @@ const ExecuteCommand = async (command?: string): Promise<string> => {
 }
 
 const cancelNFCTagReading = () => {
-  if (globalNdefReader && globalNdefReadHandler) {
-    globalNdefReader.removeEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
-    globalNdefReadHandler = null;
+  if (useWebNFC) {
+    if (globalNdefReader && globalNdefReadHandler) {
+      globalNdefReader.removeEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
+      globalNdefReadHandler = null;
+    }
+    globalNdefReader = null;
   }
-  globalNdefReader = null;
+}
+
+const StrToHex = function(s: any) {
+  return new Uint8Array(s.replaceAll(' ', '').match(/.{1,2}/g).map((b: any) => parseInt(b, 16)));
+}
+
+const arrayBufferToHex = function(arrayBuffer: any) {
+  return Array.from(new Uint8Array(arrayBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 defineExpose({ ExecuteCommand });
