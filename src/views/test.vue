@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
         </ion-buttons>
-        <ion-title>Test</ion-title>
+        <ion-title>Test V5</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -34,7 +34,7 @@ const startEvent = async () => {
   addLog('----------------');  
 
   let round = 1;
-  const maxRound = 10;
+  const maxRound = 100;
   while (true) {
     
     addLog('');
@@ -45,6 +45,7 @@ const startEvent = async () => {
 
       if (tag.TagID != '5444') {
         addLog('Unknow Tag. Please use a TapDano Tag.');
+        addLog(JSON.stringify(tag));
         return;
       }
 
@@ -69,6 +70,7 @@ const startEvent = async () => {
 
       if (tag.TagID != '5444') {
         addLog('Unknow Tag. Please use a TapDano Tag.');
+        addLog(JSON.stringify(tag));
         return;
       }
       addLog('Tag created');
@@ -79,6 +81,7 @@ const startEvent = async () => {
       tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
       if (tag.TagID != '5444') {
         addLog('Unknow Tag. Please use a TapDano Tag.');
+        addLog(JSON.stringify(tag));
         return;
       }
       addLog('Tag formated');

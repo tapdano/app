@@ -71,12 +71,16 @@ const ExecuteCommand = async (command?: string): Promise<string> => {
         let isFirstRead = (command != undefined);
 
         globalNdefReadHandler = async (event: NDEFReadingEvent) => {
-          if (isFirstRead && globalNdefReader) {
-            await globalNdefReader.write({
+          if (isFirstRead) {
+            globalNdefReader && await globalNdefReader.write({
               records: [{ recordType: "unknown", data: hexStringToArrayBuffer(command as string) }],
             });
             isFirstRead = false;
             handleAgain();
+            cancelNFCTagReading();
+            globalNdefReader = new window.NDEFReader();
+            globalNdefReader.addEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
+            await globalNdefReader.scan();
             return;
           }
 
@@ -140,7 +144,6 @@ const cancelNFCTagReading = () => {
   if (useWebNFC) {
     if (globalNdefReader && globalNdefReadHandler) {
       globalNdefReader.removeEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
-      globalNdefReadHandler = null;
     }
     globalNdefReader = null;
   }
