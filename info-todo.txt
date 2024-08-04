@@ -1,0 +1,10 @@
+TapDano SDK
+ - JavaCard Applet (The firmware for devices like Tags)
+ - NFC Module (used on Desktop or Mobile, através de WebAuthN or WebNFC)
+ - NFT Module (para mintagem de Assets com SoulBound)
+ - Auth Module (pode ser usado no front ou back)
+  - On-chain (Aiken Contract)
+  - Off-chain (Back-end)
+
+- Sample App
+- Sample Login Page

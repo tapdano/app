@@ -12,7 +12,6 @@
     <ion-content :fullscreen="true">
       <div id="container">
         <ion-button color="danger" @click="lockTag">Lock Tag</ion-button>
-        <!--<ion-button color="danger" @click="deleteTag">Delete Tag</ion-button>-->
         <ion-button color="danger" @click="formatTag">Format Tag</ion-button>
       </div>
     </ion-content>
@@ -56,15 +55,6 @@ const lockTag = async () => {
     const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
     await addTag(tag);
     router.replace('/tag/main');
-  }
-}
-
-const deleteTag = async () => {
-  const confirmation = confirm('Are you sure you want to DELETE this Tag?');
-  if (confirmation) {
-    const currentTag = await getCurrentTag();
-    await deleteTagByPublicKey(currentTag.PublicKey);
-    router.replace('/my-tags');
   }
 }
 
