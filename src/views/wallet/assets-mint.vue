@@ -58,7 +58,7 @@ const mintAsset = async () => {
   try {
     loading.value = true;
     const currentWallet = await getCurrentWallet();
-    const wallet = loadWallet(currentWallet.mnemonic);
+    const wallet = await loadWallet(currentWallet.mnemonic);
     const tx = new Transaction({ initiator: wallet });
     const forgeScript = ForgeScript.withOneSignature(currentWallet.baseAddr);
     const policyId = tx.getPolicyIdFromForgeScript(forgeScript);

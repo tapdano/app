@@ -15,6 +15,13 @@
           <ion-toggle @ionChange="toggleDarkMode" :checked="isDarkMode" :disabled="true">Dark Mode</ion-toggle>
         </ion-item>
         <ion-item>
+          <ion-label>Network</ion-label>
+          <ion-select v-model="network" @ionChange="updateNetwork">
+            <ion-select-option value="1">Mainnet</ion-select-option>
+            <ion-select-option value="0">PreProd</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item>
           <ion-label>Cache Name: {{ cacheName }}</ion-label>
         </ion-item>
         <div id="update-container">
@@ -27,13 +34,20 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem, IonSelect, IonSelectOption } from '@ionic/vue';
+import { getNetworkId, setNetworkId } from '@/utils/StorageUtils';
 
 const isDarkMode = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 const cacheName = ref<string | null>(null);
+const network = ref<string | null>(null);
 
 const toggleDarkMode = () => {
   document.body.classList.toggle('dark', isDarkMode.value);
+};
+
+const updateNetwork = (event: any) => {
+  setNetworkId(event.detail.value);
+  window.location.reload();
 };
 
 const getCacheName = async (): Promise<string> => {
@@ -79,7 +93,7 @@ const checkForUpdate = () => {
 
 onMounted(async () => {
   toggleDarkMode();
-  
+  network.value = String(await getNetworkId());
   try {
     cacheName.value = await getCacheName();
   } catch (error) {

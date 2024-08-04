@@ -93,7 +93,7 @@ const sendTransaction = async () => {
 
   try {
     const currentWallet = await getCurrentWallet();
-    const wallet = loadWallet(currentWallet.mnemonic);
+    const wallet = await loadWallet(currentWallet.mnemonic);
 
     const tx = new Transaction({ initiator: wallet }).sendLovelace(
       destinationAddress.value,

@@ -1,18 +1,52 @@
 import { AppWallet, AssetFull, BlockfrostProvider } from '@meshsdk/core';
+import { getNetworkId } from './StorageUtils';
 import * as bip39 from 'bip39';
 
-const BLOCKFROST_API_KEY = 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
-const BLOCKFROST_API_URL = 'https://cardano-mainnet.blockfrost.io/api/v0';
+export async function getBlockfrostURL() {
+  const networkId = await getNetworkId();
+  //preprod
+  if (networkId == 0) return 'https://cardano-preprod.blockfrost.io/api/v0';
+  //mainnet
+  if (networkId == 1) return 'https://cardano-mainnet.blockfrost.io/api/v0';
+  return '';
+}
 
-const blockchainProvider = new BlockfrostProvider(BLOCKFROST_API_KEY);
+export async function getBlockfrostAPI() {
+  const networkId = await getNetworkId();
+  //preprod
+  if (networkId == 0) return 'preprodZ7oYst1M80Svc1AINDBty3eptaGC7Et9';
+  //mainnet
+  if (networkId == 1) return 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
+  return '';
+}
+
+export async function getCardanoScanURL() {
+  const networkId = await getNetworkId();
+  //preprod
+  if (networkId == 0) return 'https://preprod.cardanoscan.io';
+  //mainnet
+  if (networkId == 1) return 'https://cardanoscan.io';
+  return '';
+}
+
+export async function getCExplorerURL() {
+  const networkId = await getNetworkId();
+  //preprod
+  if (networkId == 0) return 'https://preprod.cexplorer.io';
+  //mainnet
+  if (networkId == 1) return 'https://cexplorer.io';
+  return '';
+}
+
+const blockchainProvider = new BlockfrostProvider(await getBlockfrostAPI());
 
 export function validateMnemonic(mnemonic: string) {
   return bip39.validateMnemonic(mnemonic);
 }
 
-export function loadWallet(mnemonic: string) {
+export async function loadWallet(mnemonic: string) {
   return new AppWallet({
-    networkId: 1,
+    networkId: await getNetworkId(),
     fetcher: blockchainProvider,
     submitter: blockchainProvider,
     key: {
@@ -24,7 +58,7 @@ export function loadWallet(mnemonic: string) {
 
 export async function createWallet(mnemonic: string | null) {
   if (mnemonic == null) mnemonic = AppWallet.brew().join(' ');
-  const wallet = loadWallet(mnemonic);
+  const wallet = await loadWallet(mnemonic);
   return {
     mnemonic: mnemonic,
     baseAddr: wallet.getBaseAddress(),
@@ -49,9 +83,11 @@ export function fetchAssetFull(asset: string): Promise<AssetFull> {
 }
 
 export async function fetchTransactions(address: string) {
-  const response = await fetch(`${BLOCKFROST_API_URL}/addresses/${address}/transactions`, {
+  const blockFrostURL = await getBlockfrostURL();
+  const blockFrostAPI = await getBlockfrostAPI();
+  const response = await fetch(`${blockFrostURL}/addresses/${address}/transactions`, {
     headers: {
-      'project_id': BLOCKFROST_API_KEY
+      'project_id': blockFrostAPI
     }
   });
   if (!response.ok) {

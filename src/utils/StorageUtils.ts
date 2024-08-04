@@ -1,8 +1,27 @@
 import { Storage } from '@ionic/storage';
 import { TagParser } from './TagParser';
+import { loadWallet } from '@/utils/CryptoUtils';
+
+export async function getNetworkId() {
+  const storage = new Storage();
+  await storage.create();
+  return parseInt(await storage.get('networkId') || '1');
+}
+
+export async function setNetworkId(networkId: Number) {
+  const storage = new Storage();
+  await storage.create();
+  await storage.set('networkId', networkId);
+}
 
 export async function getCurrentWallet() {
-  return getCurrentItem('currentWallet', 'wallets');
+  const currentWallet = await getCurrentItem('currentWallet', 'wallets');
+  if (currentWallet != null) {
+    const wallet = await loadWallet(currentWallet.mnemonic);
+    currentWallet.baseAddr = wallet.getBaseAddress();
+    currentWallet.rewardAddr = wallet.getRewardAddress();
+  }
+  return currentWallet;
 }
 
 export async function getCurrentTag() {

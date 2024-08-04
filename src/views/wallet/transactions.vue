@@ -17,7 +17,7 @@
           <div v-else>
             <ion-list>
               <ion-item v-for="transaction in transactions" :key="transaction.tx_hash">
-                <p>Transaction: <a :href="`https://cardanoscan.io/transaction/${transaction.tx_hash}`" target="_blank">{{ transaction.tx_hash }}</a></p>
+                <p>Transaction: <a :href="`${cardanoScanURL}/transaction/${transaction.tx_hash}`" target="_blank">{{ transaction.tx_hash }}</a></p>
               </ion-item>
             </ion-list>
           </div>
@@ -34,7 +34,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonBackButton, IonTitle, IonToolbar, IonItem, IonList } from '@ionic/vue';
 import WalletTabBar from '../../components/WalletTabBar.vue';
 import { getCurrentWallet } from '@/utils/StorageUtils';
-import { fetchTransactions } from '@/utils/CryptoUtils';
+import { fetchTransactions, getCardanoScanURL } from '@/utils/CryptoUtils';
 
 interface Transaction {
   tx_hash: string;
@@ -45,6 +45,7 @@ const route = useRoute();
 const walletName = ref('');
 const transactions = ref<Transaction[]>([]);
 const loading = ref(true);
+let cardanoScanURL = '';
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/transactions') {
@@ -56,6 +57,7 @@ watch(() => route.path, async (newPath) => {
     }
     walletName.value = currentWallet.name;
     try {
+      cardanoScanURL = await getCardanoScanURL();
       const transactionsData = await fetchTransactions(currentWallet.baseAddr);
       transactions.value = transactionsData;
     } catch (error) {

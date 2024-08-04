@@ -31,7 +31,7 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonBackButton, IonButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
-import { fetchAssetFull } from '@/utils/CryptoUtils';
+import { fetchAssetFull, getCExplorerURL } from '@/utils/CryptoUtils';
 import { AssetFull } from '@meshsdk/core';
 
 const route = useRoute();
@@ -42,8 +42,8 @@ const formatIpfsUrl = (url: string) => {
   return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
 };
 
-const viewOnExplorer = () => {
-  const explorerUrl = `https://cexplorer.io/asset/${asset.value?.fingerprint}`;
+const viewOnExplorer = async () => {
+  const explorerUrl =  await getCExplorerURL() + '/asset/' + asset.value?.fingerprint;
   window.open(explorerUrl, '_blank');
 };
 
