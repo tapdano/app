@@ -15,7 +15,6 @@ export default defineConfig({
     nodePolyfills(),
     wasm(),
     vue(),
-    legacy(),
     topLevelAwait({
       promiseExportName: "__tla",
       promiseImportName: i => `__tla_${i}`
