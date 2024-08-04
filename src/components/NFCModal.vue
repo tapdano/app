@@ -29,7 +29,7 @@ const isOpen = ref(false);
 const progress = ref(0);
 const progressTotal = ref(2);
 
-let useWebNFC = (window.NDEFReader != undefined);
+const useWebNFC = false; //(window.NDEFReader != undefined);
 const AUTHN_MAX_TRIES = 3;
 let AUTHN_TRIES = 0;
 let globalNdefReader: NDEFReader | null = null;
@@ -99,12 +99,7 @@ const ExecuteCommand = async (command?: string): Promise<string> => {
         };
 
         globalNdefReader.addEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
-        try {
-          await globalNdefReader.scan();
-        } catch (error) {
-          useWebNFC = false;
-          return await ExecuteCommand(command);
-        }
+        await globalNdefReader.scan();
       } else { //WebAuthN
         progressTotal.value = 1;
         AUTHN_TRIES = 0;
