@@ -14,7 +14,7 @@
         <p>You have an empty TapDano Tag!<br /><br />Would you like to create a new Tag or restore a previous one?</p>
         <div id="buttons-box">
           <ion-button expand="block" @click="$router.push('/new-tag')">Create a new Tag</ion-button>
-          <ion-button expand="block" @click="$router.push('/restore-tag')" fill="outline" :disabled="true">Restore Tag</ion-button>
+          <ion-button expand="block" @click="$router.push('/restore-tag')" fill="outline">Restore Tag</ion-button>
         </div>
       </div>
     </ion-content>

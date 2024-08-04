@@ -6,6 +6,10 @@ export function hexStringToArrayBuffer(hexString: string) {
   return byteArray.buffer;
 }
 
+export function bufferToHexString(byteArray: Buffer) {
+  return Array.from(byteArray, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export function dataViewToHexString(dataView: DataView): string {
   let hexString = '';
   for (let i = 0; i < dataView.byteLength; i++) {

@@ -41,6 +41,8 @@ import { Storage } from '@ionic/storage';
 import NFCModal from '@/components/NFCModal.vue';
 import { TagParser } from '@/utils/TagParser';
 import { addTag } from '@/utils/StorageUtils';
+import { bufferToHexString } from '@/utils/StringUtils';
+import * as ed from '@noble/ed25519';
 
 const props = defineProps({
   route: String
@@ -64,11 +66,15 @@ const handleSubmit = async () => {
     }
 
     let cmd = '00A10000';
-    cmd += (props.route == 'new') ? '02' : '34'; //data length
+    cmd += (props.route == 'new') ? '02' : '66'; //data length
     cmd += (props.route == 'new') ? '01' : '02'; //action
     if (tagType.value == 'soulbound')   cmd += '01';
     if (tagType.value == 'extractable') cmd += '02';
-    if (props.route == 'restore') cmd += tagPrivateKey.value;
+    if (props.route == 'restore') {
+      const pubKey = bufferToHexString(await ed.getPublicKeyAsync(tagPrivateKey.value) as Buffer);
+      cmd += tagPrivateKey.value;
+      cmd += pubKey;
+    }
 
     const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
 
