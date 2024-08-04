@@ -29,7 +29,7 @@ const isOpen = ref(false);
 const progress = ref(0);
 const progressTotal = ref(2);
 
-const useWebNFC = false; //(window.NDEFReader != undefined);
+const useWebNFC = (window.NDEFReader != undefined);
 const AUTHN_MAX_TRIES = 3;
 let AUTHN_TRIES = 0;
 let globalNdefReader: NDEFReader | null = null;
