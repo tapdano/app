@@ -10,6 +10,9 @@
     </ion-header>
     <ion-content :fullscreen="true">
       <div id="container">
+        <a href="javascript:window.open('https://app.tapdano.com', '_system');">T1</a><br />
+        <a href="javascript:window.open('https://app.tapdano.com', '_blank');">T2</a><br />
+        <a href="javascript:window.Android.openExternal('https://app.tapdano.com', '_system');">T3</a><br />
         <ion-button expand="block" @click="startEvent">START</ion-button>
         <div id="console" class="console"></div>
       </div>
