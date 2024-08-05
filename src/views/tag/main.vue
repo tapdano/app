@@ -60,6 +60,6 @@ watch(() => route.path, async (newPath) => {
 }
 
 ion-list p {
-  max-width: 270px;
+  max-width: 240px;
 }
 </style>
