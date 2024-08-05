@@ -70,3 +70,10 @@ export async function addTag(tag: TagParser) {
 
   await storage.set('currentTag', tags.length - 1);
 }
+
+export async function getWallets() {
+  const storage = new Storage();
+  await storage.create();
+  const wallets = await storage.get('wallets') || [];
+  return wallets;
+}
