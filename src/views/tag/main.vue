@@ -66,10 +66,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonList, IonLabel, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal } from '@ionic/vue';
 import { getCurrentTag, getWallets } from '@/utils/StorageUtils';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
-import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, loadWallet, mnemonicToPrivateKey } from '@/utils/CryptoUtils';
+import { getBlockfrostURL, getBlockfrostAPI, getNetworkName } from '@/utils/CryptoUtils';
 import TagTabBar from '@/components/TagTabBar.vue';
 import { copyOutline } from 'ionicons/icons';
-import { Lucid, Data, Blockfrost, Constr } from 'https://unpkg.com/lucid-cardano@0.10.7/web/mod.js';
+import { Lucid, Data, Blockfrost, Constr, UTxO } from 'https://unpkg.com/lucid-cardano@0.10.7/web/mod.js';
 import NFCModal from '@/components/NFCModal.vue';
 import { TagParser } from '@/utils/TagParser';
 
@@ -142,10 +142,8 @@ async function selectWallet(wallet: any) {
       new Blockfrost(await getBlockfrostURL(), await getBlockfrostAPI()),
       await getNetworkName(),
     );
-
-    const privateKey = await mnemonicToPrivateKey(wallet.mnemonic);
     
-    lucid.selectWalletFromPrivateKey(privateKey);
+    lucid.selectWalletFromSeed(wallet.mnemonic);
 
     // Código UNLOCK adaptado
     const publicKeyHash = lucid.utils.getAddressDetails(await lucid.wallet.address()).paymentCredential?.hash;
@@ -196,6 +194,13 @@ async function selectWallet(wallet: any) {
     tx = tx.addSigner(await lucid.wallet.address()).attachSpendingValidator(validador);
 
     console.log('tx', tx);
+
+    const aaaaa = await lucid.utxosAt('addr_test1qzqj0uf3njck7cn9lyc72hhfg0zuq58dwrulp7h3zrv83qy52d87s4kp5hgvxr8havuq6jagr99pvnnllj29q6ewv8tqj5an3j');
+    console.log('aaaaa', aaaaa);
+
+    //tx = tx.txBuilder.add_collateral(aaaaa[8]);
+
+    console.log('tx c', tx);
 
     tx = await tx.complete();
     

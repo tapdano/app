@@ -1,4 +1,3 @@
-import * as CardanoWasm from '@emurgo/cardano-serialization-lib-browser';
 import { AppWallet, AssetFull, BlockfrostProvider } from '@meshsdk/core';
 import { getNetworkId } from './StorageUtils';
 import * as bip39 from 'bip39';
@@ -49,18 +48,6 @@ export async function getCExplorerURL() {
 }
 
 const blockchainProvider = new BlockfrostProvider(await getBlockfrostAPI());
-
-export async function mnemonicToPrivateKey(mnemonic: string) {
-  const entropy = bip39.mnemonicToEntropy(mnemonic);
-  const seed = Buffer.from(entropy, 'hex');
-  const rootKey = CardanoWasm.Bip32PrivateKey.from_bip39_entropy(seed, Buffer.from(''));
-  const accountKey = rootKey
-    .derive(1852 | 0x80000000)
-    .derive(1815 | 0x80000000)
-    .derive(0 | 0x80000000);
-  const privateKey = accountKey.to_raw_key().to_bech32();
-  return privateKey;
-}
 
 export function validateMnemonic(mnemonic: string) {
   return bip39.validateMnemonic(mnemonic);
