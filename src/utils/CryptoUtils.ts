@@ -20,6 +20,15 @@ export async function getBlockfrostAPI() {
   return '';
 }
 
+export async function getNetworkName() {
+  const networkId = await getNetworkId();
+  //preprod
+  if (networkId == 0) return 'Preprod';
+  //mainnet
+  if (networkId == 1) return 'Mainnet';
+  return '';
+}
+
 export async function getCardanoScanURL() {
   const networkId = await getNetworkId();
   //preprod
