@@ -22,6 +22,7 @@
           </ion-card-header>
           <ion-card-content>
             {{ adaBalance }} ADA
+            <ion-button @click="openDepositModal" color="primary" expand="block">Deposit</ion-button>
             <ion-button @click="openWalletModal" color="primary" expand="block">Withdraw</ion-button>
           </ion-card-content>
         </ion-card>
@@ -54,6 +55,27 @@
           </ion-list>
         </ion-content>
       </ion-modal>
+      <ion-modal :is-open="isDepositModalOpen" @didDismiss="closeDepositModal">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Deposit ADA</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeDepositModal">Close</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content>
+          <ion-list>
+            <ion-item>
+              <ion-input type="number" v-model.number="depositAmount" label="ADA Amount"></ion-input>
+            </ion-item>
+            <ion-item v-for="wallet in wallets" :key="(wallet as any).name" @click="selectDepositWallet(wallet)">
+              <ion-label>{{ (wallet as any).name }}</ion-label>
+            </ion-item>
+          </ion-list>
+          <!--<ion-button expand="block" @click="depositAda">Deposit</ion-button>-->
+        </ion-content>
+      </ion-modal>
     </ion-content>
     <TagTabBar />
     <NFCModal ref="nfcModal"></NFCModal>
@@ -63,7 +85,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonList, IonLabel, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonList, IonLabel, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonInput } from '@ionic/vue';
 import { getCurrentTag, getWallets } from '@/utils/StorageUtils';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { getBlockfrostURL, getBlockfrostAPI, getNetworkName } from '@/utils/CryptoUtils';
@@ -81,6 +103,8 @@ const tagInfo = ref({});
 const adaBalance = ref(0);
 const loading = ref(true);
 const isWalletModalOpen = ref(false);
+const isDepositModalOpen = ref(false);
+const depositAmount = ref<number>(0);
 const wallets = ref([]);
 
 const validador = {
@@ -131,6 +155,15 @@ function closeWalletModal() {
   isWalletModalOpen.value = false;
 }
 
+function openDepositModal() {
+  loadWallets();
+  isDepositModalOpen.value = true;
+}
+
+function closeDepositModal() {
+  isDepositModalOpen.value = false;
+}
+
 async function loadWallets() {
   wallets.value = await getWallets();
 }
@@ -145,7 +178,6 @@ async function selectWallet(wallet: any) {
     
     lucid.selectWalletFromSeed(wallet.mnemonic);
 
-    // Código UNLOCK adaptado
     const publicKeyHash = lucid.utils.getAddressDetails(await lucid.wallet.address()).paymentCredential?.hash;
     console.log('Wallet PublicKey:' + publicKeyHash);
 
@@ -198,8 +230,6 @@ async function selectWallet(wallet: any) {
     const aaaaa = await lucid.utxosAt('addr_test1qzqj0uf3njck7cn9lyc72hhfg0zuq58dwrulp7h3zrv83qy52d87s4kp5hgvxr8havuq6jagr99pvnnllj29q6ewv8tqj5an3j');
     console.log('aaaaa', aaaaa);
 
-    //tx = tx.txBuilder.add_collateral(aaaaa[8]);
-
     console.log('tx c', tx);
 
     tx = await tx.complete();
@@ -217,6 +247,43 @@ async function selectWallet(wallet: any) {
 
   } catch (error) {
     console.error('Erro ao desbloquear:', error);
+  }
+}
+
+async function selectDepositWallet(wallet: any) {
+  try {
+    closeDepositModal();
+    const lucid = await Lucid.new(
+      new Blockfrost(await getBlockfrostURL(), await getBlockfrostAPI()),
+      await getNetworkName(),
+    );
+    
+    lucid.selectWalletFromSeed(wallet.mnemonic);
+
+    const currentTag = await getCurrentTag();
+    const datum = Data.to(new Constr(0, [currentTag.PublicKey]));
+
+    const contractAddress = lucid.utils.validatorToAddress(validador);
+
+    const tx = await lucid.newTx().payToContract(contractAddress, { inline: datum }, {
+      lovelace: BigInt(depositAmount.value) * 1000000n,
+    }).complete();
+
+    const signedTx = await tx.sign().complete();
+    const txHash = await signedTx.submit();
+    console.log('TX:' + txHash);
+
+  } catch (error) {
+    console.error('Erro ao depositar:', error);
+  }
+}
+
+async function depositAda() {
+  if (depositAmount.value > 0) {
+    await loadWallets();
+    openDepositModal();
+  } else {
+    console.error('Invalid deposit amount');
   }
 }
 
