@@ -110,17 +110,18 @@ const proofSoulBound = async (asset: Asset) => {
     action: 'AUTH',
     challenge: challenge
   };
-  const messageString = JSON.stringify(message, null, 4);
-  const messageHash = await calculateSHA256(messageString);
+  const messageString = JSON.stringify(message);
+  const messageHash = await calculateSHA256(JSON.stringify(message, null, 4));
 
   const encodedMessage = encodeURIComponent(messageString);
   let url = new URL(location.href);
   
   const clientUrl = encodeURIComponent(url.protocol + '//' + url.host + '/signed');
   const link = url.protocol + '//' + url.host + `/tag/signing?message=${encodedMessage}&client=${clientUrl}`;
+  const linkQr = url.protocol + '//' + url.host + `/tag/signing` + encodeURIComponent(`?message=${messageString}&client=${url.protocol + '//' + url.host + '/signed'}`);
 
   qrCodeLink.value = link;
-  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(link)}`;
+  qrCodeUrl.value = `https://quickchart.io/qr?text=${linkQr}`;
   isQRCodeModalOpen.value = true;
   await waitSignResponse(messageHash);
 }
