@@ -85,6 +85,14 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/test',
     component: () => import ('../views/test.vue')
+  },
+  {
+    path: '/demo-auth',
+    component: () => import ('../views/demo-auth.vue')
+  },
+  {
+    path: '/signed',
+    component: () => import ('../views/signed.vue')
   }
 ];
 

@@ -58,6 +58,9 @@
       <img src="/logo.png" />
       <div class="loader"></div>
     </div>
+    <script>
+      if (location.href.includes('/demo-auth') || location.href.includes('/signed')) document.getElementById('loading-screen').style.display = 'none';
+    </script>
     <div id="app"></div>
     <script type="module">
       import { Lucid, Data, Blockfrost, Constr } from 'https://unpkg.com/lucid-cardano@0.10.7/web/mod.js';
@@ -67,7 +70,9 @@
         Blockfrost: Blockfrost,
         Constr: Constr
       }
-    </script>    
+    </script>
+    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
+    <script src="/noble-ed25519.js"></script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 

@@ -1,7 +1,7 @@
 <template>
   <ion-app>
     <ion-split-pane content-id="main-content">
-      <ion-menu content-id="main-content" type="overlay">
+      <ion-menu v-if="showMenu" content-id="main-content" type="overlay">
         <ion-content>
           <ion-img src="/logo.png" style="width: 100%; max-width: 50%; height: auto; margin: 0 auto;"></ion-img>
           <ion-list id="inbox-list">
@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { Storage } from '@ionic/storage';
 import {
   IonApp,
@@ -77,6 +77,7 @@ const path = '/' + window.location.pathname.split('/')[1];
 if (path !== undefined) {
   selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
 }
+const showMenu = computed(() => route.path != '/demo-auth' && !route.path.includes('/signed'));
 
 watch(() => route.path, async (newPath) => {
   selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(newPath.toLowerCase()) != -1);

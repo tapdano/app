@@ -20,6 +20,42 @@
       <div class="wrapper">
         <h1>Oops, your device doesn't have NFC!</h1>
         <p>Please access the link below on a device with NFC to proceed</p>
+        <div v-if="qrCodeUrl">
+          <img :src="qrCodeUrl" alt="QR Code" />
+          <ion-textarea v-model="qrCodeLink" :auto-grow="true" @click="() => copyToClipboard(qrCodeLink as string)" :readonly="true"></ion-textarea>
+        </div>
+      </div>
+    </ion-modal>
+    <ion-modal :is-open="isResultModalOpen" @didDismiss="closeResultModal">
+      <div class="wrapper">
+        <h1>Signature Received</h1>
+        <ion-item>
+          <ion-textarea v-model="resultData.messageHash" label="Message Hash" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(resultData.messageHash)" :readonly="true"></ion-textarea>
+        </ion-item>
+        <ion-item>
+          <ion-textarea v-model="resultData.publicKey" label="Public Key" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(resultData.publicKey)" :readonly="true"></ion-textarea>
+        </ion-item>
+        <ion-item>
+          <ion-textarea v-model="resultData.signature" label="Signature" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(resultData.signature)" :readonly="true"></ion-textarea>
+        </ion-item>
+        <ion-item>
+          <ion-textarea v-model="resultData.policyId" label="Policy ID" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(resultData.policyId)" :readonly="true"></ion-textarea>
+        </ion-item>
+        <ion-item>
+          <ion-textarea v-model="resultData.soulBoundId" label="SoulBound ID" :label-placement="'stacked'" :auto-grow="true" @click="() => copyToClipboard(resultData.soulBoundId)" :readonly="true"></ion-textarea>
+        </ion-item>
+        <ion-item>
+          <p>
+            isSignatureValid: 
+            <ion-icon :icon="resultData.isSignatureValid ? checkmarkCircle : closeCircle" :color="resultData.isSignatureValid ? 'success' : 'danger'"></ion-icon>
+          </p>
+        </ion-item>
+        <ion-item>
+          <p>
+            isMatchSoulBoundId: 
+            <ion-icon :icon="resultData.isMatchSoulBoundId ? checkmarkCircle : closeCircle" :color="resultData.isMatchSoulBoundId ? 'success' : 'danger'"></ion-icon>
+          </p>
+        </ion-item>
       </div>
     </ion-modal>
   </ion-content>
@@ -27,14 +63,15 @@
  
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { IonButtons, IonContent, IonHeader, IonPage, IonModal, IonButton, IonTitle, IonToolbar } from '@ionic/vue';
+import { IonContent, IonModal, IonButton, IonItem, IonTextarea, IonIcon } from '@ionic/vue';
 import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, fetchWalletAssets, fetchAssetMetadata } from '@/utils/CryptoUtils';
 import { Storage } from '@ionic/storage';
+import { copyToClipboard } from '@/utils/ClipboardUtils';
+import { calculateSHA256 } from '@/utils/StringUtils';
+import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 
 const Lucid = (window as any).Lucid.Lucid;
-const Data = (window as any).Lucid.Data;
 const Blockfrost = (window as any).Lucid.Blockfrost;
-const Constr = (window as any).Lucid.Constr;
 
 const storage = new Storage();
 
@@ -50,13 +87,73 @@ interface Asset {
 const loading = ref(true);
 const assets = ref<Asset[]>([]);
 const isQRCodeModalOpen = ref(false);
+const isResultModalOpen = ref(false);
+const qrCodeUrl = ref<string | null>(null);
+const qrCodeLink = ref<string | undefined>(undefined);
+const lastAsset = ref<Asset>();
+const resultData = ref({
+  messageHash: '',
+  publicKey: '',
+  signature: '',
+  policyId: '',
+  soulBoundId: '',
+  isMatchSoulBoundId: false,
+  isSignatureValid: false,
+});
 
-const proofSoulBound = (asset: Asset) => {
+let channel: any = null;
+
+const proofSoulBound = async (asset: Asset) => {
+  lastAsset.value = asset;
+  const challenge = await generateRandom256BitHex();
+  const message = {
+    action: 'AUTH',
+    challenge: challenge
+  };
+  const messageString = JSON.stringify(message, null, 4);
+  const messageHash = await calculateSHA256(messageString);
+
+  const encodedMessage = encodeURIComponent(messageString);
+  let url = new URL(location.href);
+  
+  const clientUrl = encodeURIComponent(url.protocol + '//' + url.host + '/signed');
+  const link = url.protocol + '//' + url.host + `/tag/signing?message=${encodedMessage}&client=${clientUrl}`;
+
+  qrCodeLink.value = link;
+  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(link)}`;
   isQRCodeModalOpen.value = true;
+  await waitSignResponse(messageHash);
+}
+
+async function waitSignResponse(messageHash: string) {
+  await channel.subscribe(messageHash, async (message: any) => {
+    isQRCodeModalOpen.value = false;
+    isResultModalOpen.value = true;
+    const data = JSON.parse(message.data);
+    const isMatchSoulBoundId = data.publicKey == lastAsset.value?.soulBoundId;
+    const isSignatureValid = await (window as any).nobleEd25519.verify(data.signature, data.messageHash, data.publicKey);
+
+    resultData.value = {
+      messageHash: data.messageHash,
+      publicKey: data.publicKey,
+      signature: data.signature,
+      policyId: data.policyId,
+      soulBoundId: lastAsset.value?.soulBoundId || '',
+      isMatchSoulBoundId,
+      isSignatureValid,
+    };
+    await storage.set('SignResponse', JSON.stringify(resultData.value));
+
+    await channel.unsubscribe(messageHash);
+  });
 }
 
 function closeQRCodeModal() {
   isQRCodeModalOpen.value = false;
+}
+
+function closeResultModal() {
+  isResultModalOpen.value = false;
 }
 
 onMounted(async () => {
@@ -69,7 +166,8 @@ onMounted(async () => {
   lucid.selectWallet(api);
 
   await storage.create();
-  let wAssets = await storage.get('wAssets');
+  let wAssets = null;
+  wAssets = await storage.get('wAssets');
   if (!wAssets) {
     wAssets = [];
     const walletAssets = await fetchWalletAssets(await lucid.wallet.address());
@@ -87,11 +185,24 @@ onMounted(async () => {
   }
   assets.value = wAssets;
   loading.value = false;
+
+  const ably = new (window as any).Ably.Realtime('iTZ0XA.06wqDQ:ZI6bW8YuX0nbFqg522l6iQ1N6u382WlHzczw4M2_fe8');
+  await ably.connection.once('connected');
+  channel = ably.channels.get('tapdano');
+
+  //resultData.value = JSON.parse(await storage.get('SignResponse'));
+  //isResultModalOpen.value = true;
 });
 
 const formatIpfsUrl = (url: string) => {
   return url?.replace('ipfs://', 'https://ipfs.io/ipfs/');
 };
+
+async function generateRandom256BitHex() {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
 </script>
 
 <style scoped>
@@ -135,10 +246,39 @@ ion-modal {
 }
 
 ion-modal h1 {
-  margin: 20px 20px 10px 20px;
+  margin: 0 0 20px 0;
+}
+
+ion-modal p {
+  text-align: center;
+}
+
+ion-textarea {
+  max-width: 300px;
+  margin: 0 auto;
+  font-size: 10px;
 }
 
 ion-modal .wrapper {
-  padding: 50px;
+  padding: 30px;
+  border-radius: 20px;
+}
+
+ion-modal img {
+  display: block;
+  margin: 20px auto;
+  width: 250px;
+  height: 250px;
+  background-color: #FFF;
+  padding: 10px;
+  border-radius: 20px;
+}
+
+ion-modal a {
+  text-align: center;
+  display: block;
+  margin-top: 10px;
+  color: #007bff;
+  text-decoration: none;
 }
 </style>

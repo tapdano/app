@@ -32,6 +32,7 @@ import { useRoute, useRouter } from 'vue-router';
 import NFCModal from '@/components/NFCModal.vue';
 import TagTabBar from '../../components/TagTabBar.vue';
 import { TagParser } from '@/utils/TagParser';
+import { calculateSHA256 } from '@/utils/StringUtils';
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const message = ref('');
@@ -48,14 +49,6 @@ onMounted(() => {
   }
   client.value = route.query.client as string || '';
 });
-
-async function calculateSHA256(message: string): Promise<string> {
-  const msgBuffer = new TextEncoder().encode(message);                          
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);         
-  const hashArray = Array.from(new Uint8Array(hashBuffer));                     
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');  
-  return hashHex;
-}
 
 const signWithTag = async () => {
   if (!nfcModal.value) return;
