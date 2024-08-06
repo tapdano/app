@@ -248,6 +248,7 @@ async function selectWallet(wallet: any) {
     const signedTx = await tx.sign().complete();
     const txHash = await signedTx.submit();
     console.log('TX:' + txHash);
+    alert('Success!');
 
   } catch (error) {
     console.error('Erro ao desbloquear:', error);
@@ -276,6 +277,7 @@ async function selectDepositWallet(wallet: any) {
     const signedTx = await tx.sign().complete();
     const txHash = await signedTx.submit();
     console.log('TX:' + txHash);
+    alert('Success!');
 
   } catch (error) {
     console.error('Erro ao depositar:', error);
