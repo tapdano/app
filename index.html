@@ -59,6 +59,15 @@
       <div class="loader"></div>
     </div>
     <div id="app"></div>
+    <script type="module">
+      import { Lucid, Data, Blockfrost, Constr } from 'https://unpkg.com/lucid-cardano@0.10.7/web/mod.js';
+      window.Lucid = {
+        Lucid: Lucid,
+        Data: Data,
+        Blockfrost: Blockfrost,
+        Constr: Constr
+      }
+    </script>    
     <script type="module" src="/src/main.ts"></script>
   </body>
 

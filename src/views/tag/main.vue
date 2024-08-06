@@ -91,9 +91,13 @@ import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { getBlockfrostURL, getBlockfrostAPI, getNetworkName } from '@/utils/CryptoUtils';
 import TagTabBar from '@/components/TagTabBar.vue';
 import { copyOutline } from 'ionicons/icons';
-import { Lucid, Data, Blockfrost, Constr, UTxO } from 'https://unpkg.com/lucid-cardano@0.10.7/web/mod.js';
 import NFCModal from '@/components/NFCModal.vue';
 import { TagParser } from '@/utils/TagParser';
+
+const Lucid = (window as any).Lucid.Lucid;
+const Data = (window as any).Lucid.Data;
+const Blockfrost = (window as any).Lucid.Blockfrost;
+const Constr = (window as any).Lucid.Constr;
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
