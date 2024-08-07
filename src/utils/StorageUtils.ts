@@ -75,5 +75,10 @@ export async function getWallets() {
   const storage = new Storage();
   await storage.create();
   const wallets = await storage.get('wallets') || [];
+  for (let i = 0; i < wallets.length; i++) {
+    const wallet = await loadWallet(wallets[i].mnemonic);
+    wallets[i].baseAddr = wallet.getBaseAddress();
+    wallets[i].rewardAddr = wallet.getRewardAddress();
+  }
   return wallets;
 }
