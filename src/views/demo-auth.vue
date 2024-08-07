@@ -168,7 +168,7 @@ onMounted(async () => {
 
   await storage.create();
   let wAssets = null;
-  wAssets = await storage.get('wAssets');
+  //wAssets = await storage.get('wAssets');
   if (!wAssets) {
     wAssets = [];
     const walletAssets = await fetchWalletAssets(await lucid.wallet.address());
