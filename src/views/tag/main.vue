@@ -93,6 +93,7 @@ import TagTabBar from '@/components/TagTabBar.vue';
 import { copyOutline } from 'ionicons/icons';
 import NFCModal from '@/components/NFCModal.vue';
 import { TagParser } from '@/utils/TagParser';
+import { intToHexString, toHex, utf8ToHex } from '@/utils/StringUtils';
 
 const Lucid = (window as any).Lucid.Lucid;
 const Data = (window as any).Lucid.Data;
@@ -282,27 +283,6 @@ async function selectDepositWallet(wallet: any) {
   } catch (error) {
     console.error('Erro ao depositar:', error);
   }
-}
-
-async function depositAda() {
-  if (depositAmount.value > 0) {
-    await loadWallets();
-    openDepositModal();
-  } else {
-    console.error('Invalid deposit amount');
-  }
-}
-
-function utf8ToHex(str: any) {
-  return Array.from(str).map((c: any) => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
-}
-
-function toHex(byteArray: any) {
-  return Array.from(byteArray, (byte: any) => byte.toString(16).padStart(2, '0')).join('');
-}
-
-function intToHexString(num: Number) {
-  return num.toString(16).padStart(2, '0').toUpperCase();
 }
 </script>
 

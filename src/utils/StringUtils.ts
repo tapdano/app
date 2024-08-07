@@ -10,6 +10,18 @@ export function bufferToHexString(byteArray: Buffer) {
   return Array.from(byteArray, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+export function utf8ToHex(str: any) {
+  return Array.from(str).map((c: any) => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+}
+
+export function toHex(byteArray: any) {
+  return Array.from(byteArray, (byte: any) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+export function intToHexString(num: Number) {
+  return num.toString(16).padStart(2, '0').toUpperCase();
+}
+
 export function dataViewToHexString(dataView: DataView): string {
   let hexString = '';
   for (let i = 0; i < dataView.byteLength; i++) {
