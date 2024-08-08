@@ -252,7 +252,6 @@ async function loadTagAssets(publicKey: string) {
         } catch (error) {
         }
       }
-      console.log(tempTagAssets);
       tagAssets.value = tempTagAssets;
       await storage.set('adaBalanceValue', JSON.stringify(adaBalanceValue));
     }
