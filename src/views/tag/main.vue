@@ -17,15 +17,14 @@
         <div v-else id="assetsArea">
           <h1>Balance</h1>
           <p>{{ adaBalance }} ADA</p>
-          <ion-item v-for="asset in tagAssets" :key="asset.unit">
-            <ion-label>
-              <img :src="formatIpfsUrl(asset.image)" alt="Asset Image" width="50" height="50" />
-              <div>
-                <strong>{{ asset.name }}</strong>
-                <p>Balance: {{ asset.quantity }}</p>
-              </div>
-            </ion-label>
-          </ion-item>          
+          <div v-if="tagAssets.length > 0" class="assets-container">
+            <div v-for="asset in tagAssets" :key="asset.unit" class="asset-item">
+              <img :src="formatIpfsUrl(asset.image)" :alt="asset.name" class="asset-image" />
+              <h2>{{ asset.name }}</h2>
+              <p>Quantity: {{ asset.quantity }}</p>
+              <p>SoulBound: <ion-icon :icon="asset.soulBoundId == tagInfo?.PublicKey ? checkmarkCircle : closeCircle" :color="asset.soulBoundId == tagInfo?.PublicKey ? 'success' : 'danger'"></ion-icon></p>
+            </div>
+          </div>
           <ion-button @click="openDepositModal" color="primary" expand="block">Deposit</ion-button>
           <ion-button @click="openWithdrawModal" color="primary" expand="block">Withdraw</ion-button>
         </div>
@@ -142,7 +141,8 @@ import TagTabBar from '@/components/TagTabBar.vue';
 import { copyOutline } from 'ionicons/icons';
 import NFCModal from '@/components/NFCModal.vue';
 import { TagParser } from '@/utils/TagParser';
-import { intToHexString, serializeBigInt, utf8ToHex, formatIpfsUrl } from '@/utils/StringUtils';
+import { intToHexString, utf8ToHex, formatIpfsUrl } from '@/utils/StringUtils';
+import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 
 interface Asset {
   unit: string;
@@ -252,6 +252,7 @@ async function loadTagAssets(publicKey: string) {
         } catch (error) {
         }
       }
+      console.log(tempTagAssets);
       tagAssets.value = tempTagAssets;
       await storage.set('adaBalanceValue', JSON.stringify(adaBalanceValue));
     }
@@ -433,5 +434,26 @@ ion-accordion-group ion-list ion-item {
 
 ion-modal .wrapper {
   padding: 20px;
+}
+
+.assets-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.asset-item {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 10px;
+  text-align: center;
+  width: calc(50% - 20px);
+}
+
+.asset-image {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
 }
 </style>
