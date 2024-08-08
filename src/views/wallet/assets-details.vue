@@ -15,7 +15,6 @@
           <img :src="formatIpfsUrl(asset?.onchain_metadata.image)" :alt="asset?.onchain_metadata.name" class="asset-detail-image" />
           <h2>{{ asset?.onchain_metadata.name }}</h2>
           <p class="small">{{ asset?.fingerprint }}</p>
-          <p>Quantity: {{ asset?.quantity }}</p>
           <p>SoulBoundId: {{ asset?.onchain_metadata.soulBoundId }}</p>
           <p>{{ asset?.onchain_metadata.description }}</p>
           <div class="buttons-box">
@@ -32,15 +31,12 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonBackButton, IonButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
 import { fetchAssetFull, getCExplorerURL } from '@/utils/CryptoUtils';
+import { formatIpfsUrl } from '@/utils/StringUtils';
 import { AssetFull } from '@meshsdk/core';
 
 const route = useRoute();
 const loading = ref(true);
 const asset = ref<AssetFull>();
-
-const formatIpfsUrl = (url: string) => {
-  return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
-};
 
 const viewOnExplorer = async () => {
   const explorerUrl =  await getCExplorerURL() + '/asset/' + asset.value?.fingerprint;

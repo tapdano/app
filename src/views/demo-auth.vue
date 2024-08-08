@@ -67,7 +67,7 @@ import { IonContent, IonModal, IonButton, IonItem, IonTextarea, IonIcon } from '
 import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, fetchWalletAssets, fetchAssetMetadata } from '@/utils/CryptoUtils';
 import { Storage } from '@ionic/storage';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
-import { calculateSHA256 } from '@/utils/StringUtils';
+import { calculateSHA256, formatIpfsUrl } from '@/utils/StringUtils';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 
 const Lucid = (window as any).Lucid.Lucid;
@@ -194,10 +194,6 @@ onMounted(async () => {
   //resultData.value = JSON.parse(await storage.get('SignResponse'));
   //isResultModalOpen.value = true;
 });
-
-const formatIpfsUrl = (url: string) => {
-  return url?.replace('ipfs://', 'https://ipfs.io/ipfs/');
-};
 
 async function generateRandom256BitHex() {
   const array = new Uint8Array(32);

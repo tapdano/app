@@ -17,6 +17,7 @@
             <div v-for="asset in assets" :key="asset.unit" class="asset-item" @click="navigateToAssetDetails(asset)">
               <img :src="formatIpfsUrl(asset.image)" :alt="asset.name" class="asset-image" />
               <h2>{{ asset.name }}</h2>
+              <p>Quantity: {{ asset.quantity }}</p>
             </div>
           </div>
           <div v-else class="no-items-message">No assets found!</div>
@@ -35,6 +36,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPag
 import WalletTabBar from '../../components/WalletTabBar.vue';
 import { getCurrentWallet } from '@/utils/StorageUtils';
 import { fetchWalletAssets, fetchAssetMetadata } from '@/utils/CryptoUtils';
+import { formatIpfsUrl } from '@/utils/StringUtils';
 
 interface Asset {
   unit: string;
@@ -87,10 +89,6 @@ watch(() => route.path, async (newPath) => {
     loading.value = false;
   }
 }, { immediate: true });
-
-const formatIpfsUrl = (url: string) => {
-  return url?.replace('ipfs://', 'https://ipfs.io/ipfs/');
-};
 </script>
 
 <style scoped>

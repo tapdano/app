@@ -38,3 +38,19 @@ export async function calculateSHA256(message: string): Promise<string> {
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');  
   return hashHex;
 }
+
+export function serializeBigInt(obj: any) {
+  return JSON.stringify(obj, (key, value) => {
+      return typeof value === 'bigint' ? value.toString() + 'n' : value;
+  });
+}
+
+export function deserializeBigInt(jsonStr: string) {
+  return JSON.parse(jsonStr, (key, value) => {
+      return typeof value === 'string' && value.endsWith('n') ? BigInt(value.slice(0, -1)) : value;
+  });
+}
+
+export function formatIpfsUrl(url: string) {
+  return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+};

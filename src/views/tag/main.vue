@@ -17,6 +17,15 @@
         <div v-else id="assetsArea">
           <h1>Balance</h1>
           <p>{{ adaBalance }} ADA</p>
+          <ion-item v-for="asset in tagAssets" :key="asset.unit">
+            <ion-label>
+              <img :src="formatIpfsUrl(asset.image)" alt="Asset Image" width="50" height="50" />
+              <div>
+                <strong>{{ asset.name }}</strong>
+                <p>Balance: {{ asset.quantity }}</p>
+              </div>
+            </ion-label>
+          </ion-item>          
           <ion-button @click="openDepositModal" color="primary" expand="block">Deposit</ion-button>
           <ion-button @click="openWithdrawModal" color="primary" expand="block">Withdraw</ion-button>
         </div>
@@ -52,7 +61,7 @@
               </div>
             </ion-list>
           </ion-accordion>
-        </ion-accordion-group>        
+        </ion-accordion-group>
       </div>
       <ion-modal :is-open="isWithdrawModalOpen" @didDismiss="closeWithdrawModal">
         <ion-header>
@@ -97,20 +106,12 @@
                   </ion-select-option>
                 </ion-select>
               </ion-item>
-              <ion-item>
-                <ion-input type="number" v-model.number="depositAmount" label="ADA Amount"></ion-input>
+              <ion-item v-if="showDepositWalletBalance">
+                <ion-input type="number" v-model.number="depositAmount" :label="`ADA Amount (Balance: ${depositWalletBalance})`" label-placement="floating"></ion-input>
               </ion-item>
               <ion-item v-for="asset in walletAssets" :key="asset.unit">
                 <template v-if="parseInt(asset.quantity) > 1">
-                  <ion-label>
-                    <h3>TOKEN: {{ asset.name }} - Max({{ asset.quantity }})</h3>
-                  </ion-label>
-                  <ion-input
-                    type="number"
-                    v-model.number="asset.amount"
-                    :max="asset.quantity"
-                    label="Quantity"
-                  ></ion-input>
+                  <ion-input type="number" v-model.number="asset.amount" :max="asset.quantity" :label="`TOKEN: ${ asset.name } (Balance: ${ asset.quantity })`" label-placement="floating"></ion-input>
                 </template>
                 <template v-else>
                   <ion-checkbox v-model="asset.selected">
@@ -118,7 +119,7 @@
                   </ion-checkbox>
                 </template>
               </ion-item>
-              <ion-button expand="block" @click="depositFromWallet(depositWallet)">Deposit</ion-button>
+              <ion-button expand="block" :disabled="!showDepositWalletBalance" @click="depositFromWallet(depositWallet)">Deposit</ion-button>
             </ion-list>
           </div>
         </ion-content>
@@ -136,12 +137,12 @@ import { IonButtons, IonCheckbox, IonAccordionGroup, IonAccordion, IonSelect, Io
 import { getCurrentTag, getWallets } from '@/utils/StorageUtils';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { Storage } from '@ionic/storage';
-import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, fetchWalletAssets, fetchAssetMetadata } from '@/utils/CryptoUtils';
+import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, fetchWalletAssets, fetchAssetMetadata, fetchAccountInfo } from '@/utils/CryptoUtils';
 import TagTabBar from '@/components/TagTabBar.vue';
 import { copyOutline } from 'ionicons/icons';
 import NFCModal from '@/components/NFCModal.vue';
 import { TagParser } from '@/utils/TagParser';
-import { intToHexString, utf8ToHex } from '@/utils/StringUtils';
+import { intToHexString, serializeBigInt, utf8ToHex, formatIpfsUrl } from '@/utils/StringUtils';
 
 interface Asset {
   unit: string;
@@ -168,7 +169,9 @@ const route = useRoute();
 const storage = new Storage();
 const tagInfo = ref<TagParser | null>(null);
 const adaBalance = ref(0);
+const depositWalletBalance = ref(0);
 const loading = ref(true);
+const showDepositWalletBalance = ref(false);
 const isWithdrawModalOpen = ref(false);
 const isDepositModalOpen = ref(false);
 const depositAmount = ref<number>(0);
@@ -176,6 +179,7 @@ const wallets = ref([]);
 const depositWallet = ref(null);
 const withdrawWallet = ref(null);
 const walletAssets = ref<Asset[]>([]);
+const tagAssets = ref<Asset[]>([]);
 
 const validador = {
   type: "PlutusV2",
@@ -207,11 +211,12 @@ watch(() => route.path, async (newPath) => {
       return;
     }
     tagInfo.value = currentTag;
-    await loadAdaBalance(currentTag.PublicKey);
+    await loadTagAssets(currentTag.PublicKey);
+    loading.value = false;
   }
 }, { immediate: true });
 
-async function loadAdaBalance(publicKey: String) {
+async function loadTagAssets(publicKey: string) {
   adaBalance.value = 0;
   try {
     let adaBalanceValue = null;
@@ -222,20 +227,43 @@ async function loadAdaBalance(publicKey: String) {
         return utxo.datum && utxo.datum.toUpperCase().includes(publicKey.toUpperCase());
       });
       adaBalanceValue = utxoForTag.reduce((sum: any, utxo: any) => sum + parseInt(utxo.assets.lovelace), 0) / 1e6;
+      const totalAssets = utxoForTag.reduce((acc: any, utxo: any) => {
+        for (const [asset, quantity] of Object.entries(utxo.assets)) {
+          if (!acc[asset]) {
+            acc[asset] = 0n;
+          }
+          acc[asset] += BigInt(quantity as any);
+        }
+        return acc;
+      }, {});
+      const totalAssetsArray = Object.entries(totalAssets).map(([asset, quantity]) => ({
+        asset,
+        quantity: quantity
+      }));
+      const tempTagAssets = [];
+      for (const asset of totalAssetsArray) {
+        try {
+          if (asset.asset == 'lovelace') continue;
+          const metadata = await fetchAssetMetadata(asset.asset);
+          tempTagAssets.push({
+            ...asset,
+            ...metadata
+          });
+        } catch (error) {
+        }
+      }
+      tagAssets.value = tempTagAssets;
       await storage.set('adaBalanceValue', JSON.stringify(adaBalanceValue));
     }
     adaBalance.value = adaBalanceValue;
   } catch (error) {
     console.error(error);
   }
-  loading.value = false;
-}
-
-async function loadTagAssets() {
-
 }
 
 async function loadWalletAssets(address: string) {
+  walletAssets.value = [];
+  showDepositWalletBalance.value = false;
   let wAssets = null;
   if (IS_CACHE_ON) wAssets = await storage.get('wAssets-' + address);
   if (!wAssets) {
@@ -255,6 +283,9 @@ async function loadWalletAssets(address: string) {
     }
     await storage.set('wAssets-' + address, wAssets);
   }
+  const accountInfo = await fetchAccountInfo(address);
+  depositWalletBalance.value = accountInfo.balance / 1000000;
+  showDepositWalletBalance.value = true;
   walletAssets.value = wAssets;
 }
 
@@ -314,49 +345,29 @@ async function depositFromWallet(wallet: any) {
       return;
     }
 
-    const selectedAssets = walletAssets.value
-      .filter((asset) => parseInt(asset.quantity) > 1 && asset.amount > 0 || asset.selected)
-      .map((asset) => ({ id: asset.unit, amount: asset.amount || 1 }));
-
-    console.log(selectedAssets);
-
     closeDepositModal();
     lucid.selectWalletFromSeed(wallet.mnemonic);
     const currentTag = await getCurrentTag();
     const datum = Data.to(new Constr(0, [currentTag.PublicKey]));
     let tx = await lucid.newTx();
 
-    /*
-    tx = tx.payToContract(contractAddress, { inline: datum }, {
-      lovelace: BigInt(depositAmount.value) * 1000000n,
-      '320efa086623412739f4eb52ebab1d4c004c8db5f373464580344bcf654a704d6948416766326f6d6538506a6d38625361423434313749382b577244': BigInt(2) * 1000000n,
-      '320efa086623412739f4eb52ebab1d4c004c8db5f373464580344bcf4d5074354e66584f75696351764142714d334c62693275306a414635327a6544': BigInt(1) * 1000000n,
-    });
-    */
-
-    /*
-    tx.payToContract(contractAddress, { inline: datum }, {
-      lovelace: BigInt(depositAmount.value) * 1000000n,
-      '320efa086623...': BigInt(2) * 1000000n,
-      '320efa086624...': BigInt(1) * 1000000n,
-    });
-    */
-
     tx = tx.payToContract(contractAddress, { inline: datum }, {
       lovelace: BigInt(depositAmount.value) * 1000000n,
     });
 
-    /*
+    const selectedAssets = walletAssets.value
+      .filter((asset) => parseInt(asset.quantity) > 1 && asset.amount > 0 || asset.selected)
+      .map((asset) => ({ id: asset.unit, amount: asset.amount || 1 }));
+
     for (let i = 0; i < selectedAssets.length; i++) {
       tx = tx.payToContract(contractAddress, { inline: datum }, {
-        lovelace: BigInt(1) * 1000000n,
-        [selectedAssets[i].id]: BigInt(selectedAssets[i].amount) * 1000000n
+        [selectedAssets[i].id]: BigInt(selectedAssets[i].amount)
       });
     }
-    */
 
     tx = await tx.complete();
     console.log('tx', tx);
+
     const signedTx = await tx.sign().complete();
     const txHash = await signedTx.submit();
     console.log('TX:' + txHash);
@@ -380,6 +391,9 @@ function openDepositModal() {
   loadWallets();
   depositWallet.value = null;
   depositAmount.value = 0;
+  walletAssets.value = [];
+  depositWalletBalance.value = 0;
+  showDepositWalletBalance.value = false;
   isDepositModalOpen.value = true;
 }
 
