@@ -1,5 +1,5 @@
 import { Storage } from '@ionic/storage';
-import { TagParser } from './TagParser';
+import { TagParser } from 'tapdano';
 import { loadWallet } from '@/utils/CryptoUtils';
 
 export async function getNetworkId() {

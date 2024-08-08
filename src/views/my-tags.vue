@@ -26,7 +26,6 @@ import { useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
 import { Storage } from '@ionic/storage';
 import NFCModal from '@/components/NFCModal.vue';
-import { TagParser } from '@/utils/TagParser';
 import { addTag } from '@/utils/StorageUtils';
 
 const storage = new Storage();
@@ -39,7 +38,7 @@ const addTagEvent = async () => {
   try {
     if (!nfcModal.value) return;
 
-    const tag = new TagParser(await nfcModal.value.ExecuteCommand());
+    const tag = await nfcModal.value.ExecuteCommand();
 
     if (tag.TagID != '5444') {
       alert('Unknow Tag. Please use a TapDano Tag.');

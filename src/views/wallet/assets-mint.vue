@@ -38,7 +38,6 @@ import { loadWallet } from '@/utils/CryptoUtils';
 import { Transaction, ForgeScript } from '@meshsdk/core';
 import type { Mint, AssetMetadata } from '@meshsdk/core';
 import NFCModal from '@/components/NFCModal.vue';
-import { TagParser } from '@/utils/TagParser';
 
 const router = useRouter();
 const route = useRoute();
@@ -63,8 +62,7 @@ const mintAsset = async () => {
     const forgeScript = ForgeScript.withOneSignature(currentWallet.baseAddr);
     const policyId = tx.getPolicyIdFromForgeScript(forgeScript);
     const cmd = '00A700001C' + policyId;
-    const tagContent = await nfcModal.value.ExecuteCommand(cmd);
-    const tag = new TagParser(tagContent);
+    const tag = await nfcModal.value.ExecuteCommand(cmd);
     tx.mintAsset(
       forgeScript,
       {

@@ -21,7 +21,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
-import { TagParser } from '@/utils/TagParser';
 import NFCModal from '@/components/NFCModal.vue';
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
@@ -41,7 +40,7 @@ const startEvent = async () => {
     addLog('ROUND: #' + round);
     try {
 
-      let tag = new TagParser(await nfcModal.value.ExecuteCommand());
+      let tag = await nfcModal.value.ExecuteCommand(undefined, true);
 
       if (tag.TagID != '5444') {
         addLog('Unknow Tag. Please use a TapDano Tag.');
@@ -66,7 +65,7 @@ const startEvent = async () => {
       if (tagType == 'extractable') cmd += '02';
       if (!isNew) cmd += tagPrivateKey;
 
-      tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
+      tag = await nfcModal.value.ExecuteCommand(cmd, true);
 
       if (tag.TagID != '5444') {
         addLog('Unknow Tag. Please use a TapDano Tag.');
@@ -78,7 +77,7 @@ const startEvent = async () => {
 
 
       cmd = "00A30000";
-      tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
+      tag = await nfcModal.value.ExecuteCommand(cmd, true);
       if (tag.TagID != '5444') {
         addLog('Unknow Tag. Please use a TapDano Tag.');
         addLog(JSON.stringify(tag));

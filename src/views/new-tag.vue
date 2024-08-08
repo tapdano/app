@@ -39,7 +39,6 @@ import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import NFCModal from '@/components/NFCModal.vue';
-import { TagParser } from '@/utils/TagParser';
 import { addTag } from '@/utils/StorageUtils';
 import { bufferToHexString } from '@/utils/StringUtils';
 import * as ed from '@noble/ed25519';
@@ -76,7 +75,7 @@ const handleSubmit = async () => {
       cmd += pubKey;
     }
 
-    const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
+    const tag = await nfcModal.value.ExecuteCommand(cmd);
 
     if (tag.TagID != '5444') {
       alert('Unknow Tag. Please use a TapDano Tag.');

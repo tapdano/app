@@ -28,7 +28,6 @@ import { Storage } from '@ionic/storage';
 import { getCurrentTag, deleteTagByPublicKey, addTag } from '@/utils/StorageUtils';
 import TagTabBar from '../../components/TagTabBar.vue';
 import NFCModal from '@/components/NFCModal.vue';
-import { TagParser } from '@/utils/TagParser';
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
@@ -52,7 +51,7 @@ const lockTag = async () => {
   const confirmation = confirm('Are you sure you want to LOCK this Tag?');
   if (confirmation) {
     const cmd = "00A40000";
-    const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
+    const tag = await nfcModal.value.ExecuteCommand(cmd);
     await addTag(tag);
     router.replace('/tag/main');
   }
@@ -63,7 +62,7 @@ const formatTag = async () => {
   const confirmation = confirm('Are you sure you want to FORMAT this Tag?');
   if (confirmation) {
     const cmd = "00A30000";
-    const tag = new TagParser(await nfcModal.value.ExecuteCommand(cmd));
+    const tag = await nfcModal.value.ExecuteCommand(cmd);
     const currentTag = await getCurrentTag();
     await deleteTagByPublicKey(currentTag.PublicKey);
     router.replace('/my-tags');

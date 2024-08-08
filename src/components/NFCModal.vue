@@ -11,9 +11,10 @@
     <ion-content class="ion-padding">
       <ion-img src="/logo.png" class="logo"></ion-img>
       <p class="txt">Approximate your TapDano Tag</p>
-      <div class="progress-circle" :class="{'progress-50': progress === 1 && progressTotal === 2, 'progress-100': (progress === 2) || (progress === 1 && progressTotal === 1)}">
+      <!--<div class="progress-circle" :class="{'progress-50': progress === 1 && progressTotal === 2, 'progress-100': (progress === 2) || (progress === 1 && progressTotal === 1)}">-->
+      <div class="progress-circle">
         <div class="content">
-          <span>{{ progress }}/{{ progressTotal }}</span>
+          <span>{{ progress }}</span>
         </div>
       </div>
     </ion-content>
@@ -23,139 +24,54 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonImg } from '@ionic/vue';
-import { dataViewToHexString, hexStringToArrayBuffer } from '@/utils/StringUtils';
+import { TagParser, WebNFCService } from 'tapdano';
+import { WebAuthnService } from 'tapdano';
 
 const isOpen = ref(false);
 const progress = ref(0);
-const progressTotal = ref(2);
+const progressTotal = ref(0);
 
-const useWebNFC = (window.NDEFReader != undefined);
-const AUTHN_MAX_TRIES = 3;
-let AUTHN_TRIES = 0;
-let globalNdefReader: NDEFReader | null = null;
-let globalNdefReadHandler: ((event: NDEFReadingEvent) => Promise<void>) | null = null;
+const useWebNFC = 'NDEFReader' in window;
+const tapDanoService = useWebNFC ? new WebNFCService() : new WebAuthnService();
+
 let commandReject: ((reason?: Error) => void) | null = null;
 
 const handleCancel = () => {
-  cancelNFCTagReading();
+  tapDanoService.cancelReading();
   isOpen.value = false;
+  progress.value = 0;
   if (commandReject) {
     commandReject();
   }
-}
+};
 
-const handleAgain = () => {
-  progress.value++;
-}
-
-const ExecuteCommand = async (command?: string): Promise<string> => {
-  return new Promise<string>(async (resolve, reject) => {
+const ExecuteCommand = async (command?: string, keepOpen: boolean = false): Promise<TagParser> => {
+  return new Promise<TagParser>(async (resolve, reject) => {
     try {
       commandReject = reject;
-      progress.value = 0;
       isOpen.value = true;
 
-      const sendResolve = (content: string) => {
-        cancelNFCTagReading();
-        progress.value++;
+      const result = await tapDanoService.executeCommand(command);
+
+      progress.value++;
+
+      if (keepOpen) {
+        resolve(result);
+      } else {
         setTimeout(() => {
           isOpen.value = false;
-          resolve(content);
+          progress.value = 0;
+          resolve(result);
         }, 500);
-      };
-
-      if (useWebNFC) {
-        progressTotal.value = command ? 2 : 1;
-
-        globalNdefReader = new window.NDEFReader();
-        let isFirstRead = (command != undefined);
-
-        globalNdefReadHandler = async (event: NDEFReadingEvent) => {
-          if (isFirstRead) {
-            globalNdefReader && await globalNdefReader.write({
-              records: [{ recordType: "unknown", data: hexStringToArrayBuffer(command as string) }],
-            });
-            isFirstRead = false;
-            handleAgain();
-            cancelNFCTagReading();
-            globalNdefReader = new window.NDEFReader();
-            globalNdefReader.addEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
-            await globalNdefReader.scan();
-            return;
-          }
-
-          let readContent: string = '';
-          if (event.message.records.length > 0) {
-            const record = event.message.records[0];
-            if (record.recordType === "text") {
-              const textDecoder = new TextDecoder(record.encoding);
-              readContent = textDecoder.decode(record.data);
-            } else if (record.recordType === "unknown") {
-              readContent = dataViewToHexString(record.data as DataView);
-            }
-          }
-
-          sendResolve(readContent);
-        };
-
-        globalNdefReader.addEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
-        await globalNdefReader.scan();
-      } else { //WebAuthN
-        progressTotal.value = 1;
-        AUTHN_TRIES = 0;
-        command = command ? command : '0000';
-        const execWebAuthN = async function() {
-          try {
-            const ret = await navigator.credentials.get({
-              publicKey: {
-                allowCredentials: [{
-                  id: StrToHex(command),
-                  type: "public-key",
-                  transports: ["nfc"]
-                }],
-                challenge: crypto.getRandomValues(new Uint8Array(32)),
-                rpId: window.location.hostname,
-                userVerification: "discouraged",
-                timeout: 60000
-              }
-            });
-            const content = arrayBufferToHex((ret as any).response.signature);
-            sendResolve(content);
-          } catch (e) {
-            console.error(e);
-            AUTHN_TRIES++;
-            if (AUTHN_TRIES == AUTHN_MAX_TRIES) {
-              throw e;
-            } else {
-              execWebAuthN();
-            }
-          }
-        }
-        execWebAuthN();
       }
+
     } catch (error) {
-      reject(error as Error);
       isOpen.value = false;
+      progress.value = 0;
+      reject(error);
     }
   });
-}
-
-const cancelNFCTagReading = () => {
-  if (useWebNFC) {
-    if (globalNdefReader && globalNdefReadHandler) {
-      globalNdefReader.removeEventListener("reading", globalNdefReadHandler as unknown as EventListenerOrEventListenerObject);
-    }
-    globalNdefReader = null;
-  }
-}
-
-const StrToHex = function(s: any) {
-  return new Uint8Array(s.replaceAll(' ', '').match(/.{1,2}/g).map((b: any) => parseInt(b, 16)));
-}
-
-const arrayBufferToHex = function(arrayBuffer: any) {
-  return Array.from(new Uint8Array(arrayBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
+};
 
 defineExpose({ ExecuteCommand });
 </script>

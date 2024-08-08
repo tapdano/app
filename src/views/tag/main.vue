@@ -140,7 +140,7 @@ import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, fetchWalletAssets, 
 import TagTabBar from '@/components/TagTabBar.vue';
 import { copyOutline } from 'ionicons/icons';
 import NFCModal from '@/components/NFCModal.vue';
-import { TagParser } from '@/utils/TagParser';
+import { TagParser } from 'tapdano';
 import { intToHexString, utf8ToHex, formatIpfsUrl } from '@/utils/StringUtils';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 
@@ -318,9 +318,8 @@ async function withdrawFromWallet(wallet: any) {
       const message = utxoToCollect[i].txHash + utf8ToHex(String(utxoToCollect[i].outputIndex)) + publicKeyHash;
       const command = '00A20000' + intToHexString(message.length / 2) + message;
       if (nfcModal.value == null) return;
-      const tmp = await nfcModal.value.ExecuteCommand(command);
-      const sig = new TagParser(tmp);
-      const redeemer = Data.to(new Constr(0, [sig.LastSignature]));
+      const tag = await nfcModal.value.ExecuteCommand(command, i + 1 < utxoToCollect.length);
+      const redeemer = Data.to(new Constr(0, [tag.LastSignature]));
       tx = tx.collectFrom([utxoToCollect[i]], redeemer);
     }
     tx = tx.addSigner(await lucid.wallet.address()).attachSpendingValidator(validador);

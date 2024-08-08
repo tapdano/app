@@ -31,7 +31,6 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import NFCModal from '@/components/NFCModal.vue';
 import TagTabBar from '../../components/TagTabBar.vue';
-import { TagParser } from '@/utils/TagParser';
 import { calculateSHA256 } from '@/utils/StringUtils';
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
@@ -55,12 +54,12 @@ const signWithTag = async () => {
   try {
     const hash = await calculateSHA256(message.value);
     const command = '00A2000020' + hash;
-    const tagResponse = new TagParser(await nfcModal.value.ExecuteCommand(command));
+    const tag = await nfcModal.value.ExecuteCommand(command);
     const response = {
       messageHash: hash,
-      publicKey: tagResponse.PublicKey,
-      signature: tagResponse.LastSignature,
-      policyId: tagResponse.PolicyId
+      publicKey: tag.PublicKey,
+      signature: tag.LastSignature,
+      policyId: tag.PolicyId
     };
     const redirectUrl = client.value + '?response=' + JSON.stringify(response);
     location.href = redirectUrl;
