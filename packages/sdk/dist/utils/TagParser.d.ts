@@ -13,7 +13,5 @@ export declare class TagParser {
     LastSignature?: string;
     constructor(input: string);
     private parseType;
-    private hexToBytes;
-    private calculatePublicKey;
 }
 export {};

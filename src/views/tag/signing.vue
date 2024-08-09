@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-buttons slot="start">
+        <ion-buttons slot="start" v-if="client == ''">
           <ion-menu-button color="primary"></ion-menu-button>
           <ion-back-button color="primary" default-href="/my-tags"></ion-back-button>
         </ion-buttons>
@@ -14,13 +14,16 @@
         <ion-item>
           <ion-textarea v-model="message" label="Message" label-placement="stacked" :auto-grow="true"></ion-textarea>
         </ion-item>
-        <ion-item>
+        <ion-item v-if="client != ''">
           <ion-input v-model="client" label="Client" readonly></ion-input>
         </ion-item>
         <ion-button color="primary" @click="signWithTag">Sign with Tag</ion-button>
+        <ion-item v-if="result != ''">
+          <ion-textarea v-model="result" label="Result" label-placement="stacked" :auto-grow="true" readonly></ion-textarea>
+        </ion-item>
       </div>
     </ion-content>
-    <TagTabBar />
+    <TagTabBar v-if="client == ''" />
     <NFCModal ref="nfcModal"></NFCModal>
   </ion-page>
 </template>
@@ -32,12 +35,13 @@ import { useRoute, useRouter } from 'vue-router';
 import NFCModal from '@/components/NFCModal.vue';
 import TagTabBar from '../../components/TagTabBar.vue';
 import { calculateSHA256 } from '@/utils/StringUtils';
+import { TapDanoService } from 'tapdano';
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const message = ref('');
 const client = ref('');
+const result = ref('');
 
-const router = useRouter();
 const route = useRoute();
 
 onMounted(() => {
@@ -52,20 +56,33 @@ onMounted(() => {
 const signWithTag = async () => {
   if (!nfcModal.value) return;
   try {
+    const tapDanoService = new TapDanoService();
+    nfcModal.value.openModal(1);
+    nfcModal.value.onModalClose(() => {
+      tapDanoService.cancel();
+    });
     const hash = await calculateSHA256(message.value);
-    const command = '00A2000020' + hash;
-    const tag = await nfcModal.value.ExecuteCommand(command);
+    const tag = await tapDanoService.signData(hash);
+    nfcModal.value.incrementProgress();
+    await nfcModal.value.closeModal(500);
     const response = {
       messageHash: hash,
       publicKey: tag.PublicKey,
       signature: tag.LastSignature,
       policyId: tag.PolicyId
     };
+    if (client.value == '') {
+      result.value = JSON.stringify(response, null, 2);
+      return;
+    }
     const redirectUrl = client.value + '?response=' + JSON.stringify(response);
     location.href = redirectUrl;
   } catch (error) {
-    console.error('Error signing with tag:', error);
-    alert('Failed to sign the message with the tag.');
+    if (error && error != 'canceled') {
+      await nfcModal.value.closeModal(0);
+      console.error(error);
+      alert(error);
+    }
   }
 };
 </script>

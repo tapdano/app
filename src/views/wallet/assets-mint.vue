@@ -38,6 +38,7 @@ import { loadWallet } from '@/utils/CryptoUtils';
 import { Transaction, ForgeScript } from '@meshsdk/core';
 import type { Mint, AssetMetadata } from '@meshsdk/core';
 import NFCModal from '@/components/NFCModal.vue';
+import { TapDanoService } from 'tapdano';
 
 const router = useRouter();
 const route = useRoute();
@@ -61,8 +62,16 @@ const mintAsset = async () => {
     const tx = new Transaction({ initiator: wallet });
     const forgeScript = ForgeScript.withOneSignature(currentWallet.baseAddr);
     const policyId = tx.getPolicyIdFromForgeScript(forgeScript);
-    const cmd = '00A700001C' + policyId;
-    const tag = await nfcModal.value.ExecuteCommand(cmd);
+
+    const tapDanoService = new TapDanoService();
+    nfcModal.value.openModal(1);
+    nfcModal.value.onModalClose(() => {
+      tapDanoService.cancel();
+    });
+    const tag = await tapDanoService.setPolicyId(policyId);
+    nfcModal.value.incrementProgress();
+    await nfcModal.value.closeModal(500);    
+    
     tx.mintAsset(
       forgeScript,
       {
@@ -85,8 +94,11 @@ const mintAsset = async () => {
     alert('Success! TxID: ' + txHash);
     router.back();
   } catch (error) {
-    console.error(error);
-    alert(error);
+    if (error && error != 'canceled') {
+      await nfcModal.value.closeModal(0);
+      console.error(error);
+      alert(error);
+    }
   }
   loading.value = false;
 };

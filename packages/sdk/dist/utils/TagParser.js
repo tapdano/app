@@ -1,4 +1,4 @@
-import nacl from 'tweetnacl';
+import { calculatePublicKey } from "./Helper";
 export class TagParser {
     constructor(input) {
         this.TagID = input.slice(0, 4);
@@ -10,7 +10,7 @@ export class TagParser {
             this.PinLocked = input.slice(14, 16) === "01";
             if (this.Type == "extractable" && !this.ExtractLocked && !this.PinLocked) {
                 this.PrivateKey = input.slice(16, 80).toUpperCase();
-                this.PublicKey = this.calculatePublicKey(this.PrivateKey).toUpperCase();
+                this.PublicKey = calculatePublicKey(this.PrivateKey).toUpperCase();
             }
             else {
                 this.PublicKey = input.slice(16, 80).toUpperCase();
@@ -31,17 +31,5 @@ export class TagParser {
             default:
                 return undefined;
         }
-    }
-    hexToBytes(hex) {
-        const bytes = new Uint8Array(hex.length / 2);
-        for (let i = 0; i < hex.length; i += 2) {
-            bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-        }
-        return bytes;
-    }
-    calculatePublicKey(privateKey) {
-        const privateKeyBytes = this.hexToBytes(privateKey);
-        const keyPair = nacl.sign.keyPair.fromSeed(privateKeyBytes);
-        return Buffer.from(keyPair.publicKey).toString('hex');
     }
 }

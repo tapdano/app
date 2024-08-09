@@ -38,10 +38,9 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPag
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
-import NFCModal from '@/components/NFCModal.vue';
 import { addTag } from '@/utils/StorageUtils';
-import { bufferToHexString } from '@/utils/StringUtils';
-import * as ed from '@noble/ed25519';
+import { TapDanoService } from 'tapdano';
+import NFCModal from '@/components/NFCModal.vue';
 
 const props = defineProps({
   route: String
@@ -53,39 +52,36 @@ const storage = new Storage();
 storage.create();
 
 const tagPrivateKey = ref('');
-const tagType = ref(props.route === 'new' ? 'soulbound' : 'extractable');
+const tagType = ref((props.route === 'new' ? 'soulbound' : 'extractable') as 'soulbound' | 'extractable');
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 const handleSubmit = async () => {
+  if (!nfcModal.value) return;
   try {
-    if (!nfcModal.value) return;
     if (props.route == 'restore' && tagPrivateKey.value.length != 64) {
       alert('The Private Key must have 64 characters.');
       return;
     }
 
-    let cmd = '00A10000';
-    cmd += (props.route == 'new') ? '02' : '66'; //data length
-    cmd += (props.route == 'new') ? '01' : '02'; //action
-    if (tagType.value == 'soulbound')   cmd += '01';
-    if (tagType.value == 'extractable') cmd += '02';
-    if (props.route == 'restore') {
-      const pubKey = bufferToHexString(await ed.getPublicKeyAsync(tagPrivateKey.value) as Buffer);
-      cmd += tagPrivateKey.value;
-      cmd += pubKey;
-    }
-
-    const tag = await nfcModal.value.ExecuteCommand(cmd);
+    const tapDanoService = new TapDanoService();
+    nfcModal.value.openModal(1);
+    nfcModal.value.onModalClose(() => {
+      tapDanoService.cancel();
+    });
+    const tag = await tapDanoService.burnTag(props.route == 'new' ? 'new' : 'restore', tagType.value, (props.route == 'restore') ? tagPrivateKey.value : undefined);
+    nfcModal.value.incrementProgress();
+    await nfcModal.value.closeModal(500);
 
     if (tag.TagID != '5444') {
-      alert('Unknow Tag. Please use a TapDano Tag.');
+      alert('Unknow Tag. Please try again with a TapDano Tag.');
       return;
     }
 
     await addTag(tag);
     router.replace('/tag/main');
   } catch (error) {
-    if (error) {
+    if (error && error != 'canceled') {
+      await nfcModal.value.closeModal(0);
       console.error(error);
       alert(error);
     }

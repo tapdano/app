@@ -4,17 +4,16 @@
       <ion-toolbar>
         <ion-title>Approximate your Tag</ion-title>
         <ion-buttons slot="primary">
-          <ion-button @click="handleCancel">Cancel</ion-button>
+          <ion-button @click="handleCloseModal">Cancel</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
       <ion-img src="/logo.png" class="logo"></ion-img>
       <p class="txt">Approximate your TapDano Tag</p>
-      <!--<div class="progress-circle" :class="{'progress-50': progress === 1 && progressTotal === 2, 'progress-100': (progress === 2) || (progress === 1 && progressTotal === 1)}">-->
-      <div class="progress-circle">
+      <div class="progress-circle" :class="{'progress-50': progress >= (progressTotal / 2), 'progress-100': (progress == progressTotal)}">
         <div class="content">
-          <span>{{ progress }}</span>
+          <span>{{ progress }} / {{ progressTotal }}</span>
         </div>
       </div>
     </ion-content>
@@ -24,56 +23,43 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonImg } from '@ionic/vue';
-import { TagParser, WebNFCService } from 'tapdano';
-import { WebAuthnService } from 'tapdano';
 
 const isOpen = ref(false);
 const progress = ref(0);
 const progressTotal = ref(0);
 
-const useWebNFC = 'NDEFReader' in window;
-const tapDanoService = useWebNFC ? new WebNFCService() : new WebAuthnService();
-
-let commandReject: ((reason?: Error) => void) | null = null;
-
-const handleCancel = () => {
-  tapDanoService.cancelReading();
-  isOpen.value = false;
+const openModal = (totalProgress: number) => {
   progress.value = 0;
-  if (commandReject) {
-    commandReject();
-  }
+  progressTotal.value = totalProgress;
+  isOpen.value = true;
 };
 
-const ExecuteCommand = async (command?: string, keepOpen: boolean = false): Promise<TagParser> => {
-  return new Promise<TagParser>(async (resolve, reject) => {
-    try {
-      commandReject = reject;
-      isOpen.value = true;
-
-      const result = await tapDanoService.executeCommand(command);
-
-      progress.value++;
-
-      if (keepOpen) {
-        resolve(result);
-      } else {
-        setTimeout(() => {
-          isOpen.value = false;
-          progress.value = 0;
-          resolve(result);
-        }, 500);
-      }
-
-    } catch (error) {
+const closeModal = async (delay: number = 0) => {
+  return new Promise<void>(async (resolve) => {
+    setTimeout(() => {
       isOpen.value = false;
-      progress.value = 0;
-      reject(error);
-    }
+      resolve();
+    }, delay);
   });
 };
 
-defineExpose({ ExecuteCommand });
+const incrementProgress = () => {
+  progress.value++;
+};
+
+let onModalCloseCallback: () => void;
+const onModalClose = (callback: () => void) => {
+  onModalCloseCallback = callback;
+};
+
+const handleCloseModal = () => {
+  if (onModalCloseCallback) {
+    onModalCloseCallback();
+  }
+  isOpen.value = false;
+};
+
+defineExpose({ openModal, closeModal, incrementProgress, onModalClose });
 </script>
 
 <style scoped>

@@ -1,7 +1,12 @@
 import { TagParser } from "../utils/TagParser";
 export declare class WebAuthnService {
-    private AUTHN_MAX_TRIES;
-    private AUTHN_TRIES;
+    private MAX_TRIES;
+    private TRIES;
+    private _command;
+    private _resolve;
+    private _reject;
+    private isCanceled;
     executeCommand(command?: string): Promise<TagParser>;
-    cancelReading(): void;
+    private execWebAuthN;
+    cancel(): void;
 }

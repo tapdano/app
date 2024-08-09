@@ -27,6 +27,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import { Storage } from '@ionic/storage';
 import NFCModal from '@/components/NFCModal.vue';
 import { addTag } from '@/utils/StorageUtils';
+import { TapDanoService } from 'tapdano';
 
 const storage = new Storage();
 storage.create();
@@ -35,10 +36,16 @@ const router = useRouter();
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 const addTagEvent = async () => {
+  if (!nfcModal.value) return;
   try {
-    if (!nfcModal.value) return;
-
-    const tag = await nfcModal.value.ExecuteCommand();
+    const tapDanoService = new TapDanoService();
+    nfcModal.value.openModal(1);
+    nfcModal.value.onModalClose(() => {
+      tapDanoService.cancel();
+    });
+    const tag = await tapDanoService.readTag();
+    nfcModal.value.incrementProgress();
+    await nfcModal.value.closeModal(500);
 
     if (tag.TagID != '5444') {
       alert('Unknow Tag. Please use a TapDano Tag.');
@@ -52,7 +59,8 @@ const addTagEvent = async () => {
       router.replace('/tag/main');
     }
   } catch (error) {
-    if (error) {
+    if (error && error != 'canceled') {
+      await nfcModal.value.closeModal(0);
       console.error(error);
       alert(error);
     }

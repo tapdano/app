@@ -11,45 +11,57 @@ import { arrayBufferToHex, hexStringToArrayBuffer } from "../utils/Helper";
 import { TagParser } from "../utils/TagParser";
 export class WebAuthnService {
     constructor() {
-        this.AUTHN_MAX_TRIES = 3;
-        this.AUTHN_TRIES = 0;
+        this.MAX_TRIES = 3;
+        this.TRIES = 0;
+        this._resolve = undefined;
+        this._reject = undefined;
+        this.isCanceled = false;
+        this.execWebAuthN = () => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const ret = yield navigator.credentials.get({
+                    publicKey: {
+                        allowCredentials: [{
+                                id: hexStringToArrayBuffer(this._command).buffer,
+                                type: "public-key",
+                                transports: ["nfc"]
+                            }],
+                        challenge: crypto.getRandomValues(new Uint8Array(32)),
+                        rpId: window.location.hostname,
+                        userVerification: "discouraged",
+                        timeout: 60000
+                    }
+                });
+                if (this.isCanceled)
+                    return;
+                this._resolve && this._resolve(new TagParser(arrayBufferToHex(ret.response.signature)));
+            }
+            catch (e) {
+                if (this.isCanceled)
+                    return;
+                this.TRIES++;
+                if (this.TRIES >= this.MAX_TRIES) {
+                    this._reject && this._reject(e);
+                }
+                else {
+                    this.execWebAuthN();
+                }
+            }
+        });
     }
     executeCommand() {
         return __awaiter(this, arguments, void 0, function* (command = '0000') {
-            this.AUTHN_TRIES = 0;
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                const execWebAuthN = () => __awaiter(this, void 0, void 0, function* () {
-                    try {
-                        const ret = yield navigator.credentials.get({
-                            publicKey: {
-                                allowCredentials: [{
-                                        id: hexStringToArrayBuffer(command),
-                                        type: "public-key",
-                                        transports: ["nfc"]
-                                    }],
-                                challenge: crypto.getRandomValues(new Uint8Array(32)),
-                                rpId: window.location.hostname,
-                                userVerification: "discouraged",
-                                timeout: 60000
-                            }
-                        });
-                        resolve(new TagParser(arrayBufferToHex(ret.response.signature)));
-                    }
-                    catch (e) {
-                        console.error(e);
-                        this.AUTHN_TRIES++;
-                        if (this.AUTHN_TRIES === this.AUTHN_MAX_TRIES) {
-                            reject(e);
-                        }
-                        else {
-                            execWebAuthN();
-                        }
-                    }
-                });
-                execWebAuthN();
+                this._resolve = resolve;
+                this._reject = reject;
+                this.isCanceled = false;
+                this._command = command;
+                this.TRIES = 0;
+                this.execWebAuthN();
             }));
         });
     }
-    cancelReading() {
+    cancel() {
+        this.isCanceled = true;
+        this._reject && this._reject('canceled');
     }
 }

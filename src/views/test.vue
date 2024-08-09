@@ -22,6 +22,7 @@
 import { ref } from 'vue';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
 import NFCModal from '@/components/NFCModal.vue';
+import { TapDanoService } from 'tapdano';
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
@@ -32,6 +33,8 @@ const startEvent = async () => {
   addLog('- TEST STARTED -');
   addLog('----------------');  
 
+  const tapDanoService = new TapDanoService();
+
   let round = 1;
   const maxRound = 100;
   while (true) {
@@ -39,8 +42,7 @@ const startEvent = async () => {
     addLog('');
     addLog('ROUND: #' + round);
     try {
-
-      let tag = await nfcModal.value.ExecuteCommand(undefined, true);
+      let tag = await tapDanoService.executeRawCommand();
 
       if (tag.TagID != '5444') {
         addLog('Unknow Tag. Please use a TapDano Tag.');
@@ -65,7 +67,7 @@ const startEvent = async () => {
       if (tagType == 'extractable') cmd += '02';
       if (!isNew) cmd += tagPrivateKey;
 
-      tag = await nfcModal.value.ExecuteCommand(cmd, true);
+      tag = await tapDanoService.executeRawCommand(cmd);
 
       if (tag.TagID != '5444') {
         addLog('Unknow Tag. Please use a TapDano Tag.');
@@ -77,7 +79,7 @@ const startEvent = async () => {
 
 
       cmd = "00A30000";
-      tag = await nfcModal.value.ExecuteCommand(cmd, true);
+      tag = await tapDanoService.executeRawCommand(cmd);
       if (tag.TagID != '5444') {
         addLog('Unknow Tag. Please use a TapDano Tag.');
         addLog(JSON.stringify(tag));

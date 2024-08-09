@@ -140,8 +140,8 @@ import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, fetchWalletAssets, 
 import TagTabBar from '@/components/TagTabBar.vue';
 import { copyOutline } from 'ionicons/icons';
 import NFCModal from '@/components/NFCModal.vue';
-import { TagParser } from 'tapdano';
-import { intToHexString, utf8ToHex, formatIpfsUrl } from '@/utils/StringUtils';
+import { TagParser, TapDanoService } from 'tapdano';
+import { utf8ToHex, formatIpfsUrl } from '@/utils/StringUtils';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 
 interface Asset {
@@ -290,6 +290,7 @@ async function loadWalletAssets(address: string) {
 }
 
 async function withdrawFromWallet(wallet: any) {
+  if (nfcModal.value == null) return;
   try {
     if (!wallet) {
       alert('Select the Wallet');
@@ -313,15 +314,22 @@ async function withdrawFromWallet(wallet: any) {
       alert('No assets found');
       return;
     }
+
+    const tapDanoService = new TapDanoService();
+    nfcModal.value.openModal(utxoToCollect.length);
+    nfcModal.value.onModalClose(() => {
+      tapDanoService.cancel();
+    });
+
     let tx = await lucid.newTx();
     for (let i = 0; i < utxoToCollect.length; i++) {
       const message = utxoToCollect[i].txHash + utf8ToHex(String(utxoToCollect[i].outputIndex)) + publicKeyHash;
-      const command = '00A20000' + intToHexString(message.length / 2) + message;
-      if (nfcModal.value == null) return;
-      const tag = await nfcModal.value.ExecuteCommand(command, i + 1 < utxoToCollect.length);
+      const tag = await tapDanoService.signData(message);
+      nfcModal.value.incrementProgress();
       const redeemer = Data.to(new Constr(0, [tag.LastSignature]));
       tx = tx.collectFrom([utxoToCollect[i]], redeemer);
     }
+    await nfcModal.value.closeModal(500);
     tx = tx.addSigner(await lucid.wallet.address()).attachSpendingValidator(validador);
     tx = await tx.complete();
     const signedTx = await tx.sign().complete();
@@ -329,7 +337,11 @@ async function withdrawFromWallet(wallet: any) {
     console.log('TX:' + txHash);
     alert('Success!');
   } catch (error) {
-    console.error(error);
+    if (error && error != 'canceled') {
+      await nfcModal.value.closeModal(0);
+      console.error(error);
+      alert(error);
+    }
   }
 }
 
