@@ -32,13 +32,14 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { IonButtons, IonContent, IonHeader, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonTextarea, IonInput, IonButton } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton } from '@ionic/vue';
 import { getCurrentWallet } from '@/utils/StorageUtils';
 import { loadWallet } from '@/utils/CryptoUtils';
 import { Transaction, ForgeScript } from '@meshsdk/core';
 import type { Mint, AssetMetadata } from '@meshsdk/core';
 import NFCModal from '@/components/NFCModal.vue';
 import { TapDanoService } from 'tapdano';
+import { hexToBase64 } from '@/utils/StringUtils';
 
 const router = useRouter();
 const route = useRoute();
@@ -102,19 +103,6 @@ const mintAsset = async () => {
   }
   loading.value = false;
 };
-
-function hexToBase64(hexString: string) {
-  const hex24 = hexString.slice(0, 48);
-  let bytes = [];
-  for (let i = 0; i < hex24.length; i += 2) {
-    bytes.push(parseInt(hex24.substr(i, 2), 16));
-  }
-  let binary = '';
-  bytes.forEach(byte => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
-}
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/wallet/assets/mint') {

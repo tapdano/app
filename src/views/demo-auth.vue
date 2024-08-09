@@ -65,15 +65,12 @@
 import { ref, onMounted } from 'vue';
 import { IonContent, IonModal, IonButton, IonItem, IonTextarea, IonIcon } from '@ionic/vue';
 import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, fetchWalletAssets, fetchAssetMetadata } from '@/utils/CryptoUtils';
-import { Storage } from '@ionic/storage';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { calculateSHA256, formatIpfsUrl } from '@/utils/StringUtils';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 
 const Lucid = (window as any).Lucid.Lucid;
 const Blockfrost = (window as any).Lucid.Blockfrost;
-
-const storage = new Storage();
 
 interface Asset {
   unit: string;
@@ -143,7 +140,6 @@ async function waitSignResponse(messageHash: string) {
       isMatchSoulBoundId,
       isSignatureValid,
     };
-    await storage.set('SignResponse', JSON.stringify(resultData.value));
 
     await channel.unsubscribe(messageHash);
   });
@@ -166,9 +162,7 @@ onMounted(async () => {
   const api = await window.cardano.nami.enable();
   lucid.selectWallet(api);
 
-  await storage.create();
   let wAssets = null;
-  //wAssets = await storage.get('wAssets');
   if (!wAssets) {
     wAssets = [];
     const walletAssets = await fetchWalletAssets(await lucid.wallet.address());
@@ -182,7 +176,6 @@ onMounted(async () => {
       } catch (error) {
       }
     }
-    await storage.set('wAssets', wAssets);
   }
   assets.value = wAssets;
   loading.value = false;
@@ -190,9 +183,6 @@ onMounted(async () => {
   const ably = new (window as any).Ably.Realtime('iTZ0XA.06wqDQ:ZI6bW8YuX0nbFqg522l6iQ1N6u382WlHzczw4M2_fe8');
   await ably.connection.once('connected');
   channel = ably.channels.get('tapdano');
-
-  //resultData.value = JSON.parse(await storage.get('SignResponse'));
-  //isResultModalOpen.value = true;
 });
 
 async function generateRandom256BitHex() {

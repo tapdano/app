@@ -12,7 +12,7 @@
 </template>
  
 <script setup lang="ts">
-import { IonButtons, IonContent, IonPage, IonButton } from '@ionic/vue';
+import { IonContent, IonPage, IonButton } from '@ionic/vue';
 </script>
 
 <style scoped>

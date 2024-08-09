@@ -1,30 +1,5 @@
-export function hexStringToArrayBuffer(hexString: string) {
-  const byteArray = Uint8Array.from(
-    { length: hexString.length / 2 },
-    (_, i) => parseInt(hexString.substr(i * 2, 2), 16)
-  );
-  return byteArray.buffer;
-}
-
-export function bufferToHexString(byteArray: Buffer) {
-  return Array.from(byteArray, byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
 export function utf8ToHex(str: any) {
   return Array.from(str).map((c: any) => c.charCodeAt(0).toString(16).padStart(2, '0')).join('');
-}
-
-export function toHex(byteArray: any) {
-  return Array.from(byteArray, (byte: any) => byte.toString(16).padStart(2, '0')).join('');
-}
-
-export function dataViewToHexString(dataView: DataView): string {
-  let hexString = '';
-  for (let i = 0; i < dataView.byteLength; i++) {
-    const byte = dataView.getUint8(i);
-    hexString += byte.toString(16).padStart(2, '0');
-  }
-  return hexString;
 }
 
 export async function calculateSHA256(message: string): Promise<string> {
@@ -49,4 +24,17 @@ export function deserializeBigInt(jsonStr: string) {
 
 export function formatIpfsUrl(url: string) {
   return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
-};
+}
+
+export function hexToBase64(hexString: string) {
+  const hex24 = hexString.slice(0, 48);
+  let bytes = [];
+  for (let i = 0; i < hex24.length; i += 2) {
+    bytes.push(parseInt(hex24.substr(i, 2), 16));
+  }
+  let binary = '';
+  bytes.forEach(byte => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
