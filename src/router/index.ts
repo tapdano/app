@@ -93,6 +93,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/signed',
     component: () => import ('../views/signed.vue')
+  },
+  {
+    path: '/demo',
+    component: () => import ('../views/demo.vue')
   }
 ];
 
