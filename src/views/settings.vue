@@ -19,6 +19,7 @@
           <ion-select v-model="network" @ionChange="updateNetwork">
             <ion-select-option value="1">Mainnet</ion-select-option>
             <ion-select-option value="0">PreProd</ion-select-option>
+            <ion-select-option value="7">ShanchoNet</ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item>
@@ -71,6 +72,8 @@ const getCacheName = async (): Promise<string> => {
 };
 
 const checkForUpdate = () => {
+  alert((window as any).nfc);
+  alert(JSON.stringify((window as any).nfc));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistration().then(registration => {
       if (registration && registration.waiting) {

@@ -97,6 +97,18 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/demo',
     component: () => import ('../views/demo.vue')
+  },
+  {
+    path: '/poa',
+    component: () => import ('../views/poa.vue')
+  },
+  {
+    path: '/poa-virtual',
+    component: () => import ('../views/poa.vue')
+  },
+  {
+    path: '/poa-verify',
+    component: () => import ('../views/poa-verify.vue')
   }
 ];
 

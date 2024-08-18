@@ -33,7 +33,8 @@ export class BlockfrostProvider implements IFetcher, IListener, ISubmitter {
       this._axiosInstance = axios.create({ baseURL: args[0] });
     } else {
       const projectId = args[0] as string;
-      const network = projectId.slice(0, 7);
+      let network = projectId.slice(0, 7);
+      network = network == 'sanchon' ? 'sanchonet' : network;
       this._axiosInstance = axios.create({
         baseURL: `https://cardano-${network}.blockfrost.io/api/v${
           args[1] ?? 0

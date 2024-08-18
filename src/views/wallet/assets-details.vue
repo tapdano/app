@@ -39,7 +39,7 @@ const loading = ref(true);
 const asset = ref<AssetFull>();
 
 const viewOnExplorer = async () => {
-  const explorerUrl =  await getCExplorerURL() + '/asset/' + asset.value?.fingerprint;
+  const explorerUrl =  await getCExplorerURL() + '/' + asset.value?.fingerprint;
   window.open(explorerUrl, '_blank');
 };
 

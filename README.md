@@ -23,5 +23,8 @@ We welcome contributions from the community! Whether you're looking to fix a bug
 
 Your contributions play a vital role in the continuous improvement of the TapDano App, making it better for everyone involved.
 
+## Stats
+![Alt](https://repobeats.axiom.co/api/embed/f2360897477fe53b830d9282b6daf27d09fda213.svg "Repobeats analytics image")
+
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.

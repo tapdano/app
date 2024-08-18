@@ -8,6 +8,8 @@ export async function getBlockfrostURL() {
   if (networkId == 0) return 'https://cardano-preprod.blockfrost.io/api/v0';
   //mainnet
   if (networkId == 1) return 'https://cardano-mainnet.blockfrost.io/api/v0';
+  //sanchonet
+  if (networkId == 7) return 'https://cardano-sanchonet.blockfrost.io/api/v0';
   return '';
 }
 
@@ -17,6 +19,8 @@ export async function getBlockfrostAPI() {
   if (networkId == 0) return 'preprodZ7oYst1M80Svc1AINDBty3eptaGC7Et9';
   //mainnet
   if (networkId == 1) return 'mainnetlA85V4VJtXzzoWf4DJ8U8NSsHq6z6Epf';
+  //sanchonet
+  if (networkId == 7) return 'sanchonetga7zaqFSyMi1EH2HKZnqoJWJIt8wV4QC';
   return '';
 }
 
@@ -26,6 +30,8 @@ export async function getNetworkName() {
   if (networkId == 0) return 'Preprod';
   //mainnet
   if (networkId == 1) return 'Mainnet';
+  //sanchonet
+  if (networkId == 7) return 'Preprod';
   return '';
 }
 
@@ -35,15 +41,19 @@ export async function getCardanoScanURL() {
   if (networkId == 0) return 'https://preprod.cardanoscan.io';
   //mainnet
   if (networkId == 1) return 'https://cardanoscan.io';
+  //sanchonet
+  if (networkId == 7) return 'https://sanchonet.beta.explorer.cardano.org';
   return '';
 }
 
 export async function getCExplorerURL() {
   const networkId = await getNetworkId();
   //preprod
-  if (networkId == 0) return 'https://preprod.cexplorer.io';
+  if (networkId == 0) return 'https://preprod.cexplorer.io/asset';
   //mainnet
-  if (networkId == 1) return 'https://cexplorer.io';
+  if (networkId == 1) return 'https://cexplorer.io/asset';
+  //sanchonet
+  if (networkId == 7) return 'https://sanchonet.beta.explorer.cardano.org/token';
   return '';
 }
 
@@ -55,7 +65,7 @@ export function validateMnemonic(mnemonic: string) {
 
 export async function loadWallet(mnemonic: string) {
   return new AppWallet({
-    networkId: await getNetworkId(),
+    networkId: await getNetworkId() == 1 ? 1 : 0,
     fetcher: blockchainProvider,
     submitter: blockchainProvider,
     key: {
