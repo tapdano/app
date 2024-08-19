@@ -22,6 +22,7 @@ import { TapDanoService } from 'tapdano';
 import { createHash, randomBytes } from 'crypto';
 import { useRoute } from 'vue-router';
 import NFCModalPetro from '@/components/NFCModalPetro.vue';
+import { getNetworkId } from '@/utils/StorageUtils';
 
 const isLoading = ref(false);
 const inputEmail = ref('');
@@ -29,10 +30,8 @@ const nfcModal = ref<InstanceType<typeof NFCModalPetro> | null>(null);
 
 const route = useRoute();
 
-watch(() => route.path, async (newPath) => {
-  if (newPath === '/poa-virtual') {
-    inputEmail.value = route.query.email as string;
-  }
+watch(() => route.path, async () => {
+  inputEmail.value = route.query.email as string;
 }, { immediate: true });
 
 const submit  = async () => {
@@ -51,7 +50,8 @@ const submit  = async () => {
     const code = generateRandomCode();
     const hash = sha256(code + inputEmail.value);    
 
-    let url = 'https://fcect1a1b5.execute-api.sa-east-1.amazonaws.com';
+    const networkId = await getNetworkId();
+    let url = 'https://' + ((networkId == 1) ? '0zx82ids4c' : '8yl2xan8xa') + '.execute-api.sa-east-1.amazonaws.com';
     url += '/?email=' + inputEmail.value;
     url += '&code=' + code;
 
