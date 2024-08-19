@@ -9,6 +9,7 @@
           <img :src="formatIpfsUrl(asset?.onchain_metadata.image)" :alt="asset?.onchain_metadata.name" class="asset-detail-image" />
           <h2>{{ asset?.onchain_metadata.name }}</h2>
           <p class="small">{{ asset?.fingerprint }}</p>
+          <p>Hash: {{ asset?.onchain_metadata.hash }}</p>
           <p>SoulBoundId: {{ asset?.onchain_metadata.soulBoundId }}</p>
           <p>Signature: {{ asset?.onchain_metadata.signature1 ? asset?.onchain_metadata.signature1 + asset?.onchain_metadata.signature2 : 'Virtual' }}</p>
           <p>{{ asset?.onchain_metadata.description }}</p>
