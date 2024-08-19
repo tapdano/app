@@ -85,6 +85,11 @@ const submit  = async () => {
           throw data.error;
         }
       } catch (error) {
+        try {
+          if ((error as any).message.includes('401')) throw '401';
+        } catch (error) {
+          if (error = '401') throw 'Sua confirmação já foi solicitada.';
+        }
         if (tryCount == maxTry) {
           throw error;
         } else {
