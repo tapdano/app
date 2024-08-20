@@ -51,7 +51,10 @@ const submit  = async () => {
     const hash = sha256(code + inputEmail.value);    
 
     const networkId = await getNetworkId();
-    let url = 'https://' + ((networkId == 1) ? '0zx82ids4c' : '8yl2xan8xa') + '.execute-api.sa-east-1.amazonaws.com';
+    const lambdaId_dev = '8yl2xan8xa';
+    const lambdaId_prod = '0zx82ids4c';
+    let useProdLambda = (networkId == 1); useProdLambda = false;
+    let url = 'https://' + (useProdLambda ? lambdaId_prod : lambdaId_dev) + '.execute-api.sa-east-1.amazonaws.com';
     url += '/?email=' + inputEmail.value;
     url += '&code=' + code;
 
