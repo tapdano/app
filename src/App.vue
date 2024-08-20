@@ -77,7 +77,7 @@ const path = '/' + window.location.pathname.split('/')[1];
 if (path !== undefined) {
   selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
 }
-const showMenu = computed(() => route.path != '/demo-auth' && !route.path.includes('/signed'));
+const showMenu = computed(() => route.path != '/demo-auth' && !route.path.includes('/signed') && !route.path.includes('/poa'));
 
 watch(() => route.path, async (newPath) => {
   selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(newPath.toLowerCase()) != -1);

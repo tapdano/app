@@ -98,7 +98,7 @@ let deferredPrompt: any;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  showInstallPromotion();
+  //showInstallPromotion();
 });
 
 function showInstallPromotion() {
