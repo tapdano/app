@@ -47,30 +47,28 @@ const submit  = async () => {
 
     isLoading.value = true;
 
-    const code = generateRandomCode();
-    const hash = sha256(code + inputEmail.value);    
-
     const networkId = await getNetworkId();
     const lambdaId_dev = '8yl2xan8xa';
     const lambdaId_prod = '0zx82ids4c';
     let useProdLambda = (networkId == 1); useProdLambda = false;
     let url = 'https://' + (useProdLambda ? lambdaId_prod : lambdaId_dev) + '.execute-api.sa-east-1.amazonaws.com';
-    url += '/?email=' + inputEmail.value;
-    url += '&code=' + code;
+    url += '/?rnd=' + Math.random();
 
     const isVirtual = location.href.includes('/poa-virtual');
 
+    let tag: any;
+    let code: any;
     if (!isVirtual) {
+      code = generateRandomCode();
+      const hash = sha256(code + inputEmail.value);
       const tapDanoService = new TapDanoService();
       nfcModal.value.openModal(1);
       nfcModal.value.onModalClose(() => {
         tapDanoService.cancel();
       });
-      const tag = await tapDanoService.signData(hash);
+      tag = await tapDanoService.signData(hash);
       nfcModal.value.incrementProgress();
       await nfcModal.value.closeModal(500);
-      url += '&publicKey=' + tag.PublicKey;
-      url += '&signature=' + tag.LastSignature;
     }
 
     const maxTry = 9;
@@ -78,7 +76,21 @@ const submit  = async () => {
     const mintRequest = async (url: string) => {
       tryCount++;
       try {
-        const response = await fetch(url);
+        const body: any = {
+          email: inputEmail.value
+        };
+        if (!isVirtual) {
+          body.code = code;
+          body.publicKey = tag.PublicKey;
+          body.signature = tag.LastSignature;
+        }
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
