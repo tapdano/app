@@ -5,6 +5,9 @@ The **TapDano App** is a web and mobile application, developed using the Ionic f
 This application interfaces seamlessly with smartcards running the TapDano applet, offering a robust and user-friendly solution for managing Cardano assets securely.
 By integrating the capabilities of smartcard technology, TapDano App provides an unmatched level of security and convenience for Cardano transactions.
 
+## APK Release
+[Download the TapDano App](https://github.com/tapdano/app/raw/main/tapdano.apk).
+
 ## Key Features
 - **Multi-Platform Support**: Available on both web and mobile platforms, offering flexibility and accessibility for users on the go.
 - **Secure Transaction Management**: Leverages smartcard technology enabled by the TapDano applet for enhanced security in transaction signing and key storage.
