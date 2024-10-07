@@ -5,7 +5,7 @@ import { loadWallet } from '@/utils/CryptoUtils';
 export async function getNetworkId() {
   const storage = new Storage();
   await storage.create();
-  return parseInt(await storage.get('networkId') || '0');
+  return parseInt(await storage.get('networkId') || '1');
 }
 
 export async function setNetworkId(networkId: Number) {
