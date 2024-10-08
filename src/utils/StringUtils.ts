@@ -23,7 +23,11 @@ export function deserializeBigInt(jsonStr: string) {
 }
 
 export function formatIpfsUrl(url: string) {
-  return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  try {
+    return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  } catch (error) {
+    return '';
+  }
 }
 
 export function hexToBase64(hexString: string) {
