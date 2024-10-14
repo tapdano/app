@@ -99,6 +99,10 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/demo.vue')
   },
   {
+    path: '/dash',
+    component: () => import ('../views/dash.vue')
+  },
+  {
     path: '/poa',
     component: () => import ('../views/poa.vue')
   },
