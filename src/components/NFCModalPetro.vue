@@ -2,7 +2,7 @@
   <ion-modal :is-open="isOpen">
     <ion-header>
       <ion-toolbar>
-        <ion-title>Aproxime seu Crachá</ion-title>
+        <ion-title>Aproxime o Crachá</ion-title>
         <ion-buttons slot="primary">
           <ion-button @click="handleCloseModal">X</ion-button>
         </ion-buttons>
@@ -66,7 +66,7 @@ ion-modal {
   --width: fit-content;
   --min-width: 250px;
   --min-height: 250px;
-  --height: 35%;
+  --height: 45%;
   --border-radius: 6px;
   --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.4);
   margin-top: -180px;
