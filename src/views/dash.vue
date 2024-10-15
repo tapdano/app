@@ -77,149 +77,129 @@
   </div>
 </template>
 
-<script>
-export default {
-  data() {
+<script setup lang="ts">
+import { ref } from 'vue';
+
+interface Item {
+  id: number;
+  status: string;
+  email: string;
+  validationCode: string;
+  dateTime: string;
+}
+
+const items = ref<Item[]>([
+  {
+    id: 1,
+    status: "Gravando na Blockchain",
+    email: "usuario1@example.com",
+    validationCode: "ADGF1234567890DO01",
+    dateTime: "2024-10-15T04:17:00Z",
+  },
+  {
+    id: 2,
+    status: "Prova permanente gravada",
+    email: "usuario2@example.com",
+    validationCode: "ADGF0987654321DO02",
+    dateTime: "2024-10-14T12:15:00Z",
+  },
+  {
+    id: 3,
+    status: "Prova permanente gravada",
+    email: "usuario3@example.com",
+    validationCode: "ADGF0987654321DO03",
+    dateTime: "2024-10-14T12:15:00Z",
+  },
+  {
+    id: 4,
+    status: "Prova permanente gravada",
+    email: "usuario3@example.com",
+    validationCode: "ADGF0987654321DO03",
+    dateTime: "2024-10-14T12:15:00Z",
+  },
+  {
+    id: 5,
+    status: "Prova permanente gravada",
+    email: "usuario3@example.com",
+    validationCode: "ADGF0987654321DO03",
+    dateTime: "2024-10-14T12:15:00Z",
+  },
+  {
+    id: 6,
+    status: "Prova permanente gravada",
+    email: "usuario3@example.com",
+    validationCode: "ADGF0987654321DO03",
+    dateTime: "2024-10-14T12:15:00Z",
+  },
+]);
+
+function censorEmail(email: string): string {
+  const [user, domain] = email.split("@");
+  const censoredUser = user.slice(0, 3) + "******";
+  return `${censoredUser}@${domain}`;
+}
+
+function censorCode(code: string): string {
+  return code.slice(0, 4) + "**********************" + code.slice(-4);
+}
+
+function timeAgo(dateTime: string): string {
+  const now = new Date();
+  const past = new Date(dateTime);
+  const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+
+  const intervals = [
+    { label: "ano", seconds: 31536000 },
+    { label: "mês", seconds: 2592000 },
+    { label: "dia", seconds: 86400 },
+    { label: "hora", seconds: 3600 },
+    { label: "minuto", seconds: 60 },
+    { label: "segundo", seconds: 1 },
+  ];
+
+  for (const interval of intervals) {
+    const count = Math.floor(diffInSeconds / interval.seconds);
+    if (count >= 1) {
+      return `${count} ${interval.label}${count > 1 ? "s" : ""} atrás`;
+    }
+  }
+  return "Agora mesmo";
+}
+
+function getCardStyle(status: string): Record<string, string> {
+  if (status === "Gravando na Blockchain") {
     return {
-      items: [
-        {
-          id: 1,
-          status: "Gravando na Blockchain",
-          email: "usuario1@example.com",
-          validationCode: "ADGF1234567890DO01",
-          dateTime: "2024-10-15T04:17:00Z",
-        },
-        {
-          id: 2,
-          status: "Prova permanente gravada",
-          email: "usuario2@example.com",
-          validationCode: "ADGF0987654321DO02",
-          dateTime: "2024-10-14T12:15:00Z",
-        },
-        {
-          id: 3,
-          status: "Prova permanente gravada",
-          email: "usuario2@example.com",
-          validationCode: "ADGF0987654321DO02",
-          dateTime: "2024-10-14T12:15:00Z",
-        },
-        {
-          id: 4,
-          status: "Prova permanente gravada",
-          email: "usuario2@example.com",
-          validationCode: "ADGF0987654321DO02",
-          dateTime: "2024-10-14T12:15:00Z",
-        },
-        {
-          id: 5,
-          status: "Prova permanente gravada",
-          email: "usuario2@example.com",
-          validationCode: "ADGF0987654321DO02",
-          dateTime: "2024-10-14T12:15:00Z",
-        },
-        {
-          id: 6,
-          status: "Prova permanente gravada",
-          email: "usuario2@example.com",
-          validationCode: "ADGF0987654321DO02",
-          dateTime: "2024-10-14T12:15:00Z",
-        },
-        {
-          id: 7,
-          status: "Prova permanente gravada",
-          email: "usuario2@example.com",
-          validationCode: "ADGF0987654321DO02",
-          dateTime: "2024-10-14T12:15:00Z",
-        },
-        {
-          id: 8,
-          status: "Prova permanente gravada",
-          email: "usuario2@example.com",
-          validationCode: "ADGF0987654321DO02",
-          dateTime: "2024-10-14T12:15:00Z",
-        },
-        {
-          id: 9,
-          status: "Prova permanente gravada",
-          email: "usuario2@example.com",
-          validationCode: "ADGF0987654321DO02",
-          dateTime: "2024-10-14T12:15:00Z",
-        },
-        {
-          id: 10,
-          status: "Prova permanente gravada",
-          email: "usuario2@example.com",
-          validationCode: "ADGF0987654321DO02",
-          dateTime: "2024-10-14T12:15:00Z",
-        },
-      ],
+      backgroundColor: "rgba(255, 205, 6, 1)",
     };
-  },
-  methods: {
-    censorEmail(email) {
-      const [user, domain] = email.split("@");
-      const censoredUser = user.slice(0, 3) + "******";
-      return `${censoredUser}@${domain}`;
-    },
-    censorCode(code) {
-      return code.slice(0, 4) + "**********************" + code.slice(-4);
-    },
-    timeAgo(dateTime) {
-      const now = new Date();
-      const past = new Date(dateTime);
-      const diffInSeconds = Math.floor((now - past) / 1000);
+  } else if (status === "Prova permanente gravada") {
+    return {
+      backgroundColor: "rgba(0, 140, 74, 1)",
+    };
+  }
+  return {};
+}
 
-      const intervals = [
-        { label: "ano", seconds: 31536000 },
-        { label: "mês", seconds: 2592000 },
-        { label: "dia", seconds: 86400 },
-        { label: "hora", seconds: 3600 },
-        { label: "minuto", seconds: 60 },
-        { label: "segundo", seconds: 1 },
-      ];
+function getTextStyle(status: string): Record<string, string> {
+  if (status === "Gravando na Blockchain") {
+    return {
+      color: "#000",
+    };
+  } else if (status === "Prova permanente gravada") {
+    return {
+      color: "#fff",
+    };
+  }
+  return {};
+}
 
-      for (const interval of intervals) {
-        const count = Math.floor(diffInSeconds / interval.seconds);
-        if (count >= 1) {
-          return `${count} ${interval.label}${count > 1 ? "s" : ""} atrás`;
-        }
-      }
-      return "Agora mesmo";
-    },
-    getCardStyle(status) {
-      if (status === "Gravando na Blockchain") {
-        return {
-          backgroundColor: "rgba(255, 205, 6, 1)",
-        };
-      } else if (status === "Prova permanente gravada") {
-        return {
-          backgroundColor: "rgba(0, 140, 74, 1)",
-        };
-      }
-      return {};
-    },
-    getTextStyle(status) {
-      if (status === "Gravando na Blockchain") {
-        return {
-          color: "#000",
-        };
-      } else if (status === "Prova permanente gravada") {
-        return {
-          color: "#fff",
-        };
-      }
-      return {};
-    },
-    getStatusClass(status) {
-      if (status === "Gravando na Blockchain") {
-        return "status-gravando";
-      } else if (status === "Prova permanente gravada") {
-        return "status-gravada";
-      }
-      return "";
-    },
-  },
-};
+function getStatusClass(status: string): string {
+  if (status === "Gravando na Blockchain") {
+    return "status-gravando";
+  } else if (status === "Prova permanente gravada") {
+    return "status-gravada";
+  }
+  return "";
+}
 </script>
 
 <style scoped>
