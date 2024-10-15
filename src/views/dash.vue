@@ -74,10 +74,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed  } from 'vue';
+import { ref, watch, computed  } from 'vue';
 import { format, register } from 'timeago.js';
 import pt_BR from 'timeago.js/lib/lang/pt_BR';
 import { useFullscreen } from '@vueuse/core'
+import { useRoute } from 'vue-router';
+import { getNetworkId } from '@/utils/StorageUtils';
+
+const route = useRoute();
+let isInitialzied = false;
 
 register('pt_BR', pt_BR);
 
@@ -204,9 +209,58 @@ const registrosPendentes = computed(() => {
   return items.value.filter(item => item.status === "Gravando na Blockchain").length;
 });
 
- const el = ref(null);
+const el = ref(null);
 const { toggle } = useFullscreen(el);
 
+async function initialize() {
+  const ably = new (window as any).Ably.Realtime('iTZ0XA.06wqDQ:ZI6bW8YuX0nbFqg522l6iQ1N6u382WlHzczw4M2_fe8');
+  await ably.connection.once('connected');
+  const channel = ably.channels.get('webhook');
+  await channel.subscribe('transaction', async (message: any) => {
+    console.log('transaction');
+    const data = JSON.parse(message.data);
+    console.log(data.tx.hash);
+  });
+  await channel.subscribe('new', async (message: any) => {
+    console.log('new');
+    console.log(message.data.email);
+    console.log(message.data.code);
+    console.log(message.data.txHash);
+  });
+  await loadData();
+}
+
+async function loadData() {
+  const networkId = await getNetworkId();
+  const lambdaId_dev = '8yl2xan8xa';
+  const lambdaId_prod = '0zx82ids4c';
+  let useProdLambda = (networkId == 1);
+  let url = 'https://' + (useProdLambda ? lambdaId_prod : lambdaId_dev) + '.execute-api.sa-east-1.amazonaws.com';
+  const response = await fetch(url + '/getItems?rnd=' + Math.random());
+  if (!response.ok) {
+    throw new Error('network error');
+  }
+  const data = await response.json();
+  console.log(data);
+  for (let i = 0; i < data.length; i++) {
+    items.value.push({
+      id: i + 1,
+      status: "Prova permanente gravada", //Gravando na Blockchain
+      email: data[i].id,
+      validationCode: data[i].code.toLowerCase(),
+      dateTime: "2024-10-15T04:17:00Z",
+    });
+  }
+}
+
+watch(() => route.path, async (newPath) => {
+  if (newPath === '/dash2') {
+    if (!isInitialzied) {
+      isInitialzied = true;
+      await initialize();
+    }
+  }
+}, { immediate: true });
 </script>
 
 <style scoped>

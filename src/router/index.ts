@@ -103,10 +103,6 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/dash.vue')
   },
   {
-    path: '/dash2',
-    component: () => import ('../views/dash2.vue')
-  },
-  {
     path: '/poa',
     component: () => import ('../views/poa.vue')
   },
