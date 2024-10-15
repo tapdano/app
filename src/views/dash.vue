@@ -66,7 +66,7 @@
       <div class="aside">
         <img src="/br.png" alt="" @click="toggle" />
         <div class="aside-text">
-          <p>Total de Registros: {{ totalRegistros }}</p>
+          <!--<p>Total de Registros: {{ totalRegistros }}</p>--><br />
           <p>Registros pendentes: {{ registrosPendentes }}</p>
         </div>
       </div>
