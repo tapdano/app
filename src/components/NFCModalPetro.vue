@@ -2,7 +2,7 @@
   <ion-modal :is-open="isOpen">
     <ion-header>
       <ion-toolbar>
-        <ion-title>Aproxime o Crachá</ion-title>
+        <ion-title>Aproxime do Toten</ion-title>
         <ion-buttons slot="primary">
           <ion-button @click="handleCloseModal">X</ion-button>
         </ion-buttons>
