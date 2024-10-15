@@ -1,76 +1,72 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="bg-container">
+  <div class="bg-container" ref="el">
     <div class="container">
       <div class="wrapper">
         <h1>Prova de Participação</h1>
         <div class="card-list">
-          <div
-            class="card mb-3"
-            v-for="item in items"
-            :key="item.id"
-            :style="getCardStyle(item.status)"
-          >
-            <div class="row g-0">
-              <div class="col-md-2 img-place">
-                <img
-                  src="/proof.png"
-                  class="img-fluid rounded-start"
-                  alt="Prova de participação"
-                />
-              </div>
-              <div class="col-md-8">
-                <div class="card-body">
-                  <h5 :style="getTextStyle(item.status)">
-                    Participante: {{ censorEmail(item.email) }}<br />
-                    Código Validador: {{ censorCode(item.validationCode) }}
-                  </h5>
-                  <p class="card-text">
-                    <small :style="getTextStyle(item.status)">
-                      {{ timeAgo(item.dateTime) }}
-                    </small>
-                  </p>
+          <transition-group name="list" tag="div">
+            <div
+              class="card mb-3"
+              v-for="item in items"
+              :key="item.id"
+              :style="getCardStyle(item.status)"
+            >
+              <div class="row g-0">
+                <div class="col-md-2 img-place">
+                  <img
+                    src="/proof.png"
+                    class="img-fluid rounded-start"
+                    alt="Prova de participação"
+                  />
                 </div>
-              </div>
-              <div class="col-md-2">
-                <div v-if="item.status === 'Gravando na Blockchain'">
-                  <div class="loading">
-                    <div class="container-animation">
-                      <div class="ball"></div>
-                      <div class="ball"></div>
-                      <div class="ball"></div>
-                      <div class="ball"></div>
-                      <div class="ball"></div>
-                    </div>
-                    <p
-                      class="status"
-                      :class="getStatusClass(item.status)"
-                    >
-                      {{ item.status }}
+                <div class="col-md-8">
+                  <div class="card-body">
+                    <h5 :style="getTextStyle(item.status)">
+                      Participante: {{ censorEmail(item.email) }}<br />
+                      Código Validador: {{ censorCode(item.validationCode) }}
+                    </h5>
+                    <p class="card-text">
+                      <small :style="getTextStyle(item.status)">
+                        {{ timeAgo(item.dateTime) }}
+                      </small>
                     </p>
                   </div>
                 </div>
-                <div v-else>
-                  <div class="loading">
-                    <img src="/check.png" alt="" />
-                    <p
-                      class="status"
-                      :class="getStatusClass(item.status)"
-                    >
-                      {{ item.status }}
-                    </p>
+                <div class="col-md-2">
+                  <div v-if="item.status === 'Gravando na Blockchain'">
+                    <div class="loading">
+                      <div class="container-animation">
+                        <div class="ball"></div>
+                        <div class="ball"></div>
+                        <div class="ball"></div>
+                        <div class="ball"></div>
+                        <div class="ball"></div>
+                      </div>
+                      <p class="status" :class="getStatusClass(item.status)">
+                        {{ item.status }}
+                      </p>
+                    </div>
+                  </div>
+                  <div v-else>
+                    <div class="loading">
+                      <img src="/check.png" alt="" />
+                      <p class="status" :class="getStatusClass(item.status)">
+                        {{ item.status }}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </transition-group>
         </div>
       </div>
       <div class="aside">
-        <img src="/br.png" alt="" />
-        <div class="aside-text">
-          <p>Total de Registros: 411</p>
-          <p>Registros pendentes: 1</p>
+        <img src="/br.png" alt="" @click="toggle" />
+        <div class="aside-text" @click="addCard">
+          <p>Total de Registros: {{ totalRegistros }}</p>
+          <p>Registros pendentes: {{ registrosPendentes }}</p>
         </div>
       </div>
     </div>
@@ -78,7 +74,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed  } from 'vue';
+import { format, register } from 'timeago.js';
+import pt_BR from 'timeago.js/lib/lang/pt_BR';
+import { useFullscreen } from '@vueuse/core'
+
+register('pt_BR', pt_BR);
 
 interface Item {
   id: number;
@@ -88,13 +89,13 @@ interface Item {
   dateTime: string;
 }
 
-const items = ref<Item[]>([
+let items = ref<Item[]>([
   {
     id: 1,
     status: "Gravando na Blockchain",
     email: "usuario1@example.com",
     validationCode: "ADGF1234567890DO01",
-    dateTime: "2024-10-15T04:17:00Z",
+    dateTime: "2024-10-15T17:00:00Z",
   },
   {
     id: 2,
@@ -144,26 +145,7 @@ function censorCode(code: string): string {
 }
 
 function timeAgo(dateTime: string): string {
-  const now = new Date();
-  const past = new Date(dateTime);
-  const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
-
-  const intervals = [
-    { label: "ano", seconds: 31536000 },
-    { label: "mês", seconds: 2592000 },
-    { label: "dia", seconds: 86400 },
-    { label: "hora", seconds: 3600 },
-    { label: "minuto", seconds: 60 },
-    { label: "segundo", seconds: 1 },
-  ];
-
-  for (const interval of intervals) {
-    const count = Math.floor(diffInSeconds / interval.seconds);
-    if (count >= 1) {
-      return `${count} ${interval.label}${count > 1 ? "s" : ""} atrás`;
-    }
-  }
-  return "Agora mesmo";
+  return format(new Date(dateTime), 'pt_BR');
 }
 
 function getCardStyle(status: string): Record<string, string> {
@@ -200,6 +182,31 @@ function getStatusClass(status: string): string {
   }
   return "";
 }
+
+function addCard() {
+  const newId = items.value.length + 1;
+  const newItem: Item = {
+    id: newId,
+    status: "Gravando na Blockchain",
+    email: `usuario${newId}@example.com`,
+    validationCode: `ADGF${Math.random().toString(36).substr(2, 10).toUpperCase()}DO${newId.toString().padStart(2, '0')}`,
+    dateTime: new Date().toISOString(),
+  };
+  items.value.unshift(newItem);
+  setTimeout(() => {
+    newItem.status = "Prova permanente gravada";
+  }, 5000);
+}
+
+const totalRegistros = computed(() => items.value.length);
+
+const registrosPendentes = computed(() => {
+  return items.value.filter(item => item.status === "Gravando na Blockchain").length;
+});
+
+ const el = ref(null);
+const { toggle } = useFullscreen(el);
+
 </script>
 
 <style scoped>
@@ -375,5 +382,17 @@ h1 {
   height: 183px;
   position: absolute;
   right: 0px;
+}
+
+.list-enter-active {
+  transition: all 0.5s ease;
+}
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+.list-enter-to {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>
