@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "ionic:serve": "vite",
     "dev": "vite",
     "build": "vue-tsc && vite build && node make_sw.js",
     "preview": "vite preview",
