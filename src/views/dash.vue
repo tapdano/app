@@ -3,7 +3,7 @@
   <div class="bg-container">
     <div class="container">
       <div class="wrapper">
-        <h1>Prova de participação</h1>
+        <h1>Prova de Participação</h1>
         <div class="card-list">
           <div
             class="card mb-3"
