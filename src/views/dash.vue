@@ -24,11 +24,12 @@
                   <div class="card-body">
                     <h5 :style="getTextStyle(item.status)">
                       Participante: {{ censorEmail(item.email) }}<br />
-                      Código Validador: {{ censorCode(item.validationCode) }}
+                      Código Validador: {{ censorCode(item.validationCode) }}<br />
+                      Assinatura: {{ item.sign }}
                     </h5>
                     <p class="card-text">
                       <small :style="getTextStyle(item.status)">
-                        {{ timeAgo(item.dateTime) }}
+                        {{ item.dateTime ? timeAgo(item.dateTime) : '' }}
                       </small>
                     </p>
                   </div>
@@ -64,7 +65,7 @@
       </div>
       <div class="aside">
         <img src="/br.png" alt="" @click="toggle" />
-        <div class="aside-text" @click="addCard">
+        <div class="aside-text">
           <p>Total de Registros: {{ totalRegistros }}</p>
           <p>Registros pendentes: {{ registrosPendentes }}</p>
         </div>
@@ -88,56 +89,15 @@ register('pt_BR', pt_BR);
 
 interface Item {
   id: number;
+  hash: string;
+  sign: string;
   status: string;
   email: string;
   validationCode: string;
-  dateTime: string;
+  dateTime: string | null;
 }
 
-let items = ref<Item[]>([
-  {
-    id: 1,
-    status: "Gravando na Blockchain",
-    email: "usuario1@example.com",
-    validationCode: "ADGF1234567890DO01",
-    dateTime: "2024-10-15T17:00:00Z",
-  },
-  {
-    id: 2,
-    status: "Prova permanente gravada",
-    email: "usuario2@example.com",
-    validationCode: "ADGF0987654321DO02",
-    dateTime: "2024-10-14T12:15:00Z",
-  },
-  {
-    id: 3,
-    status: "Prova permanente gravada",
-    email: "usuario3@example.com",
-    validationCode: "ADGF0987654321DO03",
-    dateTime: "2024-10-14T12:15:00Z",
-  },
-  {
-    id: 4,
-    status: "Prova permanente gravada",
-    email: "usuario3@example.com",
-    validationCode: "ADGF0987654321DO03",
-    dateTime: "2024-10-14T12:15:00Z",
-  },
-  {
-    id: 5,
-    status: "Prova permanente gravada",
-    email: "usuario3@example.com",
-    validationCode: "ADGF0987654321DO03",
-    dateTime: "2024-10-14T12:15:00Z",
-  },
-  {
-    id: 6,
-    status: "Prova permanente gravada",
-    email: "usuario3@example.com",
-    validationCode: "ADGF0987654321DO03",
-    dateTime: "2024-10-14T12:15:00Z",
-  },
-]);
+let items = ref<Item[]>([]);
 
 function censorEmail(email: string): string {
   const [user, domain] = email.split("@");
@@ -188,21 +148,6 @@ function getStatusClass(status: string): string {
   return "";
 }
 
-function addCard() {
-  const newId = items.value.length + 1;
-  const newItem: Item = {
-    id: newId,
-    status: "Gravando na Blockchain",
-    email: `usuario${newId}@example.com`,
-    validationCode: `ADGF${Math.random().toString(36).substr(2, 10).toUpperCase()}DO${newId.toString().padStart(2, '0')}`,
-    dateTime: new Date().toISOString(),
-  };
-  items.value.unshift(newItem);
-  setTimeout(() => {
-    newItem.status = "Prova permanente gravada";
-  }, 5000);
-}
-
 const totalRegistros = computed(() => items.value.length);
 
 const registrosPendentes = computed(() => {
@@ -213,19 +158,36 @@ const el = ref(null);
 const { toggle } = useFullscreen(el);
 
 async function initialize() {
+  const networkId = await getNetworkId();
+  const channelName = networkId == 1 ? 'webhook' : 'webhook_dev';
   const ably = new (window as any).Ably.Realtime('iTZ0XA.06wqDQ:ZI6bW8YuX0nbFqg522l6iQ1N6u382WlHzczw4M2_fe8');
   await ably.connection.once('connected');
-  const channel = ably.channels.get('webhook');
+  const channel = ably.channels.get(channelName);
   await channel.subscribe('transaction', async (message: any) => {
     console.log('transaction');
     const data = JSON.parse(message.data);
     console.log(data.tx.hash);
+    for (let i = 0; i < items.value.length; i++) {
+      if (items.value[i].hash == data.tx.hash) {
+        items.value[i].status = "Prova permanente gravada";
+        break;
+      }
+    }
   });
   await channel.subscribe('new', async (message: any) => {
     console.log('new');
-    console.log(message.data.email);
-    console.log(message.data.code);
-    console.log(message.data.txHash);
+    console.log(message.data);
+    const newId = items.value.length + 1;
+    const newItem: Item = {
+      id: newId,
+      sign: message.data.tableName == 'POA_Items_Virtual' ? 'Virtual' : 'Física',
+      hash: message.data.txHash,
+      status: "Gravando na Blockchain",
+      email: message.data.email,
+      validationCode: message.data.code.toUpperCase(),
+      dateTime: new Date().toISOString(),
+    };
+    items.value.unshift(newItem);
   });
   await loadData();
 }
@@ -240,21 +202,23 @@ async function loadData() {
   if (!response.ok) {
     throw new Error('network error');
   }
-  const data = await response.json();
-  console.log(data);
+  let data = await response.json();
+  data = data.sort((a: any, b: any) => b.counter - a.counter);
   for (let i = 0; i < data.length; i++) {
     items.value.push({
       id: i + 1,
-      status: "Prova permanente gravada", //Gravando na Blockchain
+      sign: data[i].tableName == 'POA_Items_Virtual' ? 'Virtual' : 'Física',
+      hash: data[i].tx,
+      status: "Prova permanente gravada",
       email: data[i].id,
-      validationCode: data[i].code.toLowerCase(),
-      dateTime: "2024-10-15T04:17:00Z",
+      validationCode: data[i].code.toUpperCase(),
+      dateTime: null,
     });
   }
 }
 
 watch(() => route.path, async (newPath) => {
-  if (newPath === '/dash2') {
+  if (newPath === '/dash') {
     if (!isInitialzied) {
       isInitialzied = true;
       await initialize();
@@ -309,7 +273,7 @@ watch(() => route.path, async (newPath) => {
   padding: 0px 0px 0px 40px;
   display: flex;
   flex-direction: column;
-  gap: 46px;
+  gap: 22px;
 }
 
 .aside-text {
