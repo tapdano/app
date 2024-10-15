@@ -29,7 +29,7 @@
                     </h5>
                     <p class="card-text">
                       <small :style="getTextStyle(item.status)">
-                        {{ item.dateTime ? timeAgo(item.dateTime) : '' }}
+                        {{ item.dateTimeAgo }}
                       </small>
                     </p>
                   </div>
@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed  } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { format, register } from 'timeago.js';
 import pt_BR from 'timeago.js/lib/lang/pt_BR';
 import { useFullscreen } from '@vueuse/core'
@@ -95,9 +95,23 @@ interface Item {
   email: string;
   validationCode: string;
   dateTime: string | null;
+  dateTimeAgo: string
 }
 
 let items = ref<Item[]>([]);
+
+onMounted(() => {
+  const interval = setInterval(() => {
+    for (let i = 0; i < items.value.length; i++) {
+      if (items.value[i].dateTime != null) {
+        items.value[i].dateTimeAgo = timeAgo(items.value[i].dateTime as string);
+      }
+    }
+  }, 1000);
+  onUnmounted(() => {
+    clearInterval(interval);
+  });
+});
 
 function censorEmail(email: string): string {
   const [user, domain] = email.split("@");
@@ -186,6 +200,7 @@ async function initialize() {
       email: message.data.email,
       validationCode: message.data.code.toUpperCase(),
       dateTime: new Date().toISOString(),
+      dateTimeAgo: timeAgo(new Date().toISOString())
     };
     items.value.unshift(newItem);
   });
@@ -213,6 +228,7 @@ async function loadData() {
       email: data[i].id,
       validationCode: data[i].code.toUpperCase(),
       dateTime: null,
+      dateTimeAgo: ''
     });
   }
 }
