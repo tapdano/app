@@ -229,6 +229,10 @@ export default {
   font-family: "Futura TS New", sans-serif;
 }
 
+::-webkit-scrollbar {
+  display: none;
+}
+
 .container {
   display: flex;
   flex-direction: row;
