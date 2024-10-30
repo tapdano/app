@@ -25,6 +25,13 @@
             </ion-select>
           </ion-item>
 
+          <ion-item v-if="route === 'restore'">
+            <ion-select v-model="tagVersion" label="Version">
+              <ion-select-option value="01">v1</ion-select-option>
+              <ion-select-option value="02">v2</ion-select-option>
+            </ion-select>
+          </ion-item>
+
           <ion-button id="submit-button" expand="block" type="submit">{{ route === 'new' ? 'Create a new Tag' : 'Restore Tag' }}</ion-button>
         </form>
       </div>
@@ -53,6 +60,7 @@ storage.create();
 
 const tagPrivateKey = ref('');
 const tagType = ref((props.route === 'new' ? 'soulbound' : 'extractable') as 'soulbound' | 'extractable');
+const tagVersion = ref('02');
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 const handleSubmit = async () => {
@@ -68,7 +76,7 @@ const handleSubmit = async () => {
     nfcModal.value.onModalClose(() => {
       tapDanoService.cancel();
     });
-    const tag = await tapDanoService.burnTag(props.route == 'new' ? 'new' : 'restore', tagType.value, (props.route == 'restore') ? tagPrivateKey.value : undefined);
+    const tag = await tapDanoService.burnTag(props.route == 'new' ? 'new' : 'restore', tagType.value, (props.route == 'restore') ? tagPrivateKey.value : undefined, tagVersion.value);
     nfcModal.value.incrementProgress();
     await nfcModal.value.closeModal(500);
 
