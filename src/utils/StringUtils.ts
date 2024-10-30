@@ -10,6 +10,14 @@ export async function calculateSHA256(message: string): Promise<string> {
   return hashHex;
 }
 
+export async function calculateSHA256FromHex(hexString: string): Promise<string> {
+  const msgBuffer = new Uint8Array(hexString.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
 export function serializeBigInt(obj: any) {
   return JSON.stringify(obj, (key, value) => {
       return typeof value === 'bigint' ? value.toString() + 'n' : value;
