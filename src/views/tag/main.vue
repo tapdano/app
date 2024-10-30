@@ -324,9 +324,9 @@ async function withdrawFromWallet(wallet: any) {
     let tx = await lucid.newTx();
     for (let i = 0; i < utxoToCollect.length; i++) {
       const message = utxoToCollect[i].txHash + utf8ToHex(String(utxoToCollect[i].outputIndex)) + publicKeyHash;
-      const tag = await tapDanoService.signData(calculateSHA256FromHex(hash));
+      const tag = await tapDanoService.signData(await calculateSHA256FromHex(message));
       nfcModal.value.incrementProgress();
-      const redeemer = Data.to(new Constr(0, [convertSignatureToRaw(raw_sig)]));
+      const redeemer = Data.to(new Constr(0, [convertSignatureToRaw(tag.LastSignature as string)]));
       tx = tx.collectFrom([utxoToCollect[i]], redeemer);
     }
     await nfcModal.value.closeModal(500);
@@ -416,7 +416,7 @@ function closeDepositModal() {
   isDepositModalOpen.value = false;
 }
 
-function convertSignatureToRaw(derSignatureHex) {
+function convertSignatureToRaw(derSignatureHex: string) {
   // Validate that the input is a hex string
   if (!/^[0-9a-fA-F]+$/.test(derSignatureHex)) {
       throw new Error('Invalid hex string for DER-encoded signature.');
@@ -437,7 +437,7 @@ function convertSignatureToRaw(derSignatureHex) {
   return rawSignature.toString('hex');
 }
 
-function parseDerSignature(derSignatureHex) {
+function parseDerSignature(derSignatureHex: string) {
   const data = Buffer.from(derSignatureHex, 'hex');
   let offset = 0;
   // Check for the SEQUENCE tag (0x30)
@@ -467,7 +467,7 @@ function parseDerSignature(derSignatureHex) {
   return { rBytes, sBytes };
 }
 
-function parseDerInteger(data, offset) {
+function parseDerInteger(data: any, offset: any) {
   if (data[offset++] !== 0x02) {
       throw new Error('Invalid DER signature format: Expected INTEGER (0x02).');
   }
@@ -484,7 +484,7 @@ function parseDerInteger(data, offset) {
   return { integer, offset };
 }
 
-function ensureLowS(sBigInt) {
+function ensureLowS(sBigInt: any) {
   // Curve order for secp256k1
   const curveN = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
   const halfCurveN = curveN >> BigInt(1);
@@ -495,7 +495,7 @@ function ensureLowS(sBigInt) {
   return sBigInt;
 }
 
-function bigIntToBuffer(bigint) {
+function bigIntToBuffer(bigint: any) {
   let hex = bigint.toString(16);
   // Ensure even length for hex string
   if (hex.length % 2) {
@@ -514,7 +514,7 @@ function bigIntToBuffer(bigint) {
   }
 }
 
-function compressPublicKey(uncompressedKeyHex) {
+function compressPublicKey(uncompressedKeyHex: string) {
   // Validate the input length (should be 130 characters for a 65-byte key)
   if (uncompressedKeyHex.length !== 130) {
       throw new Error('Invalid uncompressed public key length; expected 130-character hex string.');
