@@ -22,7 +22,7 @@
               <img :src="formatIpfsUrl(asset.image)" :alt="asset.name" class="asset-image" />
               <h2>{{ asset.name }}</h2>
               <p>Quantity: {{ asset.quantity }}</p>
-              <p>SoulBound: <ion-icon :icon="asset.soulBoundId == tagInfo?.PublicKey ? checkmarkCircle : closeCircle" :color="asset.soulBoundId == tagInfo?.PublicKey ? 'success' : 'danger'"></ion-icon></p>
+              <p>SoulBound: <ion-icon :icon="(asset.soulBoundId == tagInfo?.PublicKey || (asset.tagId1 + asset.tagId2 + asset.tagId3) == tagInfo?.PublicKey) ? checkmarkCircle : closeCircle" :color="(asset.soulBoundId == tagInfo?.PublicKey || (asset.tagId1 + asset.tagId2 + asset.tagId3) == tagInfo?.PublicKey) ? 'success' : 'danger'"></ion-icon></p>
             </div>
           </div>
           <ion-button @click="openDepositModal" color="primary" expand="block">Deposit</ion-button>
@@ -153,6 +153,9 @@ interface Asset {
   description: string;
   amount: number;
   selected: boolean;
+  tagId1: string;
+  tagId2: string;
+  tagId3: string;
 }
 
 const Lucid = (window as any).Lucid.Lucid;
@@ -584,7 +587,6 @@ ion-modal .wrapper {
   padding: 20px;
   margin: 10px;
   text-align: center;
-  width: calc(50% - 20px);
 }
 
 .asset-image {
