@@ -82,7 +82,9 @@ const mintAsset = async () => {
           "name": form.value.name,
           "image": form.value.image,
           "mediaType": "image/jpg",
-          "soulBoundId": tag.PublicKey,
+          "soulBoundId1": tag.PublicKey?.slice(0, 64),
+          "soulBoundId2": tag.PublicKey?.slice(64, 128),
+          "soulBoundId3": tag.PublicKey?.slice(128, 192),
           "description": form.value.description
         } as AssetMetadata,
         label: '721',
