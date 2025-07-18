@@ -45,7 +45,6 @@ import {
   settingsSharp
 } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
-import { getDevMode } from '@/utils/StorageUtils';
 
 const route = useRoute();
 
@@ -62,7 +61,7 @@ watch(() => route.path, async (newPath) => {
 });
 
 onMounted(async () => {
-  const devMode = await getDevMode();
+  const devMode = (await storage.get('devMode')) || false;
 
   const pages = [];
   pages.push({
