@@ -1,6 +1,12 @@
 import { AppWallet, AssetFull, BlockfrostProvider } from '@meshsdk/core';
-import { getNetworkId } from './StorageUtils';
+import { Storage } from '@ionic/storage';
 import * as bip39 from 'bip39';
+
+async function getNetworkId() {
+  const storage = new Storage();
+  await storage.create();
+  return parseInt(await storage.get('networkId') || '1');
+}
 
 export async function getBlockfrostURL() {
   const networkId = await getNetworkId();

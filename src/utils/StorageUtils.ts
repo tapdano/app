@@ -1,6 +1,6 @@
 import { Storage } from '@ionic/storage';
 import { TagParser } from 'tapdano';
-import { loadWallet } from '@/utils/CryptoUtils';
+import { createWallet, entropyToMnemonic, loadWallet } from '@/utils/CryptoUtils';
 
 export async function getNetworkId() {
   const storage = new Storage();
@@ -87,6 +87,34 @@ export async function addTag(tag: TagParser) {
   await storage.set('currentTag', tags.length - 1);
 }
 
+export async function addMyWallet(tag: TagParser, name: string | undefined) {
+  const storage = new Storage();
+  await storage.create();
+  
+  const wallets = (await storage.get('my-wallets')) || [];
+
+  const mnemonic = entropyToMnemonic(tag.PrivateKey as string);
+  const cryptoWallet = await createWallet(mnemonic);
+
+  const index = wallets.findIndex((item: any) => {
+    return item.baseAddr == cryptoWallet.baseAddr;
+  });
+
+  if (index != -1) {
+    await storage.set('currentMyWallet', index);
+    return;
+  }
+  
+  const newIndex = wallets.length;
+  wallets.push({
+    name: name || `TapWallet #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`,
+    tag,
+    ...cryptoWallet,
+  });
+
+  await storage.set('my-wallets', wallets);
+  await storage.set('currentMyWallet', newIndex);
+}
 
 export async function getLocalWallets() {
   const storage = new Storage();

@@ -36,8 +36,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonButton } from '@ionic/vue';
 import { Storage } from '@ionic/storage';
 import NFCModal from '@/components/NFCModal.vue';
-import { TagParser, TapDanoService } from 'tapdano';
-import { createWallet, entropyToMnemonic } from '@/utils/CryptoUtils';
+import { TapDanoService } from 'tapdano';
+import { addMyWallet } from '@/utils/StorageUtils';
 
 const storage = new Storage();
 storage.create();
@@ -65,35 +65,6 @@ const selectWallet = async (index: number) => {
   await storage.set('currentMyWallet', index);
   router.push('/my-wallet/main');
 };
-
-async function addMyWallet(tag: TagParser, name: string | undefined) {
-  const storage = new Storage();
-  await storage.create();
-  
-  const wallets = (await storage.get('my-wallets')) || [];
-
-  const mnemonic = entropyToMnemonic(tag.PrivateKey as string);
-  const cryptoWallet = await createWallet(mnemonic);
-
-  const index = wallets.findIndex((item: any) => {
-    return item.baseAddr == cryptoWallet.baseAddr;
-  });
-
-  if (index != -1) {
-    await storage.set('currentMyWallet', index);
-    return;
-  }
-  
-  const newIndex = wallets.length;
-  wallets.push({
-    name: name || `TapWallet #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`,
-    tag,
-    ...cryptoWallet,
-  });
-
-  await storage.set('my-wallets', wallets);
-  await storage.set('currentMyWallet', newIndex);
-}
 
 const addTagEvent = async () => {
   if (!nfcModal.value) return;
