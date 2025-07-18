@@ -63,6 +63,10 @@ export function validateMnemonic(mnemonic: string) {
   return bip39.validateMnemonic(mnemonic);
 }
 
+export function entropyToMnemonic(entropy: string) {
+  return bip39.entropyToMnemonic(entropy);
+}
+
 export async function loadWallet(mnemonic: string) {
   return new AppWallet({
     networkId: await getNetworkId() == 1 ? 1 : 0,

@@ -25,6 +25,7 @@
       </div>
     </ion-content>
     <WalletTabBar />
+    <NFCModal ref="nfcModal"></NFCModal>
   </ion-page>
 </template>
 
@@ -36,12 +37,18 @@ import { Storage } from '@ionic/storage';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { getCurrentMyWallet } from '@/utils/StorageUtils';
 import WalletTabBar from '../../components/MyWalletTabBar.vue';
+import NFCModal from '@/components/NFCModal.vue';
+import { calculateSHA256 } from '@/utils/StringUtils';
+import { TapDanoService } from 'tapdano';
+import { randomBytes } from 'crypto';
+import { ec as EC } from 'elliptic';
 
 const router = useRouter();
 const route = useRoute();
 const storage = new Storage();
 storage.create();
 
+const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const walletName = ref('');
 const walletMnemonic = ref('');
 const walletReceiveAddress = ref('');
@@ -63,9 +70,38 @@ watch(() => route.path, async (newPath) => {
   }
 }, { immediate: true });
 
+const checkTwoFactor = async (wallet: any) => {
+  if (!nfcModal.value) return;
+  try {
+    const tapDanoService = new TapDanoService();
+    nfcModal.value.openModal(1);
+    nfcModal.value.onModalClose(() => {
+      tapDanoService.cancel();
+    });
+    const hash = await calculateSHA256(randomBytes(64).toString('hex'));
+    const tag = await tapDanoService.signData(hash);
+    nfcModal.value.incrementProgress();
+    await nfcModal.value.closeModal(500);
+    const ec = new EC('secp256k1');
+    var key = ec.keyFromPublic(wallet.tag.PublicKey, 'hex');
+    return key.verify(hash, tag.LastSignature as string);
+  } catch (error) {
+    if (error && error != 'canceled') {
+      await nfcModal.value.closeModal(0);
+      console.error(error);
+      alert(error);
+    }
+    return false;
+  }
+};
+
 const getRecoveryPhrase = async () => {
   try {
     const currentWallet = await getCurrentMyWallet();
+    if (!(await checkTwoFactor(currentWallet))) {
+      alert('Error, authentication failed.');
+      return;
+    }
     walletMnemonic.value = currentWallet.mnemonic;
     isMnemonicVisible.value = true;
   } catch (error) {

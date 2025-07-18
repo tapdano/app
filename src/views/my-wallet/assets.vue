@@ -21,7 +21,6 @@
             </div>
           </div>
           <div v-else class="no-items-message">No assets found!</div>
-          <ion-button @click="navigateToMint">Mint SoulBound Asset</ion-button>
         </div>
       </div>
     </ion-content>
@@ -52,10 +51,6 @@ const route = useRoute();
 const walletName = ref('');
 const loading = ref(true);
 const assets = ref<Asset[]>([]);
-
-const navigateToMint = () => {
-  router.push('/my-wallet/assets/mint');
-};
 
 const navigateToAssetDetails = (asset: Asset) => {
   router.push({ path: `/my-wallet/assets/${asset.unit}` });

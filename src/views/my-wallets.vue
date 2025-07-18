@@ -12,7 +12,7 @@
       <div v-if="loading" class="loading-message"><div class="loading-spinner"></div></div>
       <div v-else>
         <div id="container">
-          <div v-if="wallets.length === 0" class="no-items-message">Start your journey! Create or Restore a Wallet to begin.</div>
+          <div v-if="wallets.length === 0" class="no-items-message">Start your journey! Scan a Tag to begin.</div>
           <div v-else>
             <ion-list>
               <ion-item v-for="(wallet, index) in wallets" :key="index" @click="selectWallet(index)">
@@ -21,12 +21,12 @@
             </ion-list>
           </div>
           <div id="buttons-box">
-            <ion-button expand="block" @click="$router.push('/new-my-wallet')">Create a new Wallet</ion-button>
-            <ion-button expand="block" @click="$router.push('/restore-my-wallet')" fill="outline">Restore Wallet</ion-button>
+            <ion-button expand="block" @click="addTagEvent">Scan a Tag</ion-button>
           </div>
         </div>
       </div>
     </ion-content>
+    <NFCModal ref="nfcModal"></NFCModal>
   </ion-page>
 </template>
 
@@ -35,6 +35,9 @@ import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonButton } from '@ionic/vue';
 import { Storage } from '@ionic/storage';
+import NFCModal from '@/components/NFCModal.vue';
+import { TapDanoService } from 'tapdano';
+import { addMyWallet } from '@/utils/StorageUtils';
 
 const storage = new Storage();
 storage.create();
@@ -43,6 +46,7 @@ const router = useRouter();
 const route = useRoute();
 const wallets = ref([]);
 const loading = ref(true);
+const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 const load = async () => {
   loading.value = true;
@@ -60,6 +64,38 @@ watch(() => route.path, async (newPath) => {
 const selectWallet = async (index: number) => {
   await storage.set('currentMyWallet', index);
   router.push('/my-wallet/main');
+};
+
+const addTagEvent = async () => {
+  if (!nfcModal.value) return;
+  try {
+    const tapDanoService = new TapDanoService();
+    nfcModal.value.openModal(1);
+    nfcModal.value.onModalClose(() => {
+      tapDanoService.cancel();
+    });
+    const tag = await tapDanoService.readTag();
+    nfcModal.value.incrementProgress();
+    await nfcModal.value.closeModal(500);
+
+    if (tag.TagID != '5444') {
+      alert('Unknow Tag. Please use a TapDano Tag.');
+      return;
+    }
+
+    if (!tag.Burned) {
+      router.push('/new-my-wallet');
+    } else {
+      await addMyWallet(tag, undefined);
+      router.replace('/my-wallet/main');
+    }
+  } catch (error) {
+    if (error && error != 'canceled') {
+      await nfcModal.value.closeModal(0);
+      console.error(error);
+      alert(error);
+    }
+  }
 };
 </script>
 

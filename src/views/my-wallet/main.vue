@@ -38,7 +38,7 @@
     </ion-content>
 
     <WalletTabBar />
-
+    <NFCModal ref="nfcModal"></NFCModal>
   </ion-page>
 </template>
 
@@ -52,7 +52,13 @@ import { loadWallet, fetchAccountInfo } from '@/utils/CryptoUtils';
 import { Transaction } from '@meshsdk/core';
 import WalletTabBar from '@/components/MyWalletTabBar.vue';
 import PriceChart from '@/components/PriceChart.vue';
+import NFCModal from '@/components/NFCModal.vue';
+import { calculateSHA256 } from '@/utils/StringUtils';
+import { TapDanoService } from 'tapdano';
+import { randomBytes } from 'crypto';
+import { ec as EC } from 'elliptic';
 
+const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const walletBalance = ref(0);
 const cardanoUsdPrice = ref(0);
 
@@ -93,6 +99,10 @@ const sendTransaction = async () => {
 
   try {
     const currentWallet = await getCurrentMyWallet();
+    if (!(await checkTwoFactor(currentWallet))) {
+      alert('Error, authentication failed.');
+      return;
+    }
     const wallet = await loadWallet(currentWallet.mnemonic);
 
     const tx = new Transaction({ initiator: wallet }).sendLovelace(
@@ -110,6 +120,31 @@ const sendTransaction = async () => {
   } catch (error) {
     console.error(error);
     alert(error);
+  }
+};
+
+const checkTwoFactor = async (wallet: any) => {
+  if (!nfcModal.value) return;
+  try {
+    const tapDanoService = new TapDanoService();
+    nfcModal.value.openModal(1);
+    nfcModal.value.onModalClose(() => {
+      tapDanoService.cancel();
+    });
+    const hash = await calculateSHA256(randomBytes(64).toString('hex'));
+    const tag = await tapDanoService.signData(hash);
+    nfcModal.value.incrementProgress();
+    await nfcModal.value.closeModal(500);
+    const ec = new EC('secp256k1');
+    var key = ec.keyFromPublic(wallet.tag.PublicKey, 'hex');
+    return key.verify(hash, tag.LastSignature as string);
+  } catch (error) {
+    if (error && error != 'canceled') {
+      await nfcModal.value.closeModal(0);
+      console.error(error);
+      alert(error);
+    }
+    return false;
   }
 };
 

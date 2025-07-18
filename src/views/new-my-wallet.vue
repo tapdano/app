@@ -23,6 +23,7 @@
         </form>
       </div>
     </ion-content>
+    <NFCModal ref="nfcModal"></NFCModal>
   </ion-page>
 </template>
 
@@ -31,7 +32,10 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPag
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
-import { createWallet, validateMnemonic } from '@/utils/CryptoUtils';
+import { createWallet, entropyToMnemonic } from '@/utils/CryptoUtils';
+import { TapDanoService } from 'tapdano';
+import NFCModal from '@/components/NFCModal.vue';
+import { addMyWallet } from '@/utils/StorageUtils';
 
 const props = defineProps({
   route: String
@@ -43,38 +47,37 @@ storage.create();
 
 const walletName = ref('');
 const walletRecoveryPhrase = ref('');
+const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 const handleSubmit = async () => {
+  if (!nfcModal.value) return;
   try {
-    let mnemonic: string | null = null;
+    const tapDanoService = new TapDanoService();
+    nfcModal.value.openModal(1);
+    nfcModal.value.onModalClose(() => {
+      tapDanoService.cancel();
+    });
+    const tag = await tapDanoService.burnTag('new', 'extractable');
+    nfcModal.value.incrementProgress();
+    await nfcModal.value.closeModal(500);
 
-    if (props.route == 'restore') {
-      mnemonic = walletRecoveryPhrase.value;
-      if (!validateMnemonic(mnemonic)) {
-        alert('Recovery phrase invalid.');
-        return;
-      }
+    if (tag.TagID != '5444') {
+      alert('Unknow Tag. Please try again with a TapDano Tag.');
+      return;
     }
 
-    const cryptoWallet = await createWallet(mnemonic);
-    const wallets = (await storage.get('my-wallets')) || [];
-    const newIndex = wallets.length;
-    const name = walletName.value.trim() || `TapWallet #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-    wallets.push({
-      name,
-      ...cryptoWallet,
-    });
-
-    await storage.set('my-wallets', wallets);
-    await storage.set('currentMyWallet', newIndex);
+    await addMyWallet(tag, walletName.value.trim());
 
     walletName.value = '';
     walletRecoveryPhrase.value = '';
 
     router.replace('/my-wallet/main');
   } catch (error) {
-    console.error(error);
-    alert(error);
+    if (error && error != 'canceled') {
+      await nfcModal.value.closeModal(0);
+      console.error(error);
+      alert(error);
+    }
   }
 };
 
