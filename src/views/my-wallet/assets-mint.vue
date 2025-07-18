@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button color="primary" default-href="/wallet/assets"></ion-back-button>
+          <ion-back-button color="primary" default-href="/my-wallet/assets"></ion-back-button>
         </ion-buttons>
         <ion-title>Mint SoulBound Asset</ion-title>
       </ion-toolbar>
@@ -33,7 +33,7 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton } from '@ionic/vue';
-import { getCurrentWallet } from '@/utils/StorageUtils';
+import { getCurrentMyWallet } from '@/utils/StorageUtils';
 import { loadWallet } from '@/utils/CryptoUtils';
 import { Transaction, ForgeScript } from '@meshsdk/core';
 import type { Mint, AssetMetadata } from '@meshsdk/core';
@@ -58,7 +58,7 @@ const mintAsset = async () => {
   if (!nfcModal.value) return;
   try {
     loading.value = true;
-    const currentWallet = await getCurrentWallet();
+    const currentWallet = await getCurrentMyWallet();
     const wallet = await loadWallet(currentWallet.mnemonic);
     const tx = new Transaction({ initiator: wallet });
     const forgeScript = ForgeScript.withOneSignature(currentWallet.baseAddr);
@@ -107,9 +107,9 @@ const mintAsset = async () => {
 };
 
 watch(() => route.path, async (newPath) => {
-  if (newPath === '/wallet/assets/mint') {
+  if (newPath === '/my-wallet/assets/mint') {
     loading.value = false;
-    const currentWallet = await getCurrentWallet();
+    const currentWallet = await getCurrentMyWallet();
     if (currentWallet == null) {
       router.replace('/my-wallets');
       return;

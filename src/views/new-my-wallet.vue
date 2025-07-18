@@ -57,7 +57,7 @@ const handleSubmit = async () => {
     }
 
     const cryptoWallet = await createWallet(mnemonic);
-    const wallets = (await storage.get('wallets')) || [];
+    const wallets = (await storage.get('my-wallets')) || [];
     const newIndex = wallets.length;
     const name = walletName.value.trim() || `TapWallet #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
     wallets.push({
@@ -65,13 +65,13 @@ const handleSubmit = async () => {
       ...cryptoWallet,
     });
 
-    await storage.set('wallets', wallets);
-    await storage.set('currentWallet', newIndex);
+    await storage.set('my-wallets', wallets);
+    await storage.set('currentMyWallet', newIndex);
 
     walletName.value = '';
     walletRecoveryPhrase.value = '';
 
-    router.replace('/wallet/main');
+    router.replace('/my-wallet/main');
   } catch (error) {
     console.error(error);
     alert(error);

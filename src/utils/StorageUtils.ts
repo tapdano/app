@@ -14,8 +14,30 @@ export async function setNetworkId(networkId: Number) {
   await storage.set('networkId', networkId);
 }
 
-export async function getCurrentWallet() {
-  const currentWallet = await getCurrentItem('currentWallet', 'wallets');
+export async function getDevMode() {
+  const storage = new Storage();
+  await storage.create();
+  return (await storage.get('devMode')) || false;
+}
+
+export async function setDevMode(value: Boolean) {
+  const storage = new Storage();
+  await storage.create();
+  await storage.set('devMode', value);
+}
+
+export async function getCurrentLocalWallet() {
+  const currentWallet = await getCurrentItem('currentLocalWallet', 'local-wallets');
+  if (currentWallet != null) {
+    const wallet = await loadWallet(currentWallet.mnemonic);
+    currentWallet.baseAddr = wallet.getBaseAddress();
+    currentWallet.rewardAddr = wallet.getRewardAddress();
+  }
+  return currentWallet;
+}
+
+export async function getCurrentMyWallet() {
+  const currentWallet = await getCurrentItem('currentMyWallet', 'my-wallets');
   if (currentWallet != null) {
     const wallet = await loadWallet(currentWallet.mnemonic);
     currentWallet.baseAddr = wallet.getBaseAddress();
@@ -71,10 +93,22 @@ export async function addTag(tag: TagParser) {
   await storage.set('currentTag', tags.length - 1);
 }
 
-export async function getWallets() {
+export async function getLocalWallets() {
   const storage = new Storage();
   await storage.create();
-  const wallets = await storage.get('wallets') || [];
+  const wallets = await storage.get('local-wallets') || [];
+  for (let i = 0; i < wallets.length; i++) {
+    const wallet = await loadWallet(wallets[i].mnemonic);
+    wallets[i].baseAddr = wallet.getBaseAddress();
+    wallets[i].rewardAddr = wallet.getRewardAddress();
+  }
+  return wallets;
+}
+
+export async function getMyWallets() {
+  const storage = new Storage();
+  await storage.create();
+  const wallets = await storage.get('my-wallets') || [];
   for (let i = 0; i < wallets.length; i++) {
     const wallet = await loadWallet(wallets[i].mnemonic);
     wallets[i].baseAddr = wallet.getBaseAddress();

@@ -15,38 +15,76 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/my-wallets.vue')
   },
   {
-    path: '/new-wallet',
-    component: () => import ('../views/new-wallet.vue'),
+    path: '/new-my-wallet',
+    component: () => import ('../views/new-my-wallet.vue'),
     props: { route: 'new' }
   },
   {
-    path: '/restore-wallet',
-    component: () => import ('../views/new-wallet.vue'),
+    path: '/restore-my-wallet',
+    component: () => import ('../views/new-my-wallet.vue'),
     props: { route: 'restore' }
   },
   {
-    path: '/wallet/main',
-    component: () => import ('../views/wallet/main.vue')
+    path: '/my-wallet/main',
+    component: () => import ('../views/my-wallet/main.vue')
   },
   {
-    path: '/wallet/transactions',
-    component: () => import ('../views/wallet/transactions.vue')
+    path: '/my-wallet/transactions',
+    component: () => import ('../views/my-wallet/transactions.vue')
   },
   {
-    path: '/wallet/assets',
-    component: () => import ('../views/wallet/assets.vue')
+    path: '/my-wallet/assets',
+    component: () => import ('../views/my-wallet/assets.vue')
   },
   {
-    path: '/wallet/assets/mint',
-    component: () => import ('../views/wallet/assets-mint.vue')
+    path: '/my-wallet/assets/mint',
+    component: () => import ('../views/my-wallet/assets-mint.vue')
   },
   {
-    path: '/wallet/assets/:unit',
-    component: () => import ('../views/wallet/assets-details.vue')
+    path: '/my-wallet/assets/:unit',
+    component: () => import ('../views/my-wallet/assets-details.vue')
   },
   {
-    path: '/wallet/settings',
-    component: () => import ('../views/wallet/settings.vue')
+    path: '/my-wallet/settings',
+    component: () => import ('../views/my-wallet/settings.vue')
+  },
+  {
+    path: '/local-wallets',
+    component: () => import ('../views/local-wallets.vue')
+  },
+  {
+    path: '/new-local-wallet',
+    component: () => import ('../views/new-local-wallet.vue'),
+    props: { route: 'new' }
+  },
+  {
+    path: '/restore-local-wallet',
+    component: () => import ('../views/new-local-wallet.vue'),
+    props: { route: 'restore' }
+  },
+  {
+    path: '/local-wallet/main',
+    component: () => import ('../views/local-wallet/main.vue')
+  },
+  {
+    path: '/local-wallet/transactions',
+    component: () => import ('../views/local-wallet/transactions.vue')
+  },
+  {
+    path: '/local-wallet/assets',
+    component: () => import ('../views/local-wallet/assets.vue')
+  },
+  {
+    path: '/local-wallet/assets/mint',
+    component: () => import ('../views/local-wallet/assets-mint.vue')
+  },
+  {
+    path: '/local-wallet/assets/:unit',
+    component: () => import ('../views/local-wallet/assets-details.vue')
+  },
+  {
+    path: '/local-wallet/settings',
+    component: () => import ('../views/local-wallet/settings.vue')
   },
   {
     path: '/my-tags',
@@ -148,15 +186,15 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
 
-  const wallets = await storage.get('wallets') || [];
+  const wallets = await storage.get('my-wallets') || [];
   if (wallets.length == 0) {
     next('/welcome');
     return;
   }
 
-  const currentIndex = await storage.get('currentWallet');
+  const currentIndex = await storage.get('currentMyWallet');
   if (!(currentIndex === null) && wallets[currentIndex]) {
-    next('/wallet/main');
+    next('/my-wallet/main');
   } else {
     next('/my-wallets');
   }

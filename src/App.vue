@@ -45,45 +45,59 @@ import {
   settingsSharp
 } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
+import { getDevMode } from '@/utils/StorageUtils';
 
 const route = useRoute();
 
 const storage = new Storage();
 storage.create();
 
-const appPages = ref([
-{
+const appPages = ref([] as any);
+const selectedIndex = ref(0);
+
+const showMenu = computed(() => route.path != '/demo-auth' && route.path != '/dash' && !route.path.includes('/signed') && !route.path.includes('/poa'));
+
+watch(() => route.path, async (newPath) => {
+  selectedIndex.value = appPages.value.findIndex((page: any) => page.url.toLowerCase().indexOf(newPath.toLowerCase()) != -1);
+});
+
+onMounted(async () => {
+  const devMode = await getDevMode();
+
+  const pages = [];
+  pages.push({
     title: 'My Wallets',
     url: '/my-wallets',
     iosIcon: walletOutline,
     mdIcon: walletSharp,
-  },
-  {
-    title: 'Tag Manager',
-    url: '/my-tags',
-    iosIcon: cardOutline,
-    mdIcon: cardSharp,
-  },
-  {
+  });
+  if (devMode) {
+    pages.push({
+      title: 'Local Wallets',
+      url: '/local-wallets',
+      iosIcon: walletOutline,
+      mdIcon: walletSharp,
+    });
+    pages.push({
+      title: 'Tag Manager',
+      url: '/my-tags',
+      iosIcon: cardOutline,
+      mdIcon: cardSharp,
+    });
+  }
+  pages.push({
     title: 'Settings',
     url: '/settings',
     iosIcon: settingsOutline,
     mdIcon: settingsSharp,
+  });
+  appPages.value = pages;
+
+  const path = '/' + window.location.pathname.split('/')[1];
+  if (path !== undefined) {
+    selectedIndex.value = appPages.value.findIndex((page: any) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
   }
-]);
 
-const selectedIndex = ref(0);
-const path = '/' + window.location.pathname.split('/')[1];
-if (path !== undefined) {
-  selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
-}
-const showMenu = computed(() => route.path != '/demo-auth' && route.path != '/dash' && !route.path.includes('/signed') && !route.path.includes('/poa'));
-
-watch(() => route.path, async (newPath) => {
-  selectedIndex.value = appPages.value.findIndex((page) => page.url.toLowerCase().indexOf(newPath.toLowerCase()) != -1);
-});
-
-onMounted(() => {
   const loadingScreen = document.getElementById('loading-screen');
   if (loadingScreen) loadingScreen.style.display = 'none';
 });

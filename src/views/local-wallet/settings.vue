@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary" default-href="/my-wallets"></ion-back-button>
+          <ion-back-button color="primary" default-href="/local-wallets"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ walletName }}</ion-title>
       </ion-toolbar>
@@ -34,8 +34,8 @@ import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
-import { getCurrentWallet } from '@/utils/StorageUtils';
-import WalletTabBar from '../../components/WalletTabBar.vue';
+import { getCurrentLocalWallet } from '@/utils/StorageUtils';
+import WalletTabBar from '../../components/LocalWalletTabBar.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -49,10 +49,10 @@ const walletStakingAddress = ref('');
 const isMnemonicVisible = ref(false);
 
 watch(() => route.path, async (newPath) => {
-  if (newPath === '/wallet/settings') {
-    const currentWallet = await getCurrentWallet();
+  if (newPath === '/local-wallet/settings') {
+    const currentWallet = await getCurrentLocalWallet();
     if (currentWallet == null) {
-      router.replace('/my-wallets');
+      router.replace('/local-wallets');
       return;
     }
     walletName.value = currentWallet.name;
@@ -65,7 +65,7 @@ watch(() => route.path, async (newPath) => {
 
 const getRecoveryPhrase = async () => {
   try {
-    const currentWallet = await getCurrentWallet();
+    const currentWallet = await getCurrentLocalWallet();
     walletMnemonic.value = currentWallet.mnemonic;
     isMnemonicVisible.value = true;
   } catch (error) {
@@ -77,13 +77,13 @@ const getRecoveryPhrase = async () => {
 const deleteWallet = async () => {
   const confirmation = confirm('Are you sure you want to delete this wallet?');
   if (confirmation) {
-    let wallets = await storage.get('wallets');
-    const currentIndex = await storage.get('currentWallet');
+    let wallets = await storage.get('local-wallets');
+    const currentIndex = await storage.get('currentLocalWallet');
     if (wallets && wallets[currentIndex]) {
       wallets.splice(currentIndex, 1);
-      await storage.set('wallets', wallets);
-      await storage.remove('currentWallet');
-      router.push('/my-wallets');
+      await storage.set('local-wallets', wallets);
+      await storage.remove('currentLocalWallet');
+      router.push('/local-wallets');
     }
   }
 };

@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button color="primary" default-href="/wallet/assets"></ion-back-button>
+          <ion-back-button color="primary" default-href="/my-wallet/assets"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ asset?.onchain_metadata.name }}</ion-title>
       </ion-toolbar>
@@ -44,7 +44,7 @@ const viewOnExplorer = async () => {
 };
 
 watch(() => route.path, async (newPath) => {
-  if (newPath.startsWith('/wallet/assets/') && newPath != '/wallet/assets/mint') {
+  if (newPath.startsWith('/my-wallet/assets/') && newPath != '/my-wallet/assets/mint') {
     loading.value = true;
     try {
       const unit = route.params.unit as string;

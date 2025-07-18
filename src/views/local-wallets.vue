@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
         </ion-buttons>
-        <ion-title>My Wallets</ion-title>
+        <ion-title>Local Wallets</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -21,8 +21,8 @@
             </ion-list>
           </div>
           <div id="buttons-box">
-            <ion-button expand="block" @click="$router.push('/new-my-wallet')">Create a new Wallet</ion-button>
-            <ion-button expand="block" @click="$router.push('/restore-my-wallet')" fill="outline">Restore Wallet</ion-button>
+            <ion-button expand="block" @click="$router.push('/new-local-wallet')">Create a new Wallet</ion-button>
+            <ion-button expand="block" @click="$router.push('/restore-local-wallet')" fill="outline">Restore Wallet</ion-button>
           </div>
         </div>
       </div>
@@ -46,20 +46,20 @@ const loading = ref(true);
 
 const load = async () => {
   loading.value = true;
-  const storedWallets = await storage.get('my-wallets') || [];
+  const storedWallets = await storage.get('local-wallets') || [];
   wallets.value = storedWallets;
   loading.value = false;
 };
 
 watch(() => route.path, async (newPath) => {
-  if (newPath === '/my-wallets') {
+  if (newPath === '/local-wallets') {
     await load();
   }
 }, { immediate: true });
 
 const selectWallet = async (index: number) => {
-  await storage.set('currentMyWallet', index);
-  router.push('/my-wallet/main');
+  await storage.set('currentLocalWallet', index);
+  router.push('/local-wallet/main');
 };
 </script>
 

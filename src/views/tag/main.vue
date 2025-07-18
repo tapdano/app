@@ -133,7 +133,7 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonCheckbox, IonAccordionGroup, IonAccordion, IonSelect, IonSelectOption, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonList, IonLabel, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonInput } from '@ionic/vue';
-import { getCurrentTag, getWallets } from '@/utils/StorageUtils';
+import { getCurrentTag, getLocalWallets } from '@/utils/StorageUtils';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { Storage } from '@ionic/storage';
 import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, fetchWalletAssets, fetchAssetMetadata, fetchAccountInfo } from '@/utils/CryptoUtils';
@@ -392,7 +392,7 @@ async function depositFromWallet(wallet: any) {
 }
 
 async function loadWallets() {
-  wallets.value = await getWallets();
+  wallets.value = await getLocalWallets();
 }
 
 function openWithdrawModal() {

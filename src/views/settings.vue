@@ -12,7 +12,10 @@
     <ion-content :fullscreen="true">
       <div id="container">
         <ion-item>
-          <ion-toggle @ionChange="toggleDarkMode" :checked="isDarkMode" :disabled="true">Dark Mode</ion-toggle>
+          <ion-toggle :checked="isDarkMode" :disabled="true">Dark Mode</ion-toggle>
+        </ion-item>
+        <ion-item>
+          <ion-toggle @ionChange="toggleDevMode" :checked="isDevMode">Developer Mode</ion-toggle>
         </ion-item>
         <ion-item>
           <ion-label>Network</ion-label>
@@ -34,20 +37,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem, IonSelect, IonSelectOption } from '@ionic/vue';
-import { getNetworkId, setNetworkId } from '@/utils/StorageUtils';
+import { ref, onMounted } from 'vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem, IonSelect, IonSelectOption, ToggleChangeEventDetail } from '@ionic/vue';
+import { getNetworkId, setNetworkId, getDevMode, setDevMode } from '@/utils/StorageUtils';
 
 const isDarkMode = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
+const isDevMode = ref<boolean | undefined>(undefined);
 const cacheName = ref<string | null>(null);
 const network = ref<string | null>(null);
 
-const toggleDarkMode = () => {
-  document.body.classList.toggle('dark', isDarkMode.value);
+const toggleDevMode = async (event: any) => {
+  await setDevMode(event.detail.checked);
+  window.location.reload();
 };
 
-const updateNetwork = (event: any) => {
-  setNetworkId(event.detail.value);
+const updateNetwork = async (event: any) => {
+  await setNetworkId(event.detail.value);
   window.location.reload();
 };
 
@@ -95,17 +100,13 @@ const checkForUpdate = () => {
 };
 
 onMounted(async () => {
-  toggleDarkMode();
+  isDevMode.value = await getDevMode();
   network.value = String(await getNetworkId());
   try {
     cacheName.value = await getCacheName();
   } catch (error) {
     console.error('Failed to get cache name:', error);
   }
-});
-
-onUnmounted(() => {
-  document.body.classList.remove('dark');
 });
 </script>
 

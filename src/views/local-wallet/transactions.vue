@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary" default-href="/my-wallets"></ion-back-button>
+          <ion-back-button color="primary" default-href="/local-wallets"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ walletName }}</ion-title>
       </ion-toolbar>
@@ -32,8 +32,8 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonBackButton, IonTitle, IonToolbar, IonItem, IonList } from '@ionic/vue';
-import WalletTabBar from '../../components/WalletTabBar.vue';
-import { getCurrentWallet } from '@/utils/StorageUtils';
+import WalletTabBar from '../../components/LocalWalletTabBar.vue';
+import { getCurrentLocalWallet } from '@/utils/StorageUtils';
 import { fetchTransactions, getCardanoScanURL } from '@/utils/CryptoUtils';
 
 interface Transaction {
@@ -48,11 +48,11 @@ const loading = ref(true);
 let cardanoScanURL = '';
 
 watch(() => route.path, async (newPath) => {
-  if (newPath === '/wallet/transactions') {
+  if (newPath === '/local-wallet/transactions') {
     loading.value = true;
-    const currentWallet = await getCurrentWallet();
+    const currentWallet = await getCurrentLocalWallet();
     if (currentWallet == null) {
-      router.push('/my-wallets');
+      router.push('/local-wallets');
       return;
     }
     walletName.value = currentWallet.name;

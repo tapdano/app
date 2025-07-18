@@ -33,8 +33,8 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
-import WalletTabBar from '../../components/WalletTabBar.vue';
-import { getCurrentWallet } from '@/utils/StorageUtils';
+import WalletTabBar from '../../components/MyWalletTabBar.vue';
+import { getCurrentMyWallet } from '@/utils/StorageUtils';
 import { fetchWalletAssets, fetchAssetMetadata } from '@/utils/CryptoUtils';
 import { formatIpfsUrl } from '@/utils/StringUtils';
 
@@ -54,17 +54,17 @@ const loading = ref(true);
 const assets = ref<Asset[]>([]);
 
 const navigateToMint = () => {
-  router.push('/wallet/assets/mint');
+  router.push('/my-wallet/assets/mint');
 };
 
 const navigateToAssetDetails = (asset: Asset) => {
-  router.push({ path: `/wallet/assets/${asset.unit}` });
+  router.push({ path: `/my-wallet/assets/${asset.unit}` });
 };
 
 watch(() => route.path, async (newPath) => {
-  if (newPath === '/wallet/assets') {
+  if (newPath === '/my-wallet/assets') {
     loading.value = true;
-    const currentWallet = await getCurrentWallet();
+    const currentWallet = await getCurrentMyWallet();
     if (currentWallet == null) {
       router.push('/my-wallets');
       return;

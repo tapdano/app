@@ -56,7 +56,7 @@ import { IonContent, IonIcon, IonButton, IonGrid, IonRow, IonCol, IonSpinner } f
 import { radioButtonOn, radioButtonOff, checkmarkCircle } from 'ionicons/icons';
 import { Storage } from '@ionic/storage';
 import { TapDanoService } from 'tapdano';
-import { getCurrentTag, getCurrentWallet } from '@/utils/StorageUtils';
+import { getCurrentTag, getCurrentLocalWallet } from '@/utils/StorageUtils';
 import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, getCardanoScanURL } from '@/utils/CryptoUtils';
 import { serializeBigInt, utf8ToHex } from '@/utils/StringUtils';
 import NFCModalPetro from '@/components/NFCModalPetro.vue';
@@ -91,7 +91,7 @@ async function initialize() {
     await getNetworkName(),
   );
   contractAddress = lucid.utils.validatorToAddress(validador);
-  wallet.value = await getCurrentWallet();
+  wallet.value = await getCurrentLocalWallet();
   const ably = new (window as any).Ably.Realtime('iTZ0XA.06wqDQ:ZI6bW8YuX0nbFqg522l6iQ1N6u382WlHzczw4M2_fe8');
   await ably.connection.once('connected');
   const channel = ably.channels.get('webhook');

@@ -46,11 +46,11 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonTextarea, IonInput, IonItem, IonButton } from '@ionic/vue';
-import { getCurrentWallet } from '@/utils/StorageUtils';
+import { getCurrentMyWallet } from '@/utils/StorageUtils';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { loadWallet, fetchAccountInfo } from '@/utils/CryptoUtils';
 import { Transaction } from '@meshsdk/core';
-import WalletTabBar from '@/components/WalletTabBar.vue';
+import WalletTabBar from '@/components/MyWalletTabBar.vue';
 import PriceChart from '@/components/PriceChart.vue';
 
 const walletBalance = ref(0);
@@ -92,7 +92,7 @@ const sendTransaction = async () => {
   if (!confirm('Confirm transaction submission?')) return;
 
   try {
-    const currentWallet = await getCurrentWallet();
+    const currentWallet = await getCurrentMyWallet();
     const wallet = await loadWallet(currentWallet.mnemonic);
 
     const tx = new Transaction({ initiator: wallet }).sendLovelace(
@@ -131,8 +131,8 @@ const formatAdaAmount = (inputValue: any) => {
 }
 
 watch(() => route.path, async (newPath) => {
-  if (newPath === '/wallet/main') {
-    const currentWallet = await getCurrentWallet();
+  if (newPath === '/my-wallet/main') {
+    const currentWallet = await getCurrentMyWallet();
     if (currentWallet == null) {
       router.push('/my-wallets');
       return;
