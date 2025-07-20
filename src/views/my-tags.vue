@@ -38,7 +38,7 @@ const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const addTagEvent = async () => {
   if (!nfcModal.value) return;
   try {
-    const tapDanoService = new TapDanoService();
+    const tapDanoService = new TapDanoService({ method: 'WebAuthn' });
     nfcModal.value.openModal(1);
     nfcModal.value.onModalClose(() => {
       tapDanoService.cancel();
