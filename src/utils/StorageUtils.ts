@@ -20,10 +20,22 @@ export async function getDevMode() {
   return (await storage.get('devMode')) || false;
 }
 
+export async function getSimulateNFCTag() {
+  const storage = new Storage();
+  await storage.create();
+  return (await storage.get('simulateNFCTag')) || false;
+}
+
 export async function setDevMode(value: Boolean) {
   const storage = new Storage();
   await storage.create();
   await storage.set('devMode', value);
+}
+
+export async function setSimulateNFCTag(value: Boolean) {
+  const storage = new Storage();
+  await storage.create();
+  await storage.set('simulateNFCTag', value);
 }
 
 export async function getCurrentLocalWallet() {

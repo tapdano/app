@@ -66,12 +66,18 @@ onMounted(async () => {
 
   const pages = [];
   pages.push({
-    title: 'My Wallets',
-    url: '/my-wallets',
+    title: 'Seed Vault',
+    url: '/seed-vault',
     iosIcon: walletOutline,
     mdIcon: walletSharp,
   });
   if (devMode) {
+    pages.push({
+      title: 'My Wallets',
+      url: '/my-wallets',
+      iosIcon: walletOutline,
+      mdIcon: walletSharp,
+    });
     pages.push({
       title: 'Local Wallets',
       url: '/local-wallets',

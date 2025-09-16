@@ -18,6 +18,9 @@
           <ion-toggle @ionChange="toggleDevMode" :checked="isDevMode">Developer Mode</ion-toggle>
         </ion-item>
         <ion-item>
+          <ion-toggle @ionChange="toggleSimulateNFCTag" :checked="isSimulateNFCTag">Simulate NFC Tag</ion-toggle>
+        </ion-item>
+        <ion-item>
           <ion-label>Network</ion-label>
           <ion-select v-model="network" @ionChange="updateNetwork">
             <ion-select-option value="1">Mainnet</ion-select-option>
@@ -39,15 +42,21 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem, IonSelect, IonSelectOption, ToggleChangeEventDetail } from '@ionic/vue';
-import { getNetworkId, setNetworkId, getDevMode, setDevMode } from '@/utils/StorageUtils';
+import { getNetworkId, setNetworkId, getDevMode, getSimulateNFCTag, setDevMode, setSimulateNFCTag } from '@/utils/StorageUtils';
 
 const isDarkMode = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 const isDevMode = ref<boolean | undefined>(undefined);
+const isSimulateNFCTag = ref<boolean | undefined>(undefined);
 const cacheName = ref<string | null>(null);
 const network = ref<string | null>(null);
 
 const toggleDevMode = async (event: any) => {
   await setDevMode(event.detail.checked);
+  window.location.reload();
+};
+
+const toggleSimulateNFCTag = async (event: any) => {
+  await setSimulateNFCTag(event.detail.checked);
   window.location.reload();
 };
 
@@ -101,6 +110,7 @@ const checkForUpdate = () => {
 
 onMounted(async () => {
   isDevMode.value = await getDevMode();
+  isSimulateNFCTag.value = await getSimulateNFCTag();
   network.value = String(await getNetworkId());
   try {
     cacheName.value = await getCacheName();

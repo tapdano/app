@@ -11,6 +11,34 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/welcome.vue')
   },
   {
+    path: '/seed-vault',
+    component: () => import ('../views/seed-vault/index.vue')
+  },
+  {
+    path: '/seed-vault/new-tag',
+    component: () => import ('../views/seed-vault/new-tag.vue')
+  },
+  {
+    path: '/seed-vault/auth',
+    component: () => import ('../views/seed-vault/auth.vue')
+  },
+  {
+    path: '/seed-vault/main',
+    component: () => import ('../views/seed-vault/main.vue')
+  },
+  {
+    path: '/seed-vault/settings',
+    component: () => import ('../views/seed-vault/settings.vue')
+  },
+  {
+    path: '/seed-vault/new-secret',
+    component: () => import ('../views/seed-vault/new-secret.vue')
+  },
+  {
+    path: '/seed-vault/secret',
+    component: () => import ('../views/seed-vault/secret.vue')
+  },
+  {
     path: '/my-wallets',
     component: () => import ('../views/my-wallets.vue')
   },
@@ -182,6 +210,9 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
 
+  next('/welcome');
+
+  /*
   const wallets = await storage.get('my-wallets') || [];
   if (wallets.length == 0) {
     next('/welcome');
@@ -194,6 +225,7 @@ router.beforeEach(async (to, from, next) => {
   } else {
     next('/my-wallets');
   }
+  */
 });
 
 export default router
