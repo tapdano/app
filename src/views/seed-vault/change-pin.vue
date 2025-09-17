@@ -13,10 +13,10 @@
       <div id="container">
         <form @submit.prevent="handleChangePin">
           <ion-item>
-            <ion-input v-model="newPin" label="New PIN" placeholder="Enter new PIN" maxlength="6" type="password" inputmode="numeric" pattern="[0-9]*"></ion-input>
+            <ion-input v-model="newPin" label="New PIN" placeholder="Enter new PIN" :maxlength="6" type="password" inputmode="numeric" pattern="[0-9]*"></ion-input>
           </ion-item>
           <ion-item>
-            <ion-input v-model="confirmPin" label="Confirm PIN" placeholder="Repeat new PIN" maxlength="6" type="password" inputmode="numeric" pattern="[0-9]*"></ion-input>
+            <ion-input v-model="confirmPin" label="Confirm PIN" placeholder="Repeat new PIN" :maxlength="6" type="password" inputmode="numeric" pattern="[0-9]*"></ion-input>
           </ion-item>
           <ion-button expand="block" type="submit">Change PIN</ion-button>
         </form>

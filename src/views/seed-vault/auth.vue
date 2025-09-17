@@ -18,7 +18,7 @@
         <div v-if="activeTab === 'pin'" style="margin-top:20px;">
           <form @submit.prevent="handlePinSubmit">
             <ion-item>
-              <ion-input v-model="pin" label="PIN" placeholder="Enter PIN" type="password" maxlength="6"></ion-input>
+              <ion-input v-model="pin" label="PIN" placeholder="Enter PIN" type="password" :maxlength="6"></ion-input>
             </ion-item>
             <ion-button id="submit-button" expand="block" type="submit">Login</ion-button>
           </form>
