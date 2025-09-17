@@ -41,8 +41,13 @@ const seedPhrase = ref('');
 
 const load = async () => {
   setTimeout(async () => {
+    const svTagsArr = await storage.get('sv_tags');
+    const currentTagIdx = await storage.get('currentSVTagIndex');
+    let key = '';
+    if (Array.isArray(svTagsArr) && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].seedVaultKey) {
+      key = svTagsArr[currentTagIdx].seedVaultKey;
+    }
     const encryptedSecrets = await storage.get('my-secrets');
-    const key = await storage.get('seedVaultKey');
     let decrypted = [];
     if (encryptedSecrets && key) {
       try {
@@ -74,8 +79,13 @@ watch(() => route.path, async (newPath) => {
 const deleteSecret = async () => {
   const confirmation = confirm('Are you sure you want to delete this Seed Phrase?');
   if (confirmation) {
+    const svTagsArr = await storage.get('sv_tags');
+    const currentTagIdx = await storage.get('currentSVTagIndex');
+    let key = '';
+    if (Array.isArray(svTagsArr) && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].seedVaultKey) {
+      key = svTagsArr[currentTagIdx].seedVaultKey;
+    }
     const encryptedSecrets = await storage.get('my-secrets');
-    const key = await storage.get('seedVaultKey');
     let secretsArr = [];
     if (encryptedSecrets && key) {
       try {

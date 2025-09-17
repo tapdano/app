@@ -17,6 +17,29 @@
         <ion-item>
           <ion-toggle @ionChange="toggleDevMode" :checked="isDevMode">Developer Mode</ion-toggle>
         </ion-item>
+        <ion-accordion-group v-if="isDevMode">
+          <ion-accordion value="dev">
+            <ion-item slot="header">
+              <ion-label>Developer Settings</ion-label>
+            </ion-item>
+            <div slot="content" class="dev-area">
+              <ion-item>
+                <ion-label position="stacked">Token</ion-label>
+                <ion-input v-model="devToken" placeholder="Enter token"></ion-input>
+              </ion-item>
+              <ion-item>
+                <ion-label position="stacked">Tag Version</ion-label>
+                <ion-input v-model="tagVersion" type="number" placeholder="1"></ion-input>
+              </ion-item>
+              <ion-item>
+                <ion-label position="stacked">Event ID</ion-label>
+                <ion-input v-model="eventId" type="text" placeholder="1"></ion-input>
+              </ion-item>
+              <ion-button @click="saveDevToken" expand="block" style="margin-top:10px;">Save</ion-button>
+              <div v-if="devTokenSaved" class="token-saved-msg">Token saved!</div>
+            </div>
+          </ion-accordion>
+        </ion-accordion-group>
         <ion-item>
           <ion-toggle @ionChange="toggleSimulateNFCTag" :checked="isSimulateNFCTag">Simulate NFC Tag</ion-toggle>
         </ion-item>
@@ -41,14 +64,22 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem, IonSelect, IonSelectOption, ToggleChangeEventDetail } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem, IonSelect, IonSelectOption, ToggleChangeEventDetail, IonAccordionGroup, IonAccordion, IonInput } from '@ionic/vue';
 import { getNetworkId, setNetworkId, getDevMode, getSimulateNFCTag, setDevMode, setSimulateNFCTag } from '@/utils/StorageUtils';
+import { Storage } from '@ionic/storage';
 
 const isDarkMode = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 const isDevMode = ref<boolean | undefined>(undefined);
 const isSimulateNFCTag = ref<boolean | undefined>(undefined);
 const cacheName = ref<string | null>(null);
 const network = ref<string | null>(null);
+
+const devToken = ref('');
+const devTokenSaved = ref(false);
+const tagVersion = ref(1);
+const eventId = ref('1');
+const storage = new Storage();
+storage.create();
 
 const toggleDevMode = async (event: any) => {
   await setDevMode(event.detail.checked);
@@ -108,6 +139,14 @@ const checkForUpdate = () => {
   }
 };
 
+const saveDevToken = async () => {
+  await storage.set('dev-token', devToken.value);
+  await storage.set('tagVersion', tagVersion.value);
+  await storage.set('eventId', eventId.value);
+  devTokenSaved.value = true;
+  setTimeout(() => devTokenSaved.value = false, 1500);
+};
+
 onMounted(async () => {
   isDevMode.value = await getDevMode();
   isSimulateNFCTag.value = await getSimulateNFCTag();
@@ -117,6 +156,9 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to get cache name:', error);
   }
+  devToken.value = await storage.get('dev-token') || '';
+  tagVersion.value = await storage.get('tagVersion') ?? 1;
+  eventId.value = await storage.get('eventId') ?? '1';
 });
 </script>
 
@@ -124,5 +166,14 @@ onMounted(async () => {
 #update-container {
   text-align: center;
   margin-top: 20px;
+}
+.dev-area {
+  padding: 10px 0;
+}
+.token-saved-msg {
+  color: green;
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.95em;
 }
 </style>

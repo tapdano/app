@@ -175,6 +175,14 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/poa-verify',
     component: () => import ('../views/poa-verify.vue')
+  },
+  {
+    path: '/seed-vault/change-email',
+    component: () => import('../views/seed-vault/change-email.vue')
+  },
+  {
+    path: '/seed-vault/change-pin',
+    component: () => import('../views/seed-vault/change-pin.vue')
   }
 ];
 
@@ -210,22 +218,12 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
 
-  next('/welcome');
-
-  /*
-  const wallets = await storage.get('my-wallets') || [];
-  if (wallets.length == 0) {
-    next('/welcome');
-    return;
-  }
-
-  const currentIndex = await storage.get('currentMyWallet');
-  if (!(currentIndex === null) && wallets[currentIndex]) {
-    next('/my-wallet/main');
+  const currentIndex = await storage.get('currentSVTagIndex');
+  if (!(currentIndex === null)) {
+    next('/seed-vault/main');
   } else {
-    next('/my-wallets');
+    next('/welcome');
   }
-  */
 });
 
 export default router

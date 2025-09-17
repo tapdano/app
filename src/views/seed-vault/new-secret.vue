@@ -54,9 +54,14 @@ const handleSubmit = async () => {
 };
 
 const saveSecret = async (newSecretObj: any) => {
-  const key = await storage.get('seedVaultKey');
+  const svTagsArr = await storage.get('sv_tags');
+  const currentIdx = await storage.get('currentSVTagIndex');
+  let key = '';
+  if (Array.isArray(svTagsArr) && svTagsArr[currentIdx] && svTagsArr[currentIdx].seedVaultKey) {
+    key = svTagsArr[currentIdx].seedVaultKey;
+  }
   if (!key) {
-    alert('Chave de autenticação não encontrada.');
+    alert('Authentication key not found.');
     return;
   }
   const existingEncrypted = await storage.get('my-secrets');

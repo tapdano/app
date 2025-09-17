@@ -23,7 +23,7 @@
             </ion-list>
           </div>
           <div id="buttons-box">
-            <ion-button expand="block" @click="addSeedPhrase">Add Seed Phrase</ion-button>
+            <ion-button expand="block" @click="addSeedPhrase">Import Wallet</ion-button>
           </div>
         </div>
       </div>
@@ -53,8 +53,13 @@ const secrets = ref([]);
 const load = async () => {
   loading.value = true;
   setTimeout(async () => {
+    const svTagsArr = await storage.get('sv_tags');
+    const currentIdx = await storage.get('currentSVTagIndex');
+    let key = '';
+    if (Array.isArray(svTagsArr) && svTagsArr[currentIdx] && svTagsArr[currentIdx].seedVaultKey) {
+      key = svTagsArr[currentIdx].seedVaultKey;
+    }
     const encryptedSecrets = await storage.get('my-secrets');
-    const key = await storage.get('seedVaultKey');
     let decrypted = [];
     if (encryptedSecrets && key) {
       try {
