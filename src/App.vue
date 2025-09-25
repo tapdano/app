@@ -42,7 +42,9 @@ import {
   cardOutline,
   cardSharp,
   settingsOutline,
-  settingsSharp
+  settingsSharp,
+  calendarOutline,
+  calendarSharp
 } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import { getDevMode } from '@/utils/StorageUtils';
@@ -55,57 +57,71 @@ storage.create();
 const appPages = ref([] as any);
 const selectedIndex = ref(0);
 
-const showMenu = computed(() => route.path != '/demo-auth' && route.path != '/dash' && !route.path.includes('/signed') && !route.path.includes('/poa'));
+const showMenu = computed(() => route.path != '/demo-auth' && route.path != '/dash' && !route.path.includes('/signed') && !route.path.includes('/poa') && !route.path.includes('/lottery'));
 
 watch(() => route.path, async (newPath) => {
   selectedIndex.value = appPages.value.findIndex((page: any) => page.url.toLowerCase().indexOf(newPath.toLowerCase()) != -1);
 });
 
 onMounted(async () => {
-  const devMode = await getDevMode();
+  try {
+    const devMode = await getDevMode();
 
-  const pages = [];
-  pages.push({
-    title: 'Seed Vault',
-    url: '/seed-vault',
-    iosIcon: walletOutline,
-    mdIcon: walletSharp,
-  });
-  if (devMode) {
+    const pages = [];
     pages.push({
-      title: 'My Wallets',
-      url: '/my-wallets',
+      title: 'Seed Vault',
+      url: '/seed-vault',
       iosIcon: walletOutline,
       mdIcon: walletSharp,
     });
     pages.push({
-      title: 'Local Wallets',
-      url: '/local-wallets',
-      iosIcon: walletOutline,
-      mdIcon: walletSharp,
+      title: 'Events',
+      url: '/events',
+      iosIcon: calendarOutline,
+      mdIcon: calendarSharp,
     });
+    if (devMode) {
+      /*
+      pages.push({
+        title: 'My Wallets',
+        url: '/my-wallets',
+        iosIcon: walletOutline,
+        mdIcon: walletSharp,
+      });
+      pages.push({
+        title: 'Local Wallets',
+        url: '/local-wallets',
+        iosIcon: walletOutline,
+        mdIcon: walletSharp,
+      });
+      pages.push({
+        title: 'Tag Manager',
+        url: '/my-tags',
+        iosIcon: cardOutline,
+        mdIcon: cardSharp,
+      });
+      */
+    }
     pages.push({
-      title: 'Tag Manager',
-      url: '/my-tags',
-      iosIcon: cardOutline,
-      mdIcon: cardSharp,
+      title: 'Settings',
+      url: '/settings',
+      iosIcon: settingsOutline,
+      mdIcon: settingsSharp,
     });
-  }
-  pages.push({
-    title: 'Settings',
-    url: '/settings',
-    iosIcon: settingsOutline,
-    mdIcon: settingsSharp,
-  });
-  appPages.value = pages;
+    appPages.value = pages;
 
-  const path = '/' + window.location.pathname.split('/')[1];
-  if (path !== undefined) {
-    selectedIndex.value = appPages.value.findIndex((page: any) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
+    const path = '/' + window.location.pathname.split('/')[1];
+    if (path !== undefined) {
+      selectedIndex.value = appPages.value.findIndex((page: any) => page.url.toLowerCase().indexOf(path.toLowerCase()) != -1);
+    }
+  } catch (error) {
+    console.error('Erro no App:', error);
   }
-
+  
   const loadingScreen = document.getElementById('loading-screen');
-  if (loadingScreen) loadingScreen.style.display = 'none';
+  if (loadingScreen) {
+    loadingScreen.style.display = 'none';
+  }
 });
 </script>
 

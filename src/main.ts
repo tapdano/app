@@ -28,19 +28,33 @@ import './theme/variables.css';
 import './theme/shared.css';
 
 import { Buffer } from 'buffer';
-window.Buffer = Buffer;
 
-const app = createApp(App)
-  .use(IonicVue)
-  .use(router);
+try {
+  window.Buffer = Buffer;
+
+  const app = createApp(App)
+    .use(IonicVue)
+    .use(router);
   
-router.isReady().then(() => {
-  app.mount('#app');
-});
+  router.isReady().then(() => {
+    app.mount('#app');
+  }).catch(error => {
+    console.error('Erro no router:', error);
+  });
 
+} catch (error) {
+  console.error('Erro no main:', error);
+}
+
+// Service Worker desabilitado para compatibilidade iOS
+
+/*
 if ('serviceWorker' in navigator) {
+  alert('DEBUG 19: Service Worker suportado');
   window.addEventListener('load', () => {
+    alert('DEBUG 20: Window load, registrando SW');
     navigator.serviceWorker.register('/sw.js').then((registration) => {
+      alert('DEBUG 21: Service Worker registrado');
       console.log('Service Worker registered with scope:', registration.scope);
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
@@ -53,11 +67,17 @@ if ('serviceWorker' in navigator) {
         }
       });
     }, (err) => {
+      alert('DEBUG 21 ERRO: Falha ao registrar SW - ' + err);
       console.log('Service Worker registration failed:', err);
     });
   });
+} else {
+  alert('DEBUG 19: Service Worker NÃO suportado');
 }
+*/
 
+/*
+// Funções do Service Worker - Desabilitadas para compatibilidade iOS
 function notifyUpdate() {
   const updateDiv = document.createElement('div');
   updateDiv.className = 'update-notification';
@@ -89,11 +109,17 @@ function updateServiceWorker() {
     }
   });
 }
+*/
 
+/*
+// Service Worker events - Desabilitados para compatibilidade iOS
 navigator.serviceWorker.addEventListener('controllerchange', () => {
   window.location.reload();
 });
+*/
 
+/*
+// PWA install prompt - Desabilitado para compatibilidade iOS  
 let deferredPrompt: any;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
@@ -129,3 +155,4 @@ function showInstallPromotion() {
     });
   }
 }
+*/

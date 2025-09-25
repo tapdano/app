@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "ionic:serve": "vite",
+    "ionic:serve": "vite --host 0.0.0.0 --port 8100",
     "dev": "vite",
     "build": "vue-tsc && vite build && node make_sw.js",
     "preview": "vite preview",
@@ -12,7 +12,8 @@
     "test:unit": "vitest",
     "lint": "eslint .",
     "serve": "ionic serve",
-    "proxy": "local-ssl-proxy --source 9000 --target 5173"
+    "proxy": "local-ssl-proxy --source 9000 --target 8100",
+    "android_run": "ionic capacitor run android -l --external"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",

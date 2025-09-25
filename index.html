@@ -59,16 +59,45 @@
       <div class="loader"></div>
     </div>
     <script>
-      if (location.href.includes('/poa') || location.href.includes('/poa-verify') || location.href.includes('/demo-auth') || location.href.includes('/signed')) document.getElementById('loading-screen').style.display = 'none';
+      // Capturar erros globais para melhor debugging em produção
+      window.onerror = function(message, source, lineno, colno, error) {
+        console.error('Erro global:', message, 'em', source + ':' + lineno);
+        return false;
+      };
+      
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Promise rejeitada:', event.reason);
+        event.preventDefault();
+      });
+      
+      if (location.href.includes('/poa') || location.href.includes('/poa-verify') || location.href.includes('/demo-auth') || location.href.includes('/signed')) {
+        document.getElementById('loading-screen').style.display = 'none';
+      }
     </script>
     <div id="app"></div>
     <script type="module">
-      import { Lucid, Data, Blockfrost, Constr } from 'https://unpkg.com/lucid-cardano@0.10.7/web/mod.js';
-      window.Lucid = {
-        Lucid: Lucid,
-        Data: Data,
-        Blockfrost: Blockfrost,
-        Constr: Constr
+      try {
+        const { Lucid, Data, Blockfrost, Constr } = await import('https://unpkg.com/lucid-cardano@0.10.7/web/mod.js');
+        window.Lucid = {
+          Lucid: Lucid,
+          Data: Data,
+          Blockfrost: Blockfrost,
+          Constr: Constr
+        };
+      } catch (error) {
+        console.error('Falha ao importar Lucid:', error);
+      }
+    </script>
+    <script>
+      // Fallback para browsers que não suportam módulos ES6
+      if (!window.Lucid) {
+        // Definir um objeto vazio para evitar erros
+        window.Lucid = {
+          Lucid: null,
+          Data: null,
+          Blockfrost: null,
+          Constr: null
+        };
       }
     </script>
     <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>

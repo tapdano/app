@@ -38,6 +38,30 @@ export async function setSimulateNFCTag(value: Boolean) {
   await storage.set('simulateNFCTag', value);
 }
 
+export async function getHomologAPI() {
+  const storage = new Storage();
+  await storage.create();
+  return (await storage.get('homologAPI')) || false;
+}
+
+export async function setHomologAPI(value: Boolean) {
+  const storage = new Storage();
+  await storage.create();
+  await storage.set('homologAPI', value);
+}
+
+export async function getBulkBurn() {
+  const storage = new Storage();
+  await storage.create();
+  return (await storage.get('bulkBurn')) || false;
+}
+
+export async function setBulkBurn(value: Boolean) {
+  const storage = new Storage();
+  await storage.create();
+  await storage.set('bulkBurn', value);
+}
+
 export async function getCurrentLocalWallet() {
   const currentWallet = await getCurrentItem('currentLocalWallet', 'local-wallets');
   if (currentWallet != null) {

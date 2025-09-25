@@ -17,32 +17,24 @@
         <ion-item>
           <ion-toggle @ionChange="toggleDevMode" :checked="isDevMode">Developer Mode</ion-toggle>
         </ion-item>
-        <ion-accordion-group v-if="isDevMode">
-          <ion-accordion value="dev">
-            <ion-item slot="header">
-              <ion-label>Developer Settings</ion-label>
-            </ion-item>
-            <div slot="content" class="dev-area">
-              <ion-item>
-                <ion-label position="stacked">Token</ion-label>
-                <ion-input v-model="devToken" placeholder="Enter token"></ion-input>
-              </ion-item>
-              <ion-item>
-                <ion-label position="stacked">Tag Version</ion-label>
-                <ion-input v-model="tagVersion" type="number" placeholder="1"></ion-input>
-              </ion-item>
-              <ion-item>
-                <ion-label position="stacked">Event ID</ion-label>
-                <ion-input v-model="eventId" type="text" placeholder="1"></ion-input>
-              </ion-item>
-              <ion-button @click="saveDevToken" expand="block" style="margin-top:10px;">Save</ion-button>
-              <div v-if="devTokenSaved" class="token-saved-msg">Token saved!</div>
-            </div>
-          </ion-accordion>
-        </ion-accordion-group>
         <ion-item>
-          <ion-toggle @ionChange="toggleSimulateNFCTag" :checked="isSimulateNFCTag">Simulate NFC Tag</ion-toggle>
+          <ion-toggle @ionChange="toggleSimulateNFCTag" :checked="isSimulateNFCTag">Use Virtual NFC Tag</ion-toggle>
         </ion-item>
+        <ion-item v-if="isDevMode">
+          <ion-toggle @ionChange="toggleHomologAPI" :checked="isHomologAPI">Use Homolog API</ion-toggle>
+        </ion-item>
+        <ion-item v-if="isDevMode">
+          <ion-toggle @ionChange="toggleBulkBurn" :checked="isBulkBurn">Enable Bulk Burn</ion-toggle>
+        </ion-item>
+        <ion-content :fullscreen="true" class="dev-area">
+          <ion-item>
+            <ion-label position="stacked">Virtual NFC Tag Passcode</ion-label>
+            <ion-input v-model="devToken" placeholder="Enter passcode"></ion-input>
+          </ion-item>
+          <ion-button @click="saveDevToken" expand="block" style="margin-top:10px;">Save</ion-button>
+          <div v-if="devTokenSaved" class="token-saved-msg">Passcode saved!</div>
+        </ion-content>
+        <!--
         <ion-item>
           <ion-label>Network</ion-label>
           <ion-select v-model="network" @ionChange="updateNetwork">
@@ -57,6 +49,7 @@
         <div id="update-container">
           <ion-button @click="checkForUpdate" expand="block">Check for Updates</ion-button>
         </div>
+        -->
       </div>
     </ion-content>
   </ion-page>
@@ -65,29 +58,43 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem, IonSelect, IonSelectOption, ToggleChangeEventDetail, IonAccordionGroup, IonAccordion, IonInput } from '@ionic/vue';
-import { getNetworkId, setNetworkId, getDevMode, getSimulateNFCTag, setDevMode, setSimulateNFCTag } from '@/utils/StorageUtils';
+import { getNetworkId, setNetworkId, getDevMode, getSimulateNFCTag, setDevMode, setSimulateNFCTag, getHomologAPI, setHomologAPI, getBulkBurn, setBulkBurn } from '@/utils/StorageUtils';
 import { Storage } from '@ionic/storage';
 
 const isDarkMode = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 const isDevMode = ref<boolean | undefined>(undefined);
 const isSimulateNFCTag = ref<boolean | undefined>(undefined);
+const isHomologAPI = ref<boolean | undefined>(undefined);
+const isBulkBurn = ref<boolean | undefined>(undefined);
 const cacheName = ref<string | null>(null);
 const network = ref<string | null>(null);
 
 const devToken = ref('');
 const devTokenSaved = ref(false);
-const tagVersion = ref(1);
-const eventId = ref('1');
 const storage = new Storage();
 storage.create();
 
 const toggleDevMode = async (event: any) => {
+  isDevMode.value = event.detail.checked;
   await setDevMode(event.detail.checked);
   window.location.reload();
 };
 
 const toggleSimulateNFCTag = async (event: any) => {
+  isSimulateNFCTag.value = event.detail.checked;
   await setSimulateNFCTag(event.detail.checked);
+  window.location.reload();
+};
+
+const toggleHomologAPI = async (event: any) => {
+  isHomologAPI.value = event.detail.checked;
+  await setHomologAPI(event.detail.checked);
+  window.location.reload();
+};
+
+const toggleBulkBurn = async (event: any) => {
+  isBulkBurn.value = event.detail.checked;
+  await setBulkBurn(event.detail.checked);
   window.location.reload();
 };
 
@@ -141,8 +148,6 @@ const checkForUpdate = () => {
 
 const saveDevToken = async () => {
   await storage.set('dev-token', devToken.value);
-  await storage.set('tagVersion', tagVersion.value);
-  await storage.set('eventId', eventId.value);
   devTokenSaved.value = true;
   setTimeout(() => devTokenSaved.value = false, 1500);
 };
@@ -150,6 +155,8 @@ const saveDevToken = async () => {
 onMounted(async () => {
   isDevMode.value = await getDevMode();
   isSimulateNFCTag.value = await getSimulateNFCTag();
+  isHomologAPI.value = await getHomologAPI();
+  isBulkBurn.value = await getBulkBurn();
   network.value = String(await getNetworkId());
   try {
     cacheName.value = await getCacheName();
@@ -157,8 +164,6 @@ onMounted(async () => {
     console.error('Failed to get cache name:', error);
   }
   devToken.value = await storage.get('dev-token') || '';
-  tagVersion.value = await storage.get('tagVersion') ?? 1;
-  eventId.value = await storage.get('eventId') ?? '1';
 });
 </script>
 

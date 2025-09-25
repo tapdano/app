@@ -22,7 +22,9 @@
           <ion-item>
             <ion-input v-model="confirmPin" label="Confirm PIN" placeholder="Repeat your PIN" :maxlength="6" type="password" inputmode="numeric" pattern="[0-9]*"></ion-input>
           </ion-item>
-          <ion-button id="submit-button" expand="block" type="submit">Send</ion-button>
+          <ion-button id="submit-button" expand="block" type="submit" :disabled="isLoading">
+            {{ isLoading ? 'Enviando...' : 'Send' }}
+          </ion-button>
         </form>
       </div>
     </ion-content>
@@ -33,50 +35,59 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton } from '@ionic/vue';
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getSeedVaultApiUrl, saveSeedVaultTag } from '@/utils/SeedVaultUtils';
+import { saveSeedVaultTag } from '@/utils/SeedVaultUtils';
+import { ApiService } from '@/utils/ApiService';
+import { StorageService } from '@/utils/StorageService';
+import { ValidationService } from '@/utils/ValidationService';
+import { UIService } from '@/utils/UIService';
 
 const router = useRouter();
+const storageService = new StorageService();
+
 const email = ref('');
 const pin = ref('');
 const confirmPin = ref('');
 const tagId = ref('');
-
-onMounted(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  tagId.value = urlParams.get('id') || '';
-});
+const tagLabels = ref<string[]>([]);
+const isLoading = ref(false);
 
 const handleSubmit = async () => {
-  if (!/^\d{6}$/.test(pin.value)) {
-    alert('PIN must be exactly 6 digits.');
+  if (isLoading.value) return;
+  
+  // Validate email
+  const emailValidation = ValidationService.validateEmail(email.value);
+  if (!emailValidation.isValid) {
+    UIService.showError(emailValidation.error);
     return;
   }
-  if (pin.value !== confirmPin.value) {
-    alert('PIN and confirmation PIN do not match.');
+  
+  // Validate PIN confirmation
+  const pinValidation = ValidationService.validatePinConfirmation(pin.value, confirmPin.value);
+  if (!pinValidation.isValid) {
+    UIService.showError(pinValidation.error);
     return;
   }
+  
+  isLoading.value = true;
+  
   try {
-    const apiUrl = await getSeedVaultApiUrl();
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'START_TAG',
-        id: tagId.value,
-        email: email.value,
-        pin: pin.value
-      })
-    });
-    const result = await response.json();
-    if (result.status === 'ok' && result.key) {
-      await saveSeedVaultTag({ key: result.key, tagId: tagId.value });
+    const urlParams = new URLSearchParams(window.location.search);
+    tagId.value = urlParams.get('id') || '';
+    tagLabels.value = await storageService.get('temp_tag_labels') || [];
+
+    const result = await ApiService.startTag(tagId.value, email.value, pin.value) as any;
+    
+    if (result.key) {
+      await saveSeedVaultTag({ key: result.key, tagId: tagId.value, labels: tagLabels.value });
+      await storageService.clearTempData();
       router.replace('/seed-vault/main');
     } else {
-      alert(result.error || 'Erro ao associar email');
+      UIService.showError(result.error || 'Error associating email');
     }
   } catch (error) {
-    console.error(error);
-    alert(error);
+    UIService.showError(error);
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>

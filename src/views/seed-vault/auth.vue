@@ -18,20 +18,26 @@
         <div v-if="activeTab === 'pin'" style="margin-top:20px;">
           <form @submit.prevent="handlePinSubmit">
             <ion-item>
-              <ion-input v-model="pin" label="PIN" placeholder="Enter PIN" type="password" :maxlength="6"></ion-input>
+              <ion-input v-model="pin" label="PIN" placeholder="Enter PIN" type="password" inputmode="numeric" :maxlength="6"></ion-input>
             </ion-item>
-            <ion-button id="submit-button" expand="block" type="submit">Login</ion-button>
+            <ion-button id="submit-button" expand="block" type="submit" :disabled="isLoading">
+              {{ isLoading ? 'Authenticating...' : 'Login' }}
+            </ion-button>
           </form>
         </div>
         <div v-else style="margin-top:20px;">
           <form @submit.prevent="handleOtpSubmit">
             <p>Please enter the code sent to your email</p>
             <ion-item>
-              <ion-input v-model="code" label="Code" placeholder="123456"></ion-input>
+              <ion-input v-model="code" label="Code" placeholder="123456" inputmode="numeric" :maxlength="6"></ion-input>
             </ion-item>
-            <ion-button expand="block" type="submit">Login</ion-button>
+            <ion-button expand="block" type="submit" :disabled="isLoading">
+              {{ isLoading ? 'Verifying...' : 'Login' }}
+            </ion-button>
           </form>
-          <ion-button expand="block" color="secondary" style="margin-top:10px;" @click="sendOtpCode">Send Code</ion-button>
+          <ion-button expand="block" color="secondary" style="margin-top:10px;" @click="sendOtpCode" :disabled="isLoading">
+            {{ isLoading ? 'Sending...' : 'Send Code' }}
+          </ion-button>
         </div>
       </div>
     </ion-content>
@@ -42,99 +48,103 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton, IonSegment, IonSegmentButton } from '@ionic/vue';
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getSeedVaultApiUrl, saveSeedVaultTag } from '@/utils/SeedVaultUtils';
-import { Storage } from '@ionic/storage';
+import { saveSeedVaultTag } from '@/utils/SeedVaultUtils';
+import { ApiService } from '@/utils/ApiService';
+import { StorageService } from '@/utils/StorageService';
+import { ValidationService } from '@/utils/ValidationService';
+import { UIService } from '@/utils/UIService';
 
 const router = useRouter();
+const storageService = new StorageService();
+
 const code = ref('');
 const pin = ref('');
 const tagId = ref('');
 const email = ref('');
 const activeTab = ref('pin');
-const storage = new Storage();
+const tagLabels = ref<string[]>([]);
+const isLoading = ref(false);
 
-storage.create();
-
-onMounted(() => {
+onMounted(async () => {
   const urlParams = new URLSearchParams(window.location.search);
   tagId.value = urlParams.get('id') || '';
   email.value = urlParams.get('email') || '';
+  tagLabels.value = await storageService.get('temp_tag_labels') || [];
 });
 
 const sendOtpCode = async () => {
   if (!tagId.value) {
-    alert('Tag ID not found.');
+    UIService.showError('Tag ID not found.');
     return;
   }
+  
+  isLoading.value = true;
+  
   try {
-    const apiUrl = await getSeedVaultApiUrl();
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'AUTH_BY_OTP',
-        id: tagId.value
-      })
-    });
-    const result = await response.json();
-    if (result.status !== 'ok') {
-      alert(result.error || 'Error requesting code');
-    } else {
-      alert('Code sent to your email.');
-    }
+    await ApiService.authByOtp(tagId.value);
+    UIService.showSuccess('Code sent to your email.');
   } catch (error) {
-    alert('Error communicating with the server');
-    console.error(error);
+    UIService.showError(error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const handleOtpSubmit = async () => {
+  if (isLoading.value) return;
+  
+  // Validate code
+  const validation = ValidationService.validateRequiredField(code.value, 'Code');
+  if (!validation.isValid) {
+    UIService.showError(validation.error);
+    return;
+  }
+  
+  isLoading.value = true;
+  
   try {
-    const apiUrl = await getSeedVaultApiUrl();
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'VERIFY_OTP',
-        id: tagId.value,
-        otp_code: code.value
-      })
-    });
-    const result = await response.json();
-    if (result.status === 'ok' && result.verified) {
-      await saveSeedVaultTag({ key: result.key, tagId: tagId.value });
+    const result = await ApiService.verifyOtp(tagId.value, code.value) as any;
+    
+    if (result.verified && result.key) {
+      await saveSeedVaultTag({ key: result.key, tagId: tagId.value, labels: tagLabels.value });
+      await storageService.clearTempData();
       router.replace('/seed-vault/main');
     } else {
-      alert('Invalid code');
+      UIService.showError('Invalid code');
     }
   } catch (error) {
-    console.error(error);
-    alert(error);
+    UIService.showError(error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const handlePinSubmit = async () => {
+  if (isLoading.value) return;
+  
+  // Validate PIN
+  const validation = ValidationService.validatePin(pin.value);
+  if (!validation.isValid) {
+    UIService.showError(validation.error);
+    return;
+  }
+  
+  isLoading.value = true;
+  
   try {
-    const apiUrl = await getSeedVaultApiUrl();
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'AUTH_BY_PIN',
-        id: tagId.value,
-        pin: pin.value
-      })
-    });
-    const result = await response.json();
-    if (result.status === 'ok' && result.verified && result.key) {
-      await saveSeedVaultTag({ key: result.key, tagId: tagId.value });
+    const result = await ApiService.authByPin(tagId.value, pin.value) as any;
+    
+    if (result.verified && result.key) {
+      await saveSeedVaultTag({ key: result.key, tagId: tagId.value, labels: tagLabels.value });
+      await storageService.clearTempData();
       router.replace('/seed-vault/main');
     } else {
-      alert('Invalid PIN');
+      UIService.showError('Invalid PIN');
     }
   } catch (error) {
-    console.error(error);
-    alert(error);
+    UIService.showError(error);
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>

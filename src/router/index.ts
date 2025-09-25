@@ -39,6 +39,18 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import ('../views/seed-vault/secret.vue')
   },
   {
+    path: '/events',
+    component: () => import ('../views/events.vue')
+  },
+  {
+    path: '/event-details',
+    component: () => import ('../views/event-details.vue')
+  },
+  {
+    path: '/lottery',
+    component: () => import ('../views/lottery.vue')
+  },
+  {
     path: '/my-wallets',
     component: () => import ('../views/my-wallets.vue')
   },

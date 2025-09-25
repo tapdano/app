@@ -50,3 +50,33 @@ export function hexToBase64(hexString: string) {
   });
   return btoa(binary);
 }
+
+export function hexStringToArray(hex: string) {
+  //@ts-ignore
+  const tmpArray = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+  const result = [];
+  for (let i = 0; i < tmpArray.length; i++) {
+    result.push(tmpArray[i]);
+  }
+  return result;
+};
+
+export function arrayBufferToHex(arrayBuffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(arrayBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export function hexToString(hex: string): string {
+  let result = '';
+  for (let i = 0; i < hex.length; i += 2) {
+    result += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+  }
+  return result;
+}
+
+export function stringToArray(str: string): number[] {
+  const result = [];
+  for (let i = 0; i < str.length; i++) {
+    result.push(str.charCodeAt(i));
+  }
+  return result;
+}
