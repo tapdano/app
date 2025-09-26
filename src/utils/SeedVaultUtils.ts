@@ -19,11 +19,12 @@ export function ensureSerializableTags(tags: any[]): any[] {
     id: tag.id,
     seedVaultKey: tag.seedVaultKey,
     labels: Array.isArray(tag.labels) ? [...tag.labels] : [],
+    chains: Array.isArray(tag.chains) ? [...tag.chains] : [],
     multipleWalletsEnabled: tag.multipleWalletsEnabled === true,
   }));
 }
 
-export async function saveSeedVaultTag({ key, tagId, labels }: { key: string, tagId: string, labels?: string[] }) {
+export async function saveSeedVaultTag({ key, tagId, labels, chains }: { key: string, tagId: string, labels?: string[], chains?: string[] }) {
   const storage = new Storage();
   await storage.create();
   let svTags = await storage.get('sv_tags');
@@ -37,6 +38,7 @@ export async function saveSeedVaultTag({ key, tagId, labels }: { key: string, ta
       id: tagId, 
       seedVaultKey: key, 
       labels: labels ? [...labels] : [],
+      chains: chains ? [...chains] : [],
       multipleWalletsEnabled: false
     });
     idx = svTags.length - 1;
@@ -44,6 +46,9 @@ export async function saveSeedVaultTag({ key, tagId, labels }: { key: string, ta
     svTags[idx].seedVaultKey = key;
     if (labels) {
       svTags[idx].labels = [...labels];
+    }
+    if (chains) {
+      svTags[idx].chains = [...chains];
     }
     // Preserve existing multipleWalletsEnabled setting or default to false
     if (svTags[idx].multipleWalletsEnabled === undefined) {

@@ -9,19 +9,73 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <div id="container">
-        <h2>Here you can manage your Seed Vault Tags, set it up, protect it, and much more.</h2>
-        <div v-if="svTags.length > 0" style="margin-bottom: 20px;">
-          <h3 class="tags-title">Available Tags:</h3>
-          <ion-list>
-            <ion-item v-for="(tag, idx) in svTags" :key="tag.id" @click="openTag(tag, idx)">
-              <span>Seed Vault #{{ idx + 1 }}</span>
-            </ion-item>
-          </ion-list>
+      <div class="main-container">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+          <div class="welcome-header">
+            <ion-icon :icon="shieldOutline" class="welcome-icon"></ion-icon>
+            <h1 class="welcome-title">Seed Vault</h1>
+          </div>
+          <p class="welcome-description">
+            Securely manage your crypto wallets with NFC tags. Import, create, and protect your digital assets.
+          </p>
         </div>
-        <div id="buttons-box">
-          <ion-button expand="block" @click="addTagEvent">Scan a Tag</ion-button>
-          <ion-button v-if="isSimulate || isDevMode" color="danger" expand="block" style="margin-top:10px;" @click="burnTagEvent">Burn a Tag</ion-button>
+
+        <!-- Tags Section -->
+        <div v-if="svTags.length > 0" class="tags-section">
+          <h2 class="section-title">
+            <ion-icon :icon="cardOutline"></ion-icon>
+            Your Tags
+          </h2>
+          <div class="tags-grid">
+            <div 
+              v-for="(tag, idx) in svTags" 
+              :key="tag.id" 
+              class="tag-card"
+              @click="openTag(tag, idx)"
+            >
+              <div class="tag-header">
+                <ion-icon :icon="cardOutline" class="tag-icon"></ion-icon>
+                <div class="tag-info">
+                  <h3 class="tag-name">Seed Vault #{{ idx + 1 }}</h3>
+                  <p class="tag-id">{{ tag.id }}</p>
+                </div>
+                <ion-icon :icon="chevronForwardOutline" class="chevron"></ion-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="empty-state">
+          <ion-icon :icon="cardOutline" class="empty-icon"></ion-icon>
+          <h3>No Tags Found</h3>
+          <p>Start by scanning your first NFC tag to begin securing your wallets</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions-section">
+          <ion-button 
+            expand="block" 
+            fill="solid"
+            @click="addTagEvent"
+            class="action-button primary"
+          >
+            <ion-icon :icon="scanOutline" slot="start"></ion-icon>
+            Scan Tag
+          </ion-button>
+          
+          <ion-button 
+            v-if="isSimulate || isDevMode" 
+            expand="block" 
+            fill="outline"
+            color="danger"
+            @click="burnTagEvent"
+            class="action-button danger"
+          >
+            <ion-icon :icon="flameOutline" slot="start"></ion-icon>
+            Burn Tag
+          </ion-button>
         </div>
       </div>
     </ion-content>
@@ -32,7 +86,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonItem, IonList } from '@ionic/vue';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonIcon } from '@ionic/vue';
+import { shieldOutline, cardOutline, chevronForwardOutline, scanOutline, flameOutline } from 'ionicons/icons';
 import { getSimulateNFCTag, getDevMode, getBulkBurn } from '@/utils/StorageUtils';
 import { ensureSerializableTags } from '@/utils/SeedVaultUtils';
 import { MobileNDEFService } from '@/utils/MobileNDEFService';
@@ -41,6 +96,8 @@ import { StorageService } from '@/utils/StorageService';
 import { UIService } from '@/utils/UIService';
 import NFCModal from '@/components/NFCModal.vue';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Device } from '@capacitor/device';
+import { App } from '@capacitor/app';
 
 const storageService = new StorageService();
 
@@ -138,13 +195,55 @@ const openTag = async (tag: { id: string, email?: string }, idx: number) => {
   }
 };
 
+// Function to collect device metadata
+const getDeviceMetadata = async () => {
+  try {
+    const deviceInfo = await Device.getInfo();
+    const deviceId = await Device.getId();
+    const appInfo = await App.getInfo();
+    
+    return {
+      platform: deviceInfo.platform === 'ios' ? 'iOS' : deviceInfo.platform === 'android' ? 'Android' : deviceInfo.platform,
+      device_model: deviceInfo.model || null,
+      device_manufacturer: deviceInfo.manufacturer || null,
+      app_version: appInfo.version || null,
+      os_version: deviceInfo.osVersion || null,
+      device_id: deviceId.identifier || null
+    };
+  } catch (error) {
+    console.warn('Error collecting device metadata:', error);
+    // Return default values if collection fails
+    return {
+      platform: 'Unknown',
+      device_model: null,
+      device_manufacturer: null,
+      app_version: null,
+      os_version: null,
+      device_id: null
+    };
+  }
+};
+
 declare const nfc: any;
 
 const burnTagEvent = async () => {
   let tag_id = null;
   
+  const isSimulateNFCTag = await getSimulateNFCTag();
+  const deviceMetadata = await getDeviceMetadata();
+
   try {
-    const result = await ApiService.addTag(devToken.value, eventId.value) as any;
+    const result = await ApiService.addTag(
+      devToken.value, 
+      eventId.value, 
+      isSimulateNFCTag,
+      deviceMetadata.platform,
+      deviceMetadata.device_model || undefined,
+      deviceMetadata.device_manufacturer || undefined,
+      deviceMetadata.app_version || undefined,
+      deviceMetadata.os_version || undefined,
+      deviceMetadata.device_id || undefined
+    ) as any;
     if (result.tag_id) {
       tag_id = result.tag_id;
     }
@@ -160,7 +259,6 @@ const burnTagEvent = async () => {
   if (!nfcModal.value) return;
   
   try {
-    const isSimulateNFCTag = await getSimulateNFCTag();
     if (isSimulateNFCTag) {
       nfcModal.value.openModal(1);
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -177,7 +275,7 @@ const burnTagEvent = async () => {
       nfcModal.value.onModalClose(() => {
         mobileNDEFService.cancel();
       });
-      await mobileNDEFService.write(tag_id, [], [], true);
+      await mobileNDEFService.write(tag_id, [], [], [], true);
       nfcModal.value.incrementProgress();
       
       try {
@@ -215,6 +313,7 @@ const burnTagEvent = async () => {
 const addTagEvent = async () => {
   let tag_Id: string | null = null;
   let tag_labels: string[] = [];
+  let tag_chains: string[] = [];
   
   if (!nfcModal.value) return;
   
@@ -225,6 +324,7 @@ const addTagEvent = async () => {
     if (isSimulateNFCTag) {
       tag_Id = await storageService.get('burned-tag-id') || '';
       tag_labels = [];
+      tag_chains = [];
       nfcModal.value.incrementProgress();
       await nfcModal.value.closeModal(500);
     } else {
@@ -238,6 +338,7 @@ const addTagEvent = async () => {
       console.log('NFC Tag content:', tag);
       tag_Id = tag.id;
       tag_labels = tag.labels || [];
+      tag_chains = tag.chains || [];
     }
   } catch (error) {
     if (error && error != 'canceled') {
@@ -259,6 +360,7 @@ const addTagEvent = async () => {
   
   if (idx !== -1) {
     svTagsArr[idx].labels = tag_labels;
+    svTagsArr[idx].chains = tag_chains;
     await storageService.set('sv_tags', ensureSerializableTags(svTagsArr));
     await storageService.set('currentSVTagIndex', idx);
     router.push('/seed-vault/main');
@@ -267,6 +369,7 @@ const addTagEvent = async () => {
 
   await storageService.set('temp_tag_id', tag_Id);
   await storageService.set('temp_tag_labels', tag_labels);
+  await storageService.set('temp_tag_chains', tag_chains);
 
   try {
     const result = await ApiService.getTag(tag_Id) as any;
@@ -291,18 +394,201 @@ const addTagEvent = async () => {
 </script>
 
 <style scoped>
-.tags-title {
-  margin: 40px 0 10px 0;
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 600;
+.main-container {
+  padding: var(--spacing-lg);
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-#buttons-box {
-  margin-top: 20px;
+.welcome-section {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: var(--ion-color-light);
+  border-radius: var(--border-radius-lg);
+  border: 2px solid var(--ion-color-light-shade);
 }
-ion-button {
-  min-height: 50px;
-  margin-top: 10px;
+
+.welcome-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.welcome-icon {
+  font-size: 48px;
+  color: var(--ion-color-primary);
+}
+
+.welcome-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: var(--font-weight-bold);
+  color: var(--ion-color-dark);
+}
+
+.welcome-description {
+  margin: 0;
+  font-size: 16px;
+  color: var(--ion-color-medium);
+  line-height: 1.5;
+}
+
+.tags-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--ion-color-primary);
+}
+
+.tags-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.tag-card {
+  background: var(--ion-color-background);
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.tag-card:hover {
+  border-color: var(--ion-color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.tag-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.tag-icon {
+  font-size: 24px;
+  color: var(--ion-color-primary);
+  min-width: 32px;
+}
+
+.tag-info {
+  flex: 1;
+}
+
+.tag-name {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--ion-color-dark);
+}
+
+.tag-id {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  color: var(--ion-color-medium);
+  word-break: break-all;
+}
+
+.chevron {
+  font-size: 20px;
+  color: var(--ion-color-medium);
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  color: var(--ion-color-medium);
+  margin-bottom: var(--spacing-xl);
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: var(--spacing-md);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.actions-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.action-button {
+  --border-radius: var(--border-radius-md);
+  --padding-top: var(--spacing-md);
+  --padding-bottom: var(--spacing-md);
+  font-weight: var(--font-weight-semibold);
+  min-height: 56px;
+}
+
+.action-button.primary {
+  --background: var(--ion-color-primary);
+  --color: var(--ion-color-primary-contrast);
+}
+
+.action-button.danger {
+  --color: var(--ion-color-danger);
+  --border-color: var(--ion-color-danger);
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .main-container {
+    padding: var(--spacing-md);
+  }
+  
+  .welcome-section {
+    padding: var(--spacing-md);
+  }
+  
+  .welcome-title {
+    font-size: 24px;
+  }
+  
+  .welcome-description {
+    font-size: 14px;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .welcome-section {
+    background: var(--ion-color-surface);
+    border-color: var(--ion-color-medium);
+  }
+  
+  .tag-card {
+    background: var(--ion-color-surface);
+    border-color: var(--ion-color-medium);
+  }
+  
+  .tag-card:hover {
+    background: var(--ion-color-light);
+  }
 }
 </style>

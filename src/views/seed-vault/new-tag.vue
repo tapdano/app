@@ -78,7 +78,8 @@ const handleSubmit = async () => {
     const result = await ApiService.startTag(tagId.value, email.value, pin.value) as any;
     
     if (result.key) {
-      await saveSeedVaultTag({ key: result.key, tagId: tagId.value, labels: tagLabels.value });
+      const tagChains = (await storageService.get('temp_tag_chains')) as string[] || [];
+      await saveSeedVaultTag({ key: result.key, tagId: tagId.value, labels: tagLabels.value, chains: tagChains });
       await storageService.clearTempData();
       router.replace('/seed-vault/main');
     } else {

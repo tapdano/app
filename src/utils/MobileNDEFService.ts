@@ -7,6 +7,7 @@ export interface SVTag {
   id: string;
   labels: string[];
   secrets: string[];
+  chains: string[];
 }
 
 export class MobileNDEFService {
@@ -17,6 +18,7 @@ export class MobileNDEFService {
   private _tag_id: string | undefined = undefined;
   private _tag_labels: string[] | undefined = undefined;
   private _tag_secrets: string[] | undefined = undefined;
+  private _tag_chains: string[] | undefined = undefined;
   private _resolve: ((value: any) => void) | undefined = undefined;
   private _reject: ((reason?: any) => void) | undefined = undefined;
   private isCanceled = false;
@@ -32,12 +34,13 @@ export class MobileNDEFService {
     return this.initializeAndExecute();
   }
 
-  async write(id: string, labels: string[], secrets: string[], forceWrite: boolean = false): Promise<void> {
+  async write(id: string, labels: string[], secrets: string[], chains: string[], forceWrite: boolean = false): Promise<void> {
     this._isWrite = true;
     this._forceWrite = forceWrite;
     this._tag_id = id;
     this._tag_labels = labels;
     this._tag_secrets = secrets;
+    this._tag_chains = chains;
     return this.initializeAndExecute();
   }
 
@@ -70,7 +73,8 @@ export class MobileNDEFService {
     const data = {
       id: this._tag_id,
       labels: this._tag_labels,
-      secrets: this._tag_secrets
+      secrets: this._tag_secrets,
+      chains: this._tag_chains
     };
     const message = [
       ndef.record(ndef.TNF_UNKNOWN, [], [], stringToArray(JSON.stringify(data)))
@@ -114,7 +118,8 @@ export class MobileNDEFService {
     let tag: SVTag = {
       id: '',
       labels: [],
-      secrets: []
+      secrets: [],
+      chains: []
     };
 
     try {
@@ -123,6 +128,7 @@ export class MobileNDEFService {
         tag.id = parsedData.id || '';
         tag.labels = Array.isArray(parsedData.labels) ? parsedData.labels : [];
         tag.secrets = Array.isArray(parsedData.secrets) ? parsedData.secrets : [];
+        tag.chains = Array.isArray(parsedData.chains) ? parsedData.chains : [];
       }
     } catch (parseError) {
       console.log('Failed to parse tag', parseError);
@@ -168,14 +174,15 @@ export class MobileNDEFService {
       
       if (!this._forceWrite && currentTag.id && currentTag.id !== this._tag_id) {
         console.log(`Tag ID mismatch. Current: ${currentTag.id}, Expected: ${this._tag_id}. Use forceWrite=true to override.`);
-        this._reject && this._reject(new Error(`Tag ID mismatch. Current: ${currentTag.id}, Expected: ${this._tag_id}. Use forceWrite=true to override.`));
+        this._reject && this._reject(new Error(`Warning: Incorrect tag. Use the tag with ID ${this._tag_id}.`));
         return;
       }
       
       const data = {
         id: this._tag_id,
         labels: this._tag_labels,
-        secrets: this._tag_secrets
+        secrets: this._tag_secrets,
+        chains: this._tag_chains
       };
       const message = [
         ndef.record(ndef.TNF_UNKNOWN, [], [], stringToArray(JSON.stringify(data)))

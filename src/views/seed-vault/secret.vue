@@ -10,49 +10,98 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <div id="container">
-        <!-- Seed Phrase Section -->
-        <div class="info-section">
-
-          <!-- Individual Word Buttons -->
-          <div class="words-grid" v-if="seedPhraseWords.length > 0">
-            <div 
-              v-for="(word, index) in seedPhraseWords" 
-              :key="index" 
-              class="word-container"
-            >
-              <div class="word-number">{{ index + 1 }}</div>
-              <ion-button 
-                fill="outline" 
-                class="word-button"
-                @click="copyWord(word, index + 1)"
-              >
-                {{ word }}
-              </ion-button>
+      <div class="main-container">
+        <!-- Wallet Info Section -->
+        <div class="wallet-info-section">
+          <div class="wallet-header">
+            <span class="wallet-icon">{{ getWalletTypeIcon(walletType) }}</span>
+            <div class="wallet-details">
+              <h2 class="wallet-name">{{ name || 'Unnamed Wallet' }}</h2>
+              <p class="wallet-type">{{ getWalletTypeName(walletType) }}</p>
             </div>
           </div>
+        </div>
 
+        <!-- Wallet Address Section -->
+        <div class="address-section" v-if="walletAddress">
+          <h3 class="field-label">
+            <ion-icon :icon="locationOutline"></ion-icon>
+            Wallet Address
+          </h3>
+          <div class="address-container">
+            <div class="address-display">{{ walletAddress }}</div>
+            <ion-button 
+              fill="outline" 
+              size="small"
+              @click="copyAddress"
+              class="copy-address-button"
+              :aria-label="`Copy ${name} address`"
+            >
+              <ion-icon slot="icon-only" :icon="copyOutline"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+
+        <!-- Wallet Seed Phrase Section -->
+        <div class="seed-phrase-section" v-if="seedPhraseWords.length > 0">
+          <h3 class="field-label">
+            <ion-icon :icon="shieldOutline"></ion-icon>
+            Recovery Phrase
+          </h3>
+          
+          <!-- Grid responsivo melhorado -->
+          <div class="words-container">
+            <div 
+              v-for="(word, index) in seedPhraseWords" 
+              :key="index"
+              class="word-card"
+              @click="copyWord(word, index + 1)"
+              :aria-label="`Copy word ${index + 1}: ${word}`"
+            >
+              <div class="word-number">{{ index + 1 }}</div>
+              <div class="word-text">{{ word }}</div>
+              <ion-icon :icon="copyOutline" class="copy-icon" aria-hidden="true"></ion-icon>
+            </div>
+          </div>
+          
           <!-- Copy All Button -->
-          <div class="copy-all-section" v-if="seedPhraseWords.length > 0">
+          <div class="copy-all-section">
             <ion-button 
               fill="solid" 
               color="primary"
               @click="copyFullSeedPhrase"
               :disabled="!seedPhrase"
+              class="copy-all-button"
             >
-              <ion-icon slot="start" name="copy-outline"></ion-icon>
+              <ion-icon slot="start" :icon="copyOutline"></ion-icon>
               Copy All Words
             </ion-button>
           </div>
-
-          <!-- Empty state -->
-          <div v-else class="empty-seed-phrase">
-            <ion-icon name="key-outline" class="empty-icon"></ion-icon>
-            <p>No seed phrase available</p>
-          </div>
+          
+          <!-- Warning sobre segurança -->
+          <ion-note color="warning" class="security-warning">
+            <ion-icon :icon="warningOutline"></ion-icon>
+            Never share your recovery phrase with anyone
+          </ion-note>
         </div>
 
-        <ion-button id="delete-button" expand="block" color="danger" @click="deleteSecret">Delete Wallet</ion-button>
+        <!-- Empty state -->
+        <div v-else class="empty-seed-phrase">
+          <ion-icon :icon="keyOutline" class="empty-icon"></ion-icon>
+          <p>No wallet seed phrase available</p>
+        </div>
+
+        <!-- Delete Button -->
+        <ion-button 
+          expand="block" 
+          color="danger" 
+          fill="outline"
+          @click="deleteSecret"
+          class="delete-button"
+        >
+          <ion-icon slot="start" :icon="trashOutline"></ion-icon>
+          Delete Wallet
+        </ion-button>
       </div>
     </ion-content>
     
@@ -73,6 +122,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton, IonIcon, IonToast } from '@ionic/vue';
+import { copyOutline, keyOutline, locationOutline, shieldOutline, warningOutline, trashOutline } from 'ionicons/icons';
 import { useRoute, useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import CryptoJS from 'crypto-js';
@@ -81,6 +131,8 @@ import { ensureSerializableTags } from '@/utils/SeedVaultUtils';
 import { MobileNDEFService } from '@/utils/MobileNDEFService';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import NFCModal from '@/components/NFCModal.vue';
+import { getWalletTypeIcon, getWalletTypeName } from '@/utils/WalletTypes';
+import { generateWalletAddress } from '@/utils/CryptoUtils';
 
 const router = useRouter();
 const route = useRoute();
@@ -90,11 +142,13 @@ storage.create();
 const secrets = ref([]);
 const name = ref('');
 const seedPhrase = ref('');
+const walletType = ref('cardano');
+const walletAddress = ref('');
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const isToastOpen = ref(false);
 const toastMessage = ref('');
 
-// Computed property to split seed phrase into words
+// Computed property to split wallet seed phrase into words
 const seedPhraseWords = computed(() => {
   if (!seedPhrase.value) return [];
   return seedPhrase.value.trim().split(/\s+/).filter(word => word.length > 0);
@@ -112,11 +166,19 @@ const copyWord = async (word: string, wordNumber: number) => {
   showToast(`Word ${wordNumber} copied!`);
 };
 
-// Copy full seed phrase
+// Copy full wallet seed phrase
 const copyFullSeedPhrase = async () => {
   if (seedPhrase.value) {
     await copyToClipboard(seedPhrase.value);
     showToast('All words copied!');
+  }
+};
+
+// Copy wallet address
+const copyAddress = async () => {
+  if (walletAddress.value) {
+    await copyToClipboard(walletAddress.value);
+    showToast('Address copied!');
   }
 };
 
@@ -147,10 +209,11 @@ const load = async () => {
       if (Array.isArray(svTagsArr) && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].labels) {
         const labels = svTagsArr[currentTagIdx].labels;
         
-        // Create secrets array with empty seed phrases
+        // Create secrets array with empty wallet seed phrases
         secretsData = labels.map((label: string, index: number) => ({
           name: label,
-          seedPhrase: ''
+          seedPhrase: '',
+          walletType: (svTagsArr[currentTagIdx].chains && svTagsArr[currentTagIdx].chains[index]) || 'cardano'
         }));
         
         // Load the specific secret from NFC tag
@@ -197,9 +260,24 @@ const load = async () => {
     if (secrets.value[currentIndex]) {
       name.value = (secrets.value[currentIndex] as any).name;
       seedPhrase.value = (secrets.value[currentIndex] as any).seedPhrase;
+      walletType.value = (secrets.value[currentIndex] as any).walletType || 'cardano';
+      
+      // Generate wallet address if seed phrase is available
+      if (seedPhrase.value && seedPhrase.value.trim()) {
+        try {
+          walletAddress.value = await generateWalletAddress(seedPhrase.value, walletType.value);
+        } catch (error) {
+          console.error('Failed to generate wallet address:', error);
+          walletAddress.value = '';
+        }
+      } else {
+        walletAddress.value = '';
+      }
     } else {
       name.value = '';
       seedPhrase.value = '';
+      walletType.value = 'cardano';
+      walletAddress.value = '';
     }
   }, 10);
 };
@@ -211,7 +289,7 @@ watch(() => route.path, async (newPath) => {
 }, { immediate: true });
 
 const deleteSecret = async () => {
-  const confirmation = confirm('Are you sure you want to delete this Seed Phrase?');
+  const confirmation = confirm('Are you sure you want to delete this Wallet?');
   if (confirmation) {
     const svTagsArr = await storage.get('sv_tags');
     const currentTagIdx = await storage.get('currentSVTagIndex');
@@ -241,9 +319,14 @@ const deleteSecret = async () => {
         await storage.set('my-secrets', encrypted);
       }
     } else {
-      // Delete from tag labels, read and update NFC tag
+      // Delete from tag labels and chains, read and update NFC tag
       if (Array.isArray(svTagsArr) && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].labels) {
         svTagsArr[currentTagIdx].labels.splice(currentIndex, 1);
+        
+        // Also remove the corresponding chain type
+        if (svTagsArr[currentTagIdx].chains && svTagsArr[currentTagIdx].chains.length > currentIndex) {
+          svTagsArr[currentTagIdx].chains.splice(currentIndex, 1);
+        }
         
         // Ensure the array is serializable by creating plain objects
         const serializableTags = ensureSerializableTags(svTagsArr);
@@ -286,6 +369,7 @@ const deleteSecret = async () => {
             currentTag.id,
             currentTag.labels || [],
             currentSecrets,
+            currentTag.chains || [],
             false
           );
           
@@ -309,97 +393,188 @@ const deleteSecret = async () => {
 </script>
 
 <style scoped>
-#container {
-  padding: 16px;
+.main-container {
+  padding: var(--spacing-lg);
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.info-section {
-  margin-bottom: 24px;
+.wallet-info-section {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--ion-color-light);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--ion-color-light-shade);
+}
+
+.wallet-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.wallet-icon {
+  font-size: 32px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.wallet-details {
+  flex: 1;
+}
+
+.wallet-name {
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--ion-color-dark);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.wallet-type {
+  font-size: 16px;
+  color: var(--ion-color-medium);
+  margin: 0;
+}
+
+.address-section {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--ion-color-light);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--ion-color-light-shade);
 }
 
 .field-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--ion-color-primary);
-  margin-bottom: 12px;
+  margin-bottom: var(--spacing-md);
   margin-top: 0;
 }
 
-.name-display {
-  background-color: var(--ion-color-light);
-  padding: 16px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--ion-color-dark);
-  border: 1px solid var(--ion-color-medium);
-}
-
-.words-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0px;
-  margin-bottom: 20px;
-}
-
-.word-container {
+.address-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
+}
+
+.address-display {
+  flex: 1;
+  background: var(--ion-color-background);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  font-family: var(--font-family-mono);
+  font-size: 14px;
+  color: var(--ion-color-dark);
+  border: 1px solid var(--ion-color-medium);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.copy-address-button {
+  --border-radius: var(--border-radius-md);
+  --padding-start: var(--spacing-sm);
+  --padding-end: var(--spacing-sm);
+  --padding-top: var(--spacing-sm);
+  --padding-bottom: var(--spacing-sm);
+  min-width: 48px;
+  height: 48px;
+}
+
+.seed-phrase-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.words-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.word-card {
+  background: var(--ion-color-background);
+  border: 2px solid var(--ion-color-light-shade);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.word-card:hover {
+  border-color: var(--ion-color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .word-number {
   font-size: 12px;
-  font-weight: bold;
   color: var(--ion-color-medium);
-  min-width: 24px;
-  text-align: center;
-  background-color: var(--ion-color-light);
-  border-radius: 12px;
-  padding: 4px 6px;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
+  background: var(--ion-color-light);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  display: inline-block;
 }
 
-.word-button {
-  flex: 1;
-  --border-radius: 8px;
-  --padding-start: 16px;
-  --padding-end: 16px;
-  font-family: 'Courier New', monospace;
+.word-text {
+  font-family: var(--font-family-mono);
   font-size: 14px;
-  text-transform: none;
-  letter-spacing: normal;
+  font-weight: var(--font-weight-medium);
+  color: var(--ion-color-dark);
+  margin-bottom: var(--spacing-xs);
 }
 
-.word-button:hover {
-  --background: var(--ion-color-primary-shade);
-  --color: white;
+.copy-icon {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  font-size: 16px;
+  opacity: 0.6;
 }
 
 .copy-all-section {
   text-align: center;
-  margin-top: 20px;
-  padding-top: 20px;
+  margin: var(--spacing-lg) 0;
+  padding-top: var(--spacing-md);
   border-top: 1px solid var(--ion-color-light);
 }
 
-.copy-all-section ion-button {
-  --padding-start: 24px;
-  --padding-end: 24px;
-  --padding-top: 12px;
-  --padding-bottom: 12px;
-  font-weight: 600;
-  font-size: 18px;
+.copy-all-button {
+  --padding-start: var(--spacing-lg);
+  --padding-end: var(--spacing-lg);
+  --padding-top: var(--spacing-sm);
+  --padding-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-semibold);
+  font-size: 16px;
+}
+
+.security-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: var(--ion-color-warning-tint);
+  border-radius: var(--border-radius-md);
+  font-size: 14px;
 }
 
 .empty-seed-phrase {
   text-align: center;
-  padding: 40px 20px;
+  padding: var(--spacing-xxl) var(--spacing-lg);
   color: var(--ion-color-medium);
 }
 
 .empty-icon {
   font-size: 48px;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
   opacity: 0.5;
 }
 
@@ -408,39 +583,63 @@ const deleteSecret = async () => {
   margin: 0;
 }
 
-#delete-button {
-  margin: 0 auto;
-  --border-radius: 8px;
-  --padding-top: 16px;
-  --padding-bottom: 16px;
-  width: 40%;
-  text-align: center;
-  font-weight: 600;
-  font-size: 12px;
+.delete-button {
+  margin-top: var(--spacing-xl);
+  --border-radius: var(--border-radius-md);
+  --padding-top: var(--spacing-md);
+  --padding-bottom: var(--spacing-md);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* Responsive design for smaller screens */
-@media (max-width: 320px) {
-  .words-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
+@media (max-width: 480px) {
+  .main-container {
+    padding: var(--spacing-md);
   }
   
-  .word-container {
-    gap: 6px;
+  .words-container {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-xs);
+  }
+  
+  .word-card {
+    padding: var(--spacing-xs);
+  }
+  
+  .wallet-header {
+    gap: var(--spacing-sm);
   }
 }
 
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
-  .name-display {
-    background-color: var(--ion-color-dark);
+  .wallet-info-section {
+    background: var(--ion-color-surface);
+    border-color: var(--ion-color-medium);
+  }
+  
+  .address-section {
+    background: var(--ion-color-surface);
+    border-color: var(--ion-color-medium);
+  }
+  
+  .address-display {
+    background: var(--ion-color-dark);
     color: var(--ion-color-light);
     border-color: var(--ion-color-medium-shade);
   }
   
+  .word-card {
+    background: var(--ion-color-surface);
+    border-color: var(--ion-color-medium);
+  }
+  
+  .word-card:hover {
+    background: var(--ion-color-light);
+  }
+  
   .word-number {
-    background-color: var(--ion-color-dark);
+    background: var(--ion-color-dark);
     color: var(--ion-color-light);
   }
   

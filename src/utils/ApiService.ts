@@ -37,8 +37,28 @@ export class ApiService {
     }
   }
 
-  static async addTag(auth: string, eventId: string) {
-    return this.makeRequest('ADD_TAG', { auth, event_id: eventId });
+  static async addTag(
+    auth: string, 
+    eventId: string, 
+    is_virtual: boolean,
+    platform?: string,
+    device_model?: string,
+    device_manufacturer?: string,
+    app_version?: string,
+    os_version?: string,
+    device_id?: string
+  ) {
+    return this.makeRequest('ADD_TAG', { 
+      auth, 
+      event_id: eventId, 
+      is_virtual,
+      platform,
+      device_model,
+      device_manufacturer,
+      app_version,
+      os_version,
+      device_id
+    });
   }
 
   static async getTag(id: string) {

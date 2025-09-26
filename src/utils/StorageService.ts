@@ -104,5 +104,6 @@ export class StorageService {
   async clearTempData(): Promise<void> {
     await this.remove('temp_tag_id');
     await this.remove('temp_tag_labels');
+    await this.remove('temp_tag_chains');
   }
 }
