@@ -7,70 +7,64 @@ export interface WalletType {
 
 export const WALLET_TYPES: WalletType[] = [
   {
-    id: 'cardano',
+    id: '1',
     name: 'Cardano',
     icon: '🔵',
     color: '#0033AD'
   },
   {
-    id: 'ethereum',
+    id: '2',
     name: 'Ethereum',
     icon: '🔷',
     color: '#627EEA'
   },
   {
-    id: 'solana',
+    id: '3',
     name: 'Solana',
     icon: '🟣',
     color: '#9945FF'
   },
   {
-    id: 'bitcoin',
+    id: '4',
     name: 'Bitcoin',
     icon: '🟠',
     color: '#F7931A'
   },
   {
-    id: 'polkadot',
+    id: '5',
     name: 'Polkadot',
     icon: '🟡',
     color: '#E6007A'
   },
   {
-    id: 'cosmos',
+    id: '6',
     name: 'Cosmos',
     icon: '🌌',
     color: '#2E3148'
   },
   {
-    id: 'algorand',
+    id: '7',
     name: 'Algorand',
     icon: '🔺',
     color: '#000000'
   },
   {
-    id: 'tezos',
+    id: '8',
     name: 'Tezos',
     icon: '🔸',
     color: '#2C7DF7'
   },
   {
-    id: 'avalanche',
+    id: '9',
     name: 'Avalanche',
     icon: '❄️',
     color: '#E84142'
   },
   {
-    id: 'midnight',
+    id: '10',
     name: 'Midnight',
     icon: '🌙',
     color: '#1A1A1A'
-  },
-  {
-    id: 'milkomeda',
-    name: 'Milkomeda',
-    icon: '🥛',
-    color: '#FF6B35'
   }
 ];
 

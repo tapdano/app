@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary" default-href="/seed-vault"></ion-back-button>
+          <ion-back-button color="primary" default-href="/seed-vault" @click="() => { router.replace('/seed-vault'); }"></ion-back-button>
         </ion-buttons>
         <ion-title>Authentication</ion-title>
       </ion-toolbar>
@@ -128,6 +128,7 @@ import { ApiService } from '@/utils/ApiService';
 import { StorageService } from '@/utils/StorageService';
 import { ValidationService } from '@/utils/ValidationService';
 import { UIService } from '@/utils/UIService';
+import { getDevMode } from '@/utils/StorageUtils';
 
 const router = useRouter();
 const storageService = new StorageService();
@@ -191,6 +192,12 @@ onMounted(async () => {
   email.value = urlParams.get('email') || '';
   tagLabels.value = await storageService.get('temp_tag_labels') || [];
   tagChains.value = await storageService.get('temp_tag_chains') || [];
+  
+  // Se estiver em modo de desenvolvimento, preencher automaticamente o PIN
+  const isDevMode = await getDevMode();
+  if (isDevMode) {
+    pin.value = '123456';
+  }
 });
 
 const sendOtpCode = async () => {
@@ -356,14 +363,14 @@ const handlePinSubmit = async () => {
 
 .info-icon {
   font-size: 20px;
-  color: white;
+  color: black;
 }
 
 .otp-info p {
   margin: 0;
   font-size: 14px;
   line-height: 1.4;
-  color: white;
+  color: black;
 }
 
 .submit-button {
@@ -390,19 +397,19 @@ const handlePinSubmit = async () => {
   padding: var(--spacing-md);
   background: var(--ion-color-success-tint);
   border-radius: var(--border-radius-md);
-  color: white;
+  color: black;
 }
 
 .notice-icon {
   font-size: 20px;
-  color: white;
+  color: black;
 }
 
 .security-notice p {
   margin: 0;
   font-size: 14px;
   font-weight: var(--font-weight-medium);
-  color: white;
+  color: black;
 }
 
 /* Responsive design */

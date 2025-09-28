@@ -2,7 +2,7 @@
   <ion-modal :is-open="isOpen">
     <ion-header>
       <ion-toolbar>
-        <ion-title>Approximate your Tag</ion-title>
+        <ion-title>Scan Tag</ion-title>
         <ion-buttons slot="primary">
           <ion-button @click="handleCloseModal">Cancel</ion-button>
         </ion-buttons>
@@ -10,7 +10,7 @@
     </ion-header>
     <ion-content class="ion-padding">
       <ion-img src="/logo.png" class="logo"></ion-img>
-      <p class="txt">Approximate your TapDano Tag</p>
+      <p class="txt">Place your Seed Vault Card it<br />near your phone's NFC area.</p>
       <div class="progress-circle" :class="{'progress-50': progress >= (progressTotal / 2), 'progress-100': (progress == progressTotal)}">
         <div class="content">
           <span>{{ progress }} / {{ progressTotal }}</span>

@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary" default-href="/seed-vault/main"></ion-back-button>
+          <ion-back-button color="primary" default-href="/seed-vault/main" @click="() => { router.replace('/seed-vault/main'); }"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ pageTitle }}</ion-title>
       </ion-toolbar>
@@ -29,6 +29,7 @@
               placeholder="Enter a name for this wallet"
               @ionInput="validateName"
               @ionBlur="validateName"
+              :maxlength="30"
             ></ion-input>
             <ion-note slot="error" v-if="nameError">{{ nameError }}</ion-note>
           </ion-item>
@@ -119,8 +120,8 @@ import { createOutline, downloadOutline, refreshOutline, checkmarkOutline, warni
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import CryptoJS from 'crypto-js';
-import { getSimulateNFCTag } from '@/utils/StorageUtils';
-import { MobileNDEFService } from '@/utils/MobileNDEFService';
+import { getSimulateNFCTag, getDevMode } from '@/utils/StorageUtils';
+import { MobileNDEFService, SVTag } from '@/utils/MobileNDEFService';
 import NFCModal from '@/components/NFCModal.vue';
 import { StorageService } from '@/utils/StorageService';
 import { ValidationService } from '@/utils/ValidationService';
@@ -135,7 +136,7 @@ const storageService = new StorageService();
 
 const name = ref('');
 const seedPhrase = ref('');
-const walletType = ref('cardano'); // Default to Cardano
+const walletType = ref('1');
 const walletTypes = ref(WALLET_TYPES);
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const isLoading = ref(false);
@@ -233,8 +234,26 @@ const validateSeedPhrase = () => {
   seedPhraseError.value = '';
 };
 
+// Generate random wallet name for dev mode
+const generateRandomWalletName = () => {
+  const adjectives = ['Swift', 'Golden', 'Crypto', 'Digital', 'Secure', 'Fast', 'Smart', 'Elite', 'Prime', 'Pro', 'Alpha', 'Beta', 'Gamma', 'Delta', 'Echo', 'Falcon', 'Phoenix', 'Thunder', 'Lightning', 'Storm'];
+  const nouns = ['Wallet', 'Vault', 'Safe', 'Guardian', 'Keeper', 'Master', 'Chief', 'Hero', 'Legend', 'Titan', 'Giant', 'Warrior', 'Champion', 'Defender', 'Protector', 'Shield', 'Armor', 'Fortress', 'Castle', 'Tower'];
+  
+  const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+  const randomNumber = Math.floor(Math.random() * 999) + 1;
+  
+  return `${randomAdjective} ${randomNoun} ${randomNumber}`;
+};
+
 // Generate a new wallet on mount if in create mode
-onMounted(() => {
+onMounted(async () => {
+  // Se estiver em modo de desenvolvimento, preencher automaticamente o nome da wallet
+  const isDevMode = await getDevMode();
+  if (isDevMode) {
+    name.value = generateRandomWalletName();
+  }
+  
   if (isCreateMode.value) {
     generateNewSeedPhrase();
   }
@@ -301,8 +320,10 @@ const handleSubmit = async () => {
     UIService.showSuccess(successMessage);
     router.replace('/seed-vault/main');
   } catch (error) {
-    console.error(error);
-    UIService.showError(String(error));
+    if (error && error !== 'canceled') {
+      console.error(error);
+      UIService.showError(String(error));
+    }
   } finally {
     isLoading.value = false;
   }
@@ -354,50 +375,40 @@ const saveToNFCTag = async (newSecretObj: any, currentTagData: any) => {
   const updatedTag = { ...currentTagData.tag };
   
   try {
-    nfcModal.value.openModal(2); // 2 steps: read + write
+    nfcModal.value.openModal(1); // Single step: read + write
     const mobileNDEFService = new MobileNDEFService();
     
     nfcModal.value.onModalClose(() => {
       mobileNDEFService.cancel();
     });
     
-    const tagData = await mobileNDEFService.read();
-    nfcModal.value.incrementProgress();
-
-    alert('Tag read successfully, preparing to write...');
-
-    updatedTag.labels = tagData.labels || [];
-    updatedTag.labels.push(newSecretObj.name);
-    
-    updatedTag.chains = tagData.chains || [];
-    updatedTag.chains.push(newSecretObj.walletType);
-    
-    await storageService.updateCurrentTag(updatedTag);
-
-    let currentSecrets = tagData.secrets || [];
-    currentSecrets.push(CryptoJS.AES.encrypt(newSecretObj.seedPhrase, updatedTag.seedVaultKey).toString());
-    
-    console.log('Gravando tag com os seguintes dados:', {
-      id: updatedTag.id,
-      labels: updatedTag.labels,
-      chains: updatedTag.chains,
-      secrets: currentSecrets,
-    });
-
-    await mobileNDEFService.write(
+    await mobileNDEFService.readAndWrite(
       updatedTag.id,
-      updatedTag.labels,
-      currentSecrets,
-      updatedTag.chains,
-      false
+      false, // forceWrite
+      (currentTag) => {
+        let currentSecrets = currentTag.secrets || [];
+        currentSecrets.push(CryptoJS.AES.encrypt(newSecretObj.seedPhrase, updatedTag.seedVaultKey).toString());
+        const newLabels = (currentTag.labels || []).concat([newSecretObj.name]);
+        const newChains = (currentTag.chains || []).concat([newSecretObj.walletType]);
+        updatedTag.labels = newLabels;
+        updatedTag.chains = newChains;
+        updatedTag.secrets = currentSecrets;
+        return {
+          id: updatedTag.id,
+          labels: newLabels,
+          secrets: currentSecrets,
+          chains: newChains
+        } as SVTag;
+      }
     );
+    storageService.updateCurrentTag(updatedTag);    
     nfcModal.value.incrementProgress();
     await nfcModal.value.closeModal(500);
   } catch (error) {
     if (error && error !== 'canceled') {
       await nfcModal.value.closeModal(0);
-      throw new Error('Error updating NFC tag: ' + error);
     }
+    throw error;
   }
 };
 </script>
@@ -511,12 +522,12 @@ const saveToNFCTag = async (newSecretObj: any, currentTagData: any) => {
   padding: var(--spacing-md);
   background: var(--ion-color-warning-tint);
   border-radius: var(--border-radius-md);
-  color: white;
+  color: black;
 }
 
 .warning-icon {
   font-size: 36px;
-  color: white;
+  color: black;
   margin-top: 2px;
 }
 
@@ -572,7 +583,7 @@ const saveToNFCTag = async (newSecretObj: any, currentTagData: any) => {
   
   .security-warning {
     background: var(--ion-color-warning-shade);
-    color: white;
+    color: black;
   }
 }
 </style>

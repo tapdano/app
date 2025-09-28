@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary" default-href="/seed-vault"></ion-back-button>
+          <ion-back-button color="primary" default-href="/seed-vault" @click="() => { router.replace('/seed-vault'); }"></ion-back-button>
         </ion-buttons>
         <ion-title>New Seed Vault</ion-title>
       </ion-toolbar>
@@ -40,6 +40,7 @@ import { ApiService } from '@/utils/ApiService';
 import { StorageService } from '@/utils/StorageService';
 import { ValidationService } from '@/utils/ValidationService';
 import { UIService } from '@/utils/UIService';
+import { getDevMode } from '@/utils/StorageUtils';
 
 const router = useRouter();
 const storageService = new StorageService();
@@ -91,6 +92,16 @@ const handleSubmit = async () => {
     isLoading.value = false;
   }
 };
+
+onMounted(async () => {
+  // Se estiver em modo de desenvolvimento, preencher automaticamente os campos
+  const isDevMode = await getDevMode();
+  if (isDevMode) {
+    email.value = 'boemekeld@gmail.com';
+    pin.value = '123456';
+    confirmPin.value = '123456';
+  }
+});
 </script>
 
 <style scoped>

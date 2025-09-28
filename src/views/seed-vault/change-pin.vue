@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary" default-href="/seed-vault/settings"></ion-back-button>
+          <ion-back-button color="primary" default-href="/seed-vault/settings" @click="() => { router.replace('/seed-vault/settings'); }"></ion-back-button>
         </ion-buttons>
         <ion-title>Change PIN</ion-title>
       </ion-toolbar>

@@ -13,11 +13,11 @@
         <!-- Welcome Section -->
         <div class="welcome-section">
           <div class="welcome-header">
-            <ion-icon :icon="shieldOutline" class="welcome-icon"></ion-icon>
-            <h1 class="welcome-title">Seed Vault</h1>
+            <ion-img src="/logo.png" class="welcome-icon"></ion-img>
+            <h1 class="welcome-title">Welcome to TapDano's<br />Seed Vault</h1>
           </div>
           <p class="welcome-description">
-            Securely manage your crypto wallets with NFC tags. Import, create, and protect your digital assets.
+            Start by scanning your first NFC tag to begin securing your wallets.
           </p>
         </div>
 
@@ -44,13 +44,6 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else class="empty-state">
-          <ion-icon :icon="cardOutline" class="empty-icon"></ion-icon>
-          <h3>No Tags Found</h3>
-          <p>Start by scanning your first NFC tag to begin securing your wallets</p>
         </div>
 
         <!-- Action Buttons -->
@@ -86,11 +79,11 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonIcon } from '@ionic/vue';
-import { shieldOutline, cardOutline, chevronForwardOutline, scanOutline, flameOutline } from 'ionicons/icons';
+import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonIcon, IonImg } from '@ionic/vue';
+import { cardOutline, chevronForwardOutline, scanOutline, flameOutline } from 'ionicons/icons';
 import { getSimulateNFCTag, getDevMode, getBulkBurn } from '@/utils/StorageUtils';
 import { ensureSerializableTags } from '@/utils/SeedVaultUtils';
-import { MobileNDEFService } from '@/utils/MobileNDEFService';
+import { MobileNDEFService, SVTag } from '@/utils/MobileNDEFService';
 import { ApiService } from '@/utils/ApiService';
 import { StorageService } from '@/utils/StorageService';
 import { UIService } from '@/utils/UIService';
@@ -275,21 +268,26 @@ const burnTagEvent = async () => {
       nfcModal.value.onModalClose(() => {
         mobileNDEFService.cancel();
       });
-      await mobileNDEFService.write(tag_id, [], [], [], true);
+      await mobileNDEFService.readAndWrite(tag_id, true, (currentTag) => ({
+        id: tag_id,
+        labels: [],
+        secrets: [],
+        chains: []
+      } as SVTag));
       nfcModal.value.incrementProgress();
       
-      try {
-        const readTag = await mobileNDEFService.read();
-        nfcModal.value.incrementProgress();
-        if (readTag.id === tag_id) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          await playSuccessSound();
-        } else {
-          throw new Error('Tag ID verification failed');
-        }
-      } catch (readError) {
-        console.error('Error verifying tag write:', readError);
-        UIService.showError('Tag burned but verification failed: ' + readError);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isIOS) {
+        UIService.showSuccess('Tap again to verify write operation.');
+      }
+
+      const readTag = await mobileNDEFService.read();
+      nfcModal.value.incrementProgress();
+      if (readTag.id === tag_id) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await playSuccessSound();
+      } else {
+        throw new Error('Tag ID verification failed');
       }
 
       await nfcModal.value.closeModal(500);
@@ -418,8 +416,10 @@ const addTagEvent = async () => {
 }
 
 .welcome-icon {
-  font-size: 48px;
-  color: var(--ion-color-primary);
+  width: 80px;
+  height: 80px;
+  max-width: 80px;
+  max-height: 80px;
 }
 
 .welcome-title {

@@ -3,9 +3,8 @@
     <ion-split-pane content-id="main-content">
       <ion-menu v-if="showMenu" content-id="main-content" type="overlay">
         <ion-content>
-          <ion-img src="/logo.png" style="width: 100%; max-width: 50%; height: auto; margin: 0 auto;"></ion-img>
-          <ion-list id="inbox-list">
-            <h1 class="logo-h1">TapDano</h1>
+          <ion-img src="/logo2.png" style="width: 100%; max-width: 50%; height: auto; margin: 20px auto 30px;"></ion-img>
+          <ion-list id="inbox-list" class="list-md">
             <ion-menu-toggle :auto-hide="false" v-for="(p, i) in appPages" :key="i">
               <ion-item @click="selectedIndex = i" router-direction="root" :router-link="p.url" lines="none" :detail="false" class="hydrated" :class="{ selected: selectedIndex === i }">
                 <ion-icon aria-hidden="true" slot="start" :ios="p.iosIcon" :md="p.mdIcon"></ion-icon>
@@ -127,7 +126,7 @@ onMounted(async () => {
 
 <style scoped>
 ion-menu ion-content {
-  --background: var(--ion-item-background, var(--ion-background-color, #fff));
+  --background: #1E1E1E;
 }
 
 ion-menu.md ion-content {
@@ -137,7 +136,7 @@ ion-menu.md ion-content {
   --padding-bottom: 20px;
 }
 
-ion-menu.md ion-list#inbox-list {
+.list-md{
   border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
 }
 
@@ -164,11 +163,12 @@ ion-menu.md ion-item ion-label {
 }
 
 ion-menu.ios ion-content {
+  --padding-top: env(safe-area-inset-top, 20px);
   --padding-bottom: 20px;
 }
 
 ion-menu.ios ion-list {
-  padding: 20px 0 0 0;
+  padding: 10px 0 0 0;
 }
 
 ion-menu.ios ion-item {
@@ -188,6 +188,10 @@ ion-menu.ios ion-item ion-icon {
 
 ion-item.selected {
   --color: var(--ion-color-primary);
+}
+
+ion-menu.ios ion-img {
+  margin-top: 10px;
 }
 
 .logo-h1 {

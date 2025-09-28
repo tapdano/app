@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary" default-href="/seed-vault"></ion-back-button>
+          <ion-back-button color="primary" default-href="/seed-vault/main" @click="() => { router.replace('/seed-vault/main'); }"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ tagTitle }}</ion-title>
       </ion-toolbar>
@@ -14,7 +14,7 @@
         <!-- Header Section -->
         <div class="header-section">
           <ion-icon :icon="settingsOutline" class="header-icon"></ion-icon>
-          <h1 class="header-title">Settings</h1>
+          <h1 class="header-title">Tag Settings</h1>
           <p class="header-description">Manage your Seed Vault configuration</p>
         </div>
 
@@ -22,7 +22,7 @@
         <div class="settings-section">
           <h2 class="section-title">
             <ion-icon :icon="personOutline"></ion-icon>
-            Account Settings
+            Authentication Settings
           </h2>
           
           <div class="settings-grid">

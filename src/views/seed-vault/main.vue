@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary" default-href="/seed-vault"></ion-back-button>
+          <ion-back-button color="primary" default-href="/seed-vault" @click="() => { router.replace('/seed-vault'); }"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ tagTitle }}</ion-title>
       </ion-toolbar>
@@ -51,9 +51,9 @@
               @click="selectSeedPhrase(index)"
             >
               <div class="wallet-header">
-                <span class="wallet-icon">{{ getWalletTypeIcon((secret as any).walletType || 'cardano') }}</span>
+                <span class="wallet-icon">{{ getWalletTypeIcon((secret as any).walletType || '1') }}</span>
                 <div class="wallet-info">
-                  <h4 class="wallet-name">{{ (secret as any).name }} <span class="wallet-type">[{{ getWalletTypeName((secret as any).walletType || 'cardano') }}]</span></h4>
+                  <h4 class="wallet-name">{{ (secret as any).name }} <span class="wallet-type">[{{ getWalletTypeName((secret as any).walletType || '1') }}]</span></h4>
                 </div>
                 <ion-icon :icon="chevronForwardOutline" class="chevron"></ion-icon>
               </div>
@@ -101,7 +101,7 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPag
 import { cardOutline, walletOutline, chevronForwardOutline, addOutline, createOutline } from 'ionicons/icons';
 import SeedVaultTabBar from '../../components/SeedVaultTabBar.vue';
 import CryptoJS from 'crypto-js';
-import { getSimulateNFCTag } from '@/utils/StorageUtils';
+import { getSimulateNFCTag, getDevMode } from '@/utils/StorageUtils';
 import { StorageService } from '@/utils/StorageService';
 import { getWalletTypeIcon, getWalletTypeName } from '@/utils/WalletTypes';
 import { generateWalletAddress } from '@/utils/CryptoUtils';
@@ -125,7 +125,7 @@ const generateAddressesForSecrets = async () => {
     // For simulation mode, we have the seed phrase
     if (secret.seedPhrase && secret.seedPhrase.trim()) {
       try {
-        const address = await generateWalletAddress(secret.seedPhrase, secret.walletType || 'cardano');
+        const address = await generateWalletAddress(secret.seedPhrase, secret.walletType || '1');
         addresses.push(address);
       } catch (error) {
         console.error(`Failed to generate address for wallet ${i}:`, error);
@@ -188,7 +188,7 @@ const load = async () => {
           console.log('Tag chains:', chains);
           secrets_in = labels.map((label: string, index: number) => ({
             name: label,
-            walletType: chains[index] || 'cardano', // Default to cardano for backward compatibility
+            walletType: chains[index] || '1', // Default to cardano for backward compatibility
           }));
         }
       }
@@ -224,6 +224,12 @@ const createWallet = async () => {
 
 const shouldBlockMultipleWallets = async (): Promise<boolean> => {
   try {
+    // Se estiver em modo de desenvolvimento, nunca bloquear
+    const isDevMode = await getDevMode();
+    if (isDevMode) {
+      return false;
+    }
+    
     const currentTag = await storageService.getCurrentTag();
     if (!currentTag?.tag?.id) return false;
     

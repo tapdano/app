@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-menu-button color="primary"></ion-menu-button>
-          <ion-back-button color="primary" default-href="/seed-vault/main"></ion-back-button>
+          <ion-back-button color="primary" default-href="/seed-vault/main" @click="() => { router.replace('/seed-vault/main'); }"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ name || 'Unnamed Wallet' }}</ion-title>
       </ion-toolbar>
@@ -31,7 +31,6 @@
           <div class="address-container">
             <div class="address-display">{{ walletAddress }}</div>
             <ion-button 
-              fill="outline" 
               size="small"
               @click="copyAddress"
               class="copy-address-button"
@@ -46,7 +45,7 @@
         <div class="seed-phrase-section" v-if="seedPhraseWords.length > 0">
           <h3 class="field-label">
             <ion-icon :icon="shieldOutline"></ion-icon>
-            Recovery Phrase
+            Seed Phrase
           </h3>
           
           <!-- Grid responsivo melhorado -->
@@ -58,15 +57,21 @@
               @click="copyWord(word, index + 1)"
               :aria-label="`Copy word ${index + 1}: ${word}`"
             >
-              <div class="word-number">{{ index + 1 }}</div>
-              <div class="word-text">{{ word }}</div>
+              <div class="word-text">{{ index + 1 }}. {{ word }}</div>
               <ion-icon :icon="copyOutline" class="copy-icon" aria-hidden="true"></ion-icon>
             </div>
           </div>
+
+          <!-- Warning sobre segurança -->
+          <ion-note color="warning" class="security-warning">
+            <ion-icon :icon="warningOutline"></ion-icon>
+            Never share your seed phrase with anyone.
+          </ion-note>
           
           <!-- Copy All Button -->
           <div class="copy-all-section">
             <ion-button 
+              expand="block"
               fill="solid" 
               color="primary"
               @click="copyFullSeedPhrase"
@@ -78,11 +83,6 @@
             </ion-button>
           </div>
           
-          <!-- Warning sobre segurança -->
-          <ion-note color="warning" class="security-warning">
-            <ion-icon :icon="warningOutline"></ion-icon>
-            Never share your recovery phrase with anyone
-          </ion-note>
         </div>
 
         <!-- Empty state -->
@@ -128,7 +128,7 @@ import { Storage } from '@ionic/storage';
 import CryptoJS from 'crypto-js';
 import { getSimulateNFCTag } from '@/utils/StorageUtils';
 import { ensureSerializableTags } from '@/utils/SeedVaultUtils';
-import { MobileNDEFService } from '@/utils/MobileNDEFService';
+import { MobileNDEFService, SVTag } from '@/utils/MobileNDEFService';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import NFCModal from '@/components/NFCModal.vue';
 import { getWalletTypeIcon, getWalletTypeName } from '@/utils/WalletTypes';
@@ -142,7 +142,7 @@ storage.create();
 const secrets = ref([]);
 const name = ref('');
 const seedPhrase = ref('');
-const walletType = ref('cardano');
+const walletType = ref('1');
 const walletAddress = ref('');
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const isToastOpen = ref(false);
@@ -213,7 +213,7 @@ const load = async () => {
         secretsData = labels.map((label: string, index: number) => ({
           name: label,
           seedPhrase: '',
-          walletType: (svTagsArr[currentTagIdx].chains && svTagsArr[currentTagIdx].chains[index]) || 'cardano'
+          walletType: (svTagsArr[currentTagIdx].chains && svTagsArr[currentTagIdx].chains[index]) || '1'
         }));
         
         // Load the specific secret from NFC tag
@@ -248,8 +248,9 @@ const load = async () => {
             if (error && error !== 'canceled') {
               await nfcModal.value.closeModal(0);
               console.error(error);
-              alert('Error updating NFC tag: ' + error);
+              alert('Error reading NFC tag: ' + error);
             }
+            router.replace('/seed-vault/main');
           }
         }
       }
@@ -260,7 +261,7 @@ const load = async () => {
     if (secrets.value[currentIndex]) {
       name.value = (secrets.value[currentIndex] as any).name;
       seedPhrase.value = (secrets.value[currentIndex] as any).seedPhrase;
-      walletType.value = (secrets.value[currentIndex] as any).walletType || 'cardano';
+      walletType.value = (secrets.value[currentIndex] as any).walletType || '1';
       
       // Generate wallet address if seed phrase is available
       if (seedPhrase.value && seedPhrase.value.trim()) {
@@ -276,7 +277,7 @@ const load = async () => {
     } else {
       name.value = '';
       seedPhrase.value = '';
-      walletType.value = 'cardano';
+      walletType.value = '1';
       walletAddress.value = '';
     }
   }, 10);
@@ -318,76 +319,62 @@ const deleteSecret = async () => {
         const encrypted = CryptoJS.AES.encrypt(JSON.stringify(secretsArr), key).toString();
         await storage.set('my-secrets', encrypted);
       }
+
+      await storage.remove('currentSeedPhrase');
+      router.replace('/seed-vault/main');
     } else {
-      // Delete from tag labels and chains, read and update NFC tag
       if (Array.isArray(svTagsArr) && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].labels) {
         svTagsArr[currentTagIdx].labels.splice(currentIndex, 1);
-        
-        // Also remove the corresponding chain type
         if (svTagsArr[currentTagIdx].chains && svTagsArr[currentTagIdx].chains.length > currentIndex) {
           svTagsArr[currentTagIdx].chains.splice(currentIndex, 1);
         }
         
-        // Ensure the array is serializable by creating plain objects
-        const serializableTags = ensureSerializableTags(svTagsArr);
-        
-        await storage.set('sv_tags', serializableTags);
-        
-        // Read from NFC tag, remove secret, and write back
         if (!nfcModal.value) return;
         
         try {
-          nfcModal.value.openModal(2); // 2 steps: read + write
+          nfcModal.value.openModal(1);
           const mobileNDEFService = new MobileNDEFService();
           
           nfcModal.value.onModalClose(() => {
             mobileNDEFService.cancel();
           });
-          
-          // Read current secrets from NFC tag
-          let currentSecrets: string[] = [];
-          try {
-            const tagData = await mobileNDEFService.read();
-            currentSecrets = tagData.secrets || [];
-          } catch (readError) {
-            console.log('Failed to read existing secrets');
-            currentSecrets = [];
-          }
-          
-          nfcModal.value.incrementProgress();
 
-          alert('Tag read successfully, preparing to write...');
-          
-          // Remove the secret at currentIndex
-          if (currentSecrets.length > currentIndex) {
-            currentSecrets.splice(currentIndex, 1);
-          }
-          
-          // Write updated data back to tag
           const currentTag = svTagsArr[currentTagIdx];
-          await mobileNDEFService.write(
+          await mobileNDEFService.readAndWrite(
             currentTag.id,
-            currentTag.labels || [],
-            currentSecrets,
-            currentTag.chains || [],
-            false
+            false, // forceWrite
+            (currentTagData) => {
+              console.log('Current tag data from NFC:', currentTagData);
+              let currentSecrets = currentTagData.secrets || [];
+              if (currentSecrets.length > currentIndex) {
+                currentSecrets.splice(currentIndex, 1);
+              }
+              return {
+                id: currentTag.id,
+                labels: currentTag.labels || [],
+                secrets: currentSecrets,
+                chains: currentTag.chains || []
+              } as SVTag;
+            }
           );
+
+          const serializableTags = ensureSerializableTags(svTagsArr);
+          await storage.set('sv_tags', serializableTags);
           
           nfcModal.value.incrementProgress();
           await nfcModal.value.closeModal(500);
           
+          await storage.remove('currentSeedPhrase');
+          router.replace('/seed-vault/main');
         } catch (error) {
           if (error && error != 'canceled') {
             await nfcModal.value.closeModal(0);
             console.error('Failed to update NFC tag:', error);
-            alert('Secret deleted locally but failed to update NFC tag: ' + error);
+            alert('Failed to update NFC tag: ' + error);
           }
         }
       }
     }
-    
-    await storage.remove('currentSeedPhrase');
-    router.replace('/seed-vault/main');
   }
 };
 </script>
@@ -438,10 +425,6 @@ const deleteSecret = async () => {
 
 .address-section {
   margin-bottom: var(--spacing-lg);
-  padding: var(--spacing-md);
-  background: var(--ion-color-light);
-  border-radius: var(--border-radius-lg);
-  border: 1px solid var(--ion-color-light-shade);
 }
 
 .field-label {
@@ -463,15 +446,12 @@ const deleteSecret = async () => {
 
 .address-display {
   flex: 1;
-  background: var(--ion-color-background);
-  padding: var(--spacing-sm);
-  border-radius: var(--border-radius-md);
   font-family: var(--font-family-mono);
-  font-size: 14px;
-  color: var(--ion-color-dark);
-  border: 1px solid var(--ion-color-medium);
+  font-size: 12px;
+  color: var(--ion-color-medium);
   word-break: break-all;
   line-height: 1.4;
+  margin: 0;
 }
 
 .copy-address-button {
@@ -491,13 +471,13 @@ const deleteSecret = async () => {
 .words-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--spacing-sm);
+  gap: 8px;
   margin-bottom: var(--spacing-md);
 }
 
 .word-card {
-  background: var(--ion-color-background);
-  border: 2px solid var(--ion-color-light-shade);
+  background: #232428;
+  border: 1px solid #232428;
   border-radius: var(--border-radius-md);
   padding: var(--spacing-sm);
   text-align: center;
@@ -529,12 +509,13 @@ const deleteSecret = async () => {
   font-weight: var(--font-weight-medium);
   color: var(--ion-color-dark);
   margin-bottom: var(--spacing-xs);
+  text-align: left;
 }
 
 .copy-icon {
   position: absolute;
-  top: var(--spacing-xs);
-  right: var(--spacing-xs);
+  top: 8px;
+  right: 8px;
   font-size: 16px;
   opacity: 0.6;
 }
@@ -552,7 +533,7 @@ const deleteSecret = async () => {
   --padding-top: var(--spacing-sm);
   --padding-bottom: var(--spacing-sm);
   font-weight: var(--font-weight-semibold);
-  font-size: 16px;
+  height: 48px;
 }
 
 .security-warning {
@@ -564,6 +545,7 @@ const deleteSecret = async () => {
   background: var(--ion-color-warning-tint);
   border-radius: var(--border-radius-md);
   font-size: 14px;
+  color: black;
 }
 
 .empty-seed-phrase {
@@ -584,7 +566,7 @@ const deleteSecret = async () => {
 }
 
 .delete-button {
-  margin-top: var(--spacing-xl);
+  margin-top: -5px;
   --border-radius: var(--border-radius-md);
   --padding-top: var(--spacing-md);
   --padding-bottom: var(--spacing-md);
@@ -618,20 +600,10 @@ const deleteSecret = async () => {
     border-color: var(--ion-color-medium);
   }
   
-  .address-section {
-    background: var(--ion-color-surface);
-    border-color: var(--ion-color-medium);
-  }
-  
-  .address-display {
-    background: var(--ion-color-dark);
-    color: var(--ion-color-light);
-    border-color: var(--ion-color-medium-shade);
-  }
   
   .word-card {
-    background: var(--ion-color-surface);
-    border-color: var(--ion-color-medium);
+    background: #232428;
+    border-color: #232428;
   }
   
   .word-card:hover {

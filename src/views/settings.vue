@@ -11,9 +11,11 @@
 
     <ion-content :fullscreen="true">
       <div id="container">
+        <!--
         <ion-item>
           <ion-toggle :checked="isDarkMode" :disabled="true">Dark Mode</ion-toggle>
         </ion-item>
+        -->
         <ion-item>
           <ion-toggle @ionChange="toggleDevMode" :checked="isDevMode">Developer Mode</ion-toggle>
         </ion-item>
@@ -26,14 +28,22 @@
         <ion-item v-if="isDevMode">
           <ion-toggle @ionChange="toggleBulkBurn" :checked="isBulkBurn">Enable Bulk Burn</ion-toggle>
         </ion-item>
-        <ion-content :fullscreen="true" class="dev-area">
-          <ion-item>
-            <ion-label position="stacked">Virtual NFC Tag Passcode</ion-label>
-            <ion-input v-model="devToken" placeholder="Enter passcode"></ion-input>
-          </ion-item>
-          <ion-button @click="saveDevToken" expand="block" style="margin-top:10px;">Save</ion-button>
-          <div v-if="devTokenSaved" class="token-saved-msg">Passcode saved!</div>
-        </ion-content>
+        <ion-item>
+          <ion-label position="stacked">Virtual NFC Tag Passcode</ion-label>
+          <ion-input v-model="devToken" placeholder="Enter passcode"></ion-input>
+        </ion-item>
+        <ion-button @click="saveDevToken" expand="block" style="margin-top:10px;">Save</ion-button>
+        <div v-if="devTokenSaved" class="token-saved-msg">Passcode saved!</div>
+        
+        <!-- App Version Information -->
+        <ion-item style="margin-top:40px;">
+          <ion-label>
+            <h3>App Version</h3>
+            <p>Marketing Version: {{ appVersion }}</p>
+            <p>Build Number: {{ buildNumber }}</p>
+            <p>Last Updated: {{ lastBuildTime }}</p>
+          </ion-label>
+        </ion-item>
         <!--
         <ion-item>
           <ion-label>Network</ion-label>
@@ -60,6 +70,8 @@ import { ref, onMounted } from 'vue';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem, IonSelect, IonSelectOption, ToggleChangeEventDetail, IonAccordionGroup, IonAccordion, IonInput } from '@ionic/vue';
 import { getNetworkId, setNetworkId, getDevMode, getSimulateNFCTag, setDevMode, setSimulateNFCTag, getHomologAPI, setHomologAPI, getBulkBurn, setBulkBurn } from '@/utils/StorageUtils';
 import { Storage } from '@ionic/storage';
+import { App } from '@capacitor/app';
+import { format } from 'timeago.js';
 
 const isDarkMode = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 const isDevMode = ref<boolean | undefined>(undefined);
@@ -71,6 +83,9 @@ const network = ref<string | null>(null);
 
 const devToken = ref('');
 const devTokenSaved = ref(false);
+const appVersion = ref('');
+const buildNumber = ref('');
+const lastBuildTime = ref('');
 const storage = new Storage();
 storage.create();
 
@@ -164,6 +179,31 @@ onMounted(async () => {
     console.error('Failed to get cache name:', error);
   }
   devToken.value = await storage.get('dev-token') || '';
+  
+  // Get app version information
+  try {
+    const appInfo = await App.getInfo();
+    appVersion.value = appInfo.version;
+    buildNumber.value = appInfo.build;
+  } catch (error) {
+    console.error('Failed to get app info:', error);
+    appVersion.value = 'Unknown';
+    buildNumber.value = 'Unknown';
+  }
+  
+  // Get last build information
+  try {
+    const response = await fetch('/last-build.json');
+    if (response.ok) {
+      const buildData = await response.json();
+      lastBuildTime.value = format(new Date(buildData.timestamp));
+    } else {
+      throw new Error('Last build file not found');
+    }
+  } catch (error) {
+    console.error('Failed to get last build info:', error);
+    lastBuildTime.value = 'Unknown';
+  }
 });
 </script>
 
@@ -171,9 +211,6 @@ onMounted(async () => {
 #update-container {
   text-align: center;
   margin-top: 20px;
-}
-.dev-area {
-  padding: 10px 0;
 }
 .token-saved-msg {
   color: green;
