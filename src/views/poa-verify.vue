@@ -33,6 +33,7 @@ import { hexToBase64, utf8ToHex } from '@/utils/StringUtils';
 import { AssetFull } from '@meshsdk/core';
 import { formatIpfsUrl } from '@/utils/StringUtils';
 import NFCModalPetro from '@/components/NFCModalPetro.vue';
+import { UIService } from '@/utils/UIService';
 
 const loading = ref(true);
 const asset = ref<AssetFull>();
@@ -53,7 +54,7 @@ watch(() => route.path, async (newPath) => {
       asset.value = assetFull;
       console.log(assetFull);
     } catch (error) {
-      alert('Confirmação não encontrada, tente novamente em alguns instantes.');
+      await UIService.showError('Confirmação não encontrada, tente novamente em alguns instantes.');
     }
     loading.value = false;
   }

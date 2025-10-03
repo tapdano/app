@@ -34,23 +34,22 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonButton } from '@ionic/vue';
-import { Storage } from '@ionic/storage';
 import NFCModal from '@/components/NFCModal.vue';
 import { TapDanoService } from 'tapdano';
-import { addMyWallet } from '@/utils/StorageUtils';
-
-const storage = new Storage();
-storage.create();
+import { UIService } from '@/utils/UIService';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
+import type { Wallet } from '@/utils/storage-services/WalletStorageService';
 
 const router = useRouter();
 const route = useRoute();
-const wallets = ref([]);
+const wallets = ref<Wallet[]>([]);
 const loading = ref(true);
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
+const walletStorageService = new WalletStorageService();
 
 const load = async () => {
   loading.value = true;
-  const storedWallets = await storage.get('my-wallets') || [];
+  const storedWallets = await walletStorageService.getMyWallets();
   wallets.value = storedWallets;
   loading.value = false;
 };
@@ -62,7 +61,7 @@ watch(() => route.path, async (newPath) => {
 }, { immediate: true });
 
 const selectWallet = async (index: number) => {
-  await storage.set('currentMyWallet', index);
+  await walletStorageService.setCurrentMyWallet(index);
   router.push('/my-wallet/main');
 };
 
@@ -79,21 +78,21 @@ const addTagEvent = async () => {
     await nfcModal.value.closeModal(500);
 
     if (tag.TagID != '5444') {
-      alert('Unknow Tag. Please use a TapDano Tag.');
+      await UIService.showError('Unknown Tag. Please use a TapDano Tag.');
       return;
     }
 
     if (!tag.Burned) {
       router.push('/new-my-wallet');
     } else {
-      await addMyWallet(tag, undefined);
+      await walletStorageService.addMyWallet(tag, undefined);
       router.replace('/my-wallet/main');
     }
   } catch (error) {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      alert(error);
+      await UIService.showError(error);
     }
   }
 };

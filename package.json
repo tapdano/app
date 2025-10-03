@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "serve": "ionic serve",
     "proxy": "local-ssl-proxy --source 9000 --target 8100",
-    "android_run": "ionic capacitor run android -l --external"
+    "android": "ionic capacitor run android -l --external"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",

@@ -122,12 +122,13 @@ import {
 import { ApiService } from '@/utils/ApiService';
 import { UIService } from '@/utils/UIService';
 import { MobileNDEFService } from '@/utils/MobileNDEFService';
-import { getSimulateNFCTag } from '@/utils/StorageUtils';
-import { StorageService } from '@/utils/StorageService';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
+import { VirtualNFCService } from '@/utils/storage-services/VirtualNFCService';
 import NFCModal from '@/components/NFCModal.vue';
 
 const route = useRoute();
-const storageService = new StorageService();
+const appConfigService = new AppConfigStorageService();
+const virtualNFCService = new VirtualNFCService();
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 interface Event {
@@ -186,12 +187,12 @@ const loadEventDetails = async () => {
 
 const participateInLottery = async () => {
   if (!passcode.value.trim()) {
-    UIService.showError('Please enter a passcode');
+    await UIService.showError('Please enter a passcode');
     return;
   }
 
   if (!event.value) {
-    UIService.showError('No event selected');
+    await UIService.showError('No event selected');
     return;
   }
 
@@ -208,13 +209,13 @@ const participateInLottery = async () => {
     // Step 2: Check if tag is started
     const tagInfo = await ApiService.getTag(tagId) as any;
     if (tagInfo.status !== 'ok') {
-      UIService.showError('Error retrieving tag information');
+      await UIService.showError('Error retrieving tag information');
       participating.value = false;
       return;
     }
 
     if (!tagInfo.is_started) {
-      UIService.showError('Tag needs to be initialized first through the Seed Vault menu');
+      await UIService.showError('Tag needs to be initialized first through the Seed Vault menu');
       participating.value = false;
       return;
     }
@@ -222,15 +223,15 @@ const participateInLottery = async () => {
     // Step 3: Participate in lottery
     const participationResult = await ApiService.participateLottery(event.value.id.toString(), tagId, passcode.value.trim()) as any;
     if (participationResult?.status === 'ok') {
-      UIService.showSuccess('Successfully registered for lottery!');
+      await UIService.showSuccess('Successfully registered for lottery!');
       passcode.value = ''; // Clear passcode after successful participation
     } else {
-      UIService.showError(participationResult.error || 'Failed to register for lottery');
+      await UIService.showError(participationResult.error || 'Failed to register for lottery');
     }
 
   } catch (error: any) {
     console.error('Error participating in lottery:', error);
-    UIService.showError(error.message || 'An error occurred while participating in the lottery');
+    await UIService.showError(error.message || 'An error occurred while participating in the lottery');
   } finally {
     participating.value = false;
   }
@@ -238,24 +239,24 @@ const participateInLottery = async () => {
 
 const readNFCTag = async (): Promise<string | null> => {
   if (!nfcModal.value) {
-    UIService.showError('NFC modal not available');
+    await UIService.showError('NFC modal not available');
     return null;
   }
 
   try {
     nfcModal.value.openModal(1);
-    const isSimulateNFCTag = await getSimulateNFCTag();
+    const isSimulateNFCTag = await appConfigService.getSimulateNFCTag();
     
     let tagId: string | null = null;
 
     if (isSimulateNFCTag) {
       // Simulate tag reading
-      tagId = await storageService.get('burned-tag-id') || '';
+      tagId = await virtualNFCService.getBurnedTagId() || '';
       nfcModal.value.incrementProgress();
       await nfcModal.value.closeModal(500);
     } else {
       // Real NFC reading
-      const mobileNDEFService = new MobileNDEFService();
+      const mobileNDEFService = MobileNDEFService.getInstance();
       nfcModal.value.onModalClose(() => {
         try {
           mobileNDEFService.cancel();
@@ -269,11 +270,11 @@ const readNFCTag = async (): Promise<string | null> => {
       await nfcModal.value.closeModal(500);
       
       console.log('NFC Tag content:', tag);
-      tagId = tag.id;
+      tagId = tag.data.id;
     }
 
     if (!tagId) {
-      UIService.showError('Unable to read Tag ID');
+      await UIService.showError('Unable to read Tag ID');
       return null;
     }
 
@@ -283,7 +284,7 @@ const readNFCTag = async (): Promise<string | null> => {
     if (error && error !== 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error('NFC read error:', error);
-      UIService.showError('Error reading NFC tag: ' + error);
+      await UIService.showError('Error reading NFC tag: ' + error);
     }
     return null;
   }

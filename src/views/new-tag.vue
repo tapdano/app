@@ -44,10 +44,10 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonTextarea, IonSelect, IonSelectOption, IonButton } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Storage } from '@ionic/storage';
-import { addTag } from '@/utils/StorageUtils';
 import { TapDanoService } from 'tapdano';
+import { UIService } from '@/utils/UIService';
 import NFCModal from '@/components/NFCModal.vue';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 
 const props = defineProps({
   route: String
@@ -55,8 +55,7 @@ const props = defineProps({
 
 const router = useRouter();
 const routeP = useRoute();
-const storage = new Storage();
-storage.create();
+const walletStorageService = new WalletStorageService();
 
 const tagPrivateKey = ref('');
 const tagType = ref((props.route === 'new' ? 'soulbound' : 'extractable') as 'soulbound' | 'extractable');
@@ -67,7 +66,7 @@ const handleSubmit = async () => {
   if (!nfcModal.value) return;
   try {
     if (props.route == 'restore' && tagPrivateKey.value.length != 64) {
-      alert('The Private Key must have 64 characters.');
+      await UIService.showError('The Private Key must have 64 characters.');
       return;
     }
 
@@ -81,17 +80,17 @@ const handleSubmit = async () => {
     await nfcModal.value.closeModal(500);
 
     if (tag.TagID != '5444') {
-      alert('Unknow Tag. Please try again with a TapDano Tag.');
+      await UIService.showError('Unknown Tag. Please try again with a TapDano Tag.');
       return;
     }
 
-    await addTag(tag);
+    await walletStorageService.addTag(tag);
     router.replace('/tag/main');
   } catch (error) {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      alert(error);
+      await UIService.showError(error);
     }
   }
 }

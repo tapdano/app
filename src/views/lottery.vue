@@ -183,6 +183,7 @@ import {
   checkmarkOutline
 } from 'ionicons/icons';
 import { ApiService } from '@/utils/ApiService';
+import { UIService } from '@/utils/UIService';
 
 const route = useRoute();
 
@@ -322,7 +323,7 @@ const scheduleAutoRefresh = () => {
 
 const startLotteryDraw = async () => {
   if (participants.value.length === 0) {
-    alert('No participants to draw from!');
+    await UIService.showError('No participants to draw from!');
     return;
   }
 

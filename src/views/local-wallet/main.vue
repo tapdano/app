@@ -46,12 +46,13 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonTextarea, IonInput, IonItem, IonButton } from '@ionic/vue';
-import { getCurrentLocalWallet } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { loadWallet, fetchAccountInfo } from '@/utils/CryptoUtils';
 import { Transaction } from '@meshsdk/core';
 import WalletTabBar from '@/components/LocalWalletTabBar.vue';
 import PriceChart from '@/components/PriceChart.vue';
+import { UIService } from '@/utils/UIService';
 
 const walletBalance = ref(0);
 const cardanoUsdPrice = ref(0);
@@ -76,6 +77,7 @@ const getCardanoUsdPrice = async () => {
 
 const router = useRouter();
 const route = useRoute();
+const walletStorageService = new WalletStorageService();
 
 const walletName = ref('');
 const walletReceiveAddress = ref('');
@@ -85,14 +87,18 @@ const adaAmount = ref(0);
 
 const sendTransaction = async () => {
   if (!destinationAddress.value || adaAmount.value <= 0) {
-    alert('Please fill in all fields correctly.');
+    await UIService.showError('Please fill in all fields correctly.');
     return;
   }
 
-  if (!confirm('Confirm transaction submission?')) return;
+  if (!(await UIService.showConfirmation('Confirm transaction submission?'))) return;
 
   try {
-    const currentWallet = await getCurrentLocalWallet();
+    const currentWallet = await walletStorageService.getCurrentLocalWallet();
+    if (!currentWallet) {
+      await UIService.showError('No wallet found');
+      return;
+    }
     const wallet = await loadWallet(currentWallet.mnemonic);
 
     const tx = new Transaction({ initiator: wallet }).sendLovelace(
@@ -106,10 +112,10 @@ const sendTransaction = async () => {
 
     destinationAddress.value = '';
     adaAmount.value = 0;
-    alert('Success! TxID: ' + txHash);
+    await UIService.showSuccess('Success! TxID: ' + txHash);
   } catch (error) {
     console.error(error);
-    alert(error);
+    await UIService.showError(error);
   }
 };
 
@@ -132,7 +138,7 @@ const formatAdaAmount = (inputValue: any) => {
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/local-wallet/main') {
-    const currentWallet = await getCurrentLocalWallet();
+    const currentWallet = await walletStorageService.getCurrentLocalWallet();
     if (currentWallet == null) {
       router.push('/local-wallets');
       return;

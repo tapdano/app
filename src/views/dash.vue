@@ -80,9 +80,10 @@ import { format, register } from 'timeago.js';
 import pt_BR from 'timeago.js/lib/lang/pt_BR';
 import { useFullscreen } from '@vueuse/core'
 import { useRoute } from 'vue-router';
-import { getNetworkId } from '@/utils/StorageUtils';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
 
 const route = useRoute();
+const appConfigService = new AppConfigStorageService();
 let isInitialzied = false;
 
 register('pt_BR', pt_BR);
@@ -172,7 +173,7 @@ const el = ref(null);
 const { toggle } = useFullscreen(el);
 
 async function initialize() {
-  const networkId = await getNetworkId();
+  const networkId = await appConfigService.getNetworkId();
   const channelName = networkId == 1 ? 'webhook' : 'webhook_dev';
   const ably = new (window as any).Ably.Realtime('iTZ0XA.06wqDQ:ZI6bW8YuX0nbFqg522l6iQ1N6u382WlHzczw4M2_fe8');
   await ably.connection.once('connected');
@@ -208,7 +209,7 @@ async function initialize() {
 }
 
 async function loadData() {
-  const networkId = await getNetworkId();
+  const networkId = await appConfigService.getNetworkId();
   const lambdaId_dev = '8yl2xan8xa';
   const lambdaId_prod = '0zx82ids4c';
   let useProdLambda = (networkId == 1);

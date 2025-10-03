@@ -1,3 +1,13 @@
+/**
+ * @deprecated This file is deprecated. Use the new specialized storage services instead:
+ * - SeedVaultStorageService for Seed Vault data
+ * - VirtualNFCService for virtual NFC simulation data  
+ * - AppConfigStorageService for application configuration
+ * - WalletStorageService for legacy wallet management
+ * 
+ * Legacy storage utility functions - kept for backward compatibility
+ */
+
 import { Storage } from '@ionic/storage';
 import { TagParser } from 'tapdano';
 import { createWallet, entropyToMnemonic, loadWallet } from '@/utils/CryptoUtils';

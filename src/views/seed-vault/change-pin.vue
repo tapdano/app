@@ -52,12 +52,12 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton } from '@ionic/vue';
 import { ApiService } from '@/utils/ApiService';
-import { StorageService } from '@/utils/StorageService';
+import { SeedVaultStorageService } from '@/utils/storage-services/SeedVaultStorageService';
 import { ValidationService } from '@/utils/ValidationService';
 import { UIService } from '@/utils/UIService';
 
 const router = useRouter();
-const storageService = new StorageService();
+const seedVaultService = new SeedVaultStorageService();
 
 const newPin = ref('');
 const confirmPin = ref('');
@@ -69,14 +69,14 @@ const handleChangePin = async () => {
   // Validate input
   const validation = ValidationService.validatePinConfirmation(newPin.value, confirmPin.value);
   if (!validation.isValid) {
-    UIService.showError(validation.error);
+    await UIService.showError(validation.error);
     return;
   }
   
   isLoading.value = true;
   
   try {
-    const currentTag = await storageService.getCurrentTag();
+    const currentTag = await seedVaultService.getCurrentTag();
     if (!currentTag) {
       throw new Error('Tag not found');
     }
@@ -85,11 +85,11 @@ const handleChangePin = async () => {
     
     await ApiService.setPin(id, newPin.value, seedVaultKey || '');
     
-    UIService.showSuccess('PIN changed successfully.');
+    await UIService.showSuccess('PIN changed successfully.');
     router.replace('/seed-vault/settings');
     
   } catch (error) {
-    UIService.showError(error);
+    await UIService.showError(error);
   } finally {
     isLoading.value = false;
   }

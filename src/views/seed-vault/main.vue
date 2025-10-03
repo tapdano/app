@@ -101,12 +101,16 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPag
 import { cardOutline, walletOutline, chevronForwardOutline, addOutline, createOutline } from 'ionicons/icons';
 import SeedVaultTabBar from '../../components/SeedVaultTabBar.vue';
 import CryptoJS from 'crypto-js';
-import { getSimulateNFCTag, getDevMode } from '@/utils/StorageUtils';
-import { StorageService } from '@/utils/StorageService';
+import { SeedVaultStorageService } from '@/utils/storage-services/SeedVaultStorageService';
+import { VirtualNFCService } from '@/utils/storage-services/VirtualNFCService';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
 import { getWalletTypeIcon, getWalletTypeName } from '@/utils/WalletTypes';
 import { generateWalletAddress } from '@/utils/CryptoUtils';
+import { UIService } from '@/utils/UIService';
 
-const storageService = new StorageService();
+const seedVaultService = new SeedVaultStorageService();
+const virtualNFCService = new VirtualNFCService();
+const appConfigService = new AppConfigStorageService();
 const router = useRouter();
 const route = useRoute();
 const loading = ref(true);
@@ -156,7 +160,7 @@ const load = async () => {
   loading.value = true;
   setTimeout(async () => {
     try {
-      const currentTag = await storageService.getCurrentTag();
+      const currentTag = await seedVaultService.getCurrentTag();
       currentTagData.value = currentTag;
       
       // Update title with tag index
@@ -168,11 +172,11 @@ const load = async () => {
       
       let secrets_in = [];
       
-      const isSimulate = await getSimulateNFCTag();
+      const isSimulate = await appConfigService.getSimulateNFCTag();
       if (isSimulate) {
         if (currentTag?.tag?.seedVaultKey) {
           const key = currentTag.tag.seedVaultKey;
-          const encryptedSecrets = await storageService.get('my-secrets') as string;
+          const encryptedSecrets = await virtualNFCService.getMySecrets();
           if (encryptedSecrets && key) {
             const bytes = CryptoJS.AES.decrypt(encryptedSecrets, key);
             const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
@@ -225,12 +229,12 @@ const createWallet = async () => {
 const shouldBlockMultipleWallets = async (): Promise<boolean> => {
   try {
     // Se estiver em modo de desenvolvimento, nunca bloquear
-    const isDevMode = await getDevMode();
+    const isDevMode = await appConfigService.getDevMode();
     if (isDevMode) {
       return false;
     }
     
-    const currentTag = await storageService.getCurrentTag();
+    const currentTag = await seedVaultService.getCurrentTag();
     if (!currentTag?.tag?.id) return false;
     
     // Check if there are already secrets stored
@@ -238,7 +242,7 @@ const shouldBlockMultipleWallets = async (): Promise<boolean> => {
     
     if (hasExistingSecrets) {
       // Check if multiple wallets feature is enabled
-      const isMultipleWalletsEnabled = await storageService.isMultipleWalletsEnabled(currentTag.tag.id);
+      const isMultipleWalletsEnabled = await seedVaultService.isMultipleWalletsEnabled(currentTag.tag.id);
       
       if (!isMultipleWalletsEnabled) {
         const message = `Multiple wallets functionality is currently disabled.
@@ -247,7 +251,7 @@ You already have ${secrets.value.length} wallet${secrets.value.length > 1 ? 's' 
 
 ⚠️ Important: Please read the warning in Settings before enabling this feature, as there are risks involved with the writing process.`;
         
-        alert(message);
+        await UIService.showWarning(message, 'Multiple Wallets Disabled');
         return true;
       }
     }
@@ -260,7 +264,7 @@ You already have ${secrets.value.length} wallet${secrets.value.length > 1 ? 's' 
 };
 
 const selectSeedPhrase = async (index: number) => {
-  await storageService.set('currentSeedPhrase', index);
+  await seedVaultService.setCurrentSeedPhrase(index);
   router.push('/seed-vault/secret');
 };
 </script>

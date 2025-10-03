@@ -123,15 +123,15 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPag
 import { shieldCheckmarkOutline, keypadOutline, mailOutline, logInOutline, sendOutline, shieldOutline } from 'ionicons/icons';
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { saveSeedVaultTag } from '@/utils/SeedVaultUtils';
 import { ApiService } from '@/utils/ApiService';
-import { StorageService } from '@/utils/StorageService';
+import { SeedVaultStorageService } from '@/utils/storage-services/SeedVaultStorageService';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
 import { ValidationService } from '@/utils/ValidationService';
 import { UIService } from '@/utils/UIService';
-import { getDevMode } from '@/utils/StorageUtils';
 
 const router = useRouter();
-const storageService = new StorageService();
+const seedVaultService = new SeedVaultStorageService();
+const appConfigService = new AppConfigStorageService();
 
 const code = ref('');
 const pin = ref('');
@@ -190,11 +190,11 @@ onMounted(async () => {
   const urlParams = new URLSearchParams(window.location.search);
   tagId.value = urlParams.get('id') || '';
   email.value = urlParams.get('email') || '';
-  tagLabels.value = await storageService.get('temp_tag_labels') || [];
-  tagChains.value = await storageService.get('temp_tag_chains') || [];
+  tagLabels.value = await seedVaultService.getTempTagLabels();
+  tagChains.value = await seedVaultService.getTempTagChains();
   
   // Se estiver em modo de desenvolvimento, preencher automaticamente o PIN
-  const isDevMode = await getDevMode();
+  const isDevMode = await appConfigService.getDevMode();
   if (isDevMode) {
     pin.value = '123456';
   }
@@ -202,7 +202,7 @@ onMounted(async () => {
 
 const sendOtpCode = async () => {
   if (!tagId.value) {
-    UIService.showError('Tag ID not found.');
+    await UIService.showError('Tag ID not found.');
     return;
   }
   
@@ -210,9 +210,9 @@ const sendOtpCode = async () => {
   
   try {
     await ApiService.authByOtp(tagId.value);
-    UIService.showSuccess('Code sent to your email.');
+    await UIService.showSuccess('Code sent to your email.');
   } catch (error) {
-    UIService.showError(error);
+    await UIService.showError(error);
   } finally {
     isLoading.value = false;
   }
@@ -224,7 +224,7 @@ const handleOtpSubmit = async () => {
   // Validate code
   const validation = ValidationService.validateRequiredField(code.value, 'Code');
   if (!validation.isValid) {
-    UIService.showError(validation.error);
+    await UIService.showError(validation.error);
     return;
   }
   
@@ -234,14 +234,21 @@ const handleOtpSubmit = async () => {
     const result = await ApiService.verifyOtp(tagId.value, code.value) as any;
     
     if (result.verified && result.key) {
-      await saveSeedVaultTag({ key: result.key, tagId: tagId.value, labels: tagLabels.value, chains: tagChains.value });
-      await storageService.clearTempData();
+      const tagPhysicalId = await seedVaultService.getTempTagPhysicalId();
+      await seedVaultService.saveSeedVaultTag({ 
+        key: result.key, 
+        tagId: tagId.value, 
+        physicalId: tagPhysicalId || undefined,
+        labels: tagLabels.value, 
+        chains: tagChains.value 
+      });
+      await seedVaultService.clearTempData();
       router.replace('/seed-vault/main');
     } else {
-      UIService.showError('Invalid code');
+      await UIService.showError('Invalid code');
     }
   } catch (error) {
-    UIService.showError(error);
+    await UIService.showError(error);
   } finally {
     isLoading.value = false;
   }
@@ -253,7 +260,7 @@ const handlePinSubmit = async () => {
   // Validate PIN
   const validation = ValidationService.validatePin(pin.value);
   if (!validation.isValid) {
-    UIService.showError(validation.error);
+    await UIService.showError(validation.error);
     return;
   }
   
@@ -263,14 +270,21 @@ const handlePinSubmit = async () => {
     const result = await ApiService.authByPin(tagId.value, pin.value) as any;
     
     if (result.verified && result.key) {
-      await saveSeedVaultTag({ key: result.key, tagId: tagId.value, labels: tagLabels.value, chains: tagChains.value });
-      await storageService.clearTempData();
+      const tagPhysicalId = await seedVaultService.getTempTagPhysicalId();
+      await seedVaultService.saveSeedVaultTag({ 
+        key: result.key, 
+        tagId: tagId.value, 
+        physicalId: tagPhysicalId || undefined,
+        labels: tagLabels.value, 
+        chains: tagChains.value 
+      });
+      await seedVaultService.clearTempData();
       router.replace('/seed-vault/main');
     } else {
-      UIService.showError('Invalid PIN');
+      await UIService.showError('Invalid PIN');
     }
   } catch (error) {
-    UIService.showError(error);
+    await UIService.showError(error);
   } finally {
     isLoading.value = false;
   }

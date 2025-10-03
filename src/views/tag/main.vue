@@ -133,7 +133,8 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonCheckbox, IonAccordionGroup, IonAccordion, IonSelect, IonSelectOption, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonList, IonLabel, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonModal, IonInput } from '@ionic/vue';
-import { getCurrentTag, getLocalWallets } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
+import type { Wallet } from '@/utils/storage-services/WalletStorageService';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { Storage } from '@ionic/storage';
 import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, fetchWalletAssets, fetchAssetMetadata, fetchAccountInfo } from '@/utils/CryptoUtils';
@@ -143,6 +144,7 @@ import NFCModal from '@/components/NFCModal.vue';
 import { TagParser, TapDanoService } from 'tapdano';
 import { utf8ToHex, formatIpfsUrl, calculateSHA256FromHex } from '@/utils/StringUtils';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
+import { UIService } from '@/utils/UIService';
 
 interface Asset {
   unit: string;
@@ -170,6 +172,7 @@ const IS_CACHE_ON = false;
 const router = useRouter();
 const route = useRoute();
 const storage = new Storage();
+const walletStorageService = new WalletStorageService();
 const tagInfo = ref<TagParser | null>(null);
 const adaBalance = ref(0);
 const depositWalletBalance = ref(0);
@@ -178,7 +181,7 @@ const showDepositWalletBalance = ref(false);
 const isWithdrawModalOpen = ref(false);
 const isDepositModalOpen = ref(false);
 const depositAmount = ref<number>(0);
-const wallets = ref([]);
+const wallets = ref<Wallet[]>([]);
 const depositWallet = ref(null);
 const withdrawWallet = ref(null);
 const walletAssets = ref<Asset[]>([]);
@@ -208,13 +211,13 @@ watch(() => route.path, async (newPath) => {
       isInitialzied = true;
       await initialize();
     }
-    const currentTag = await getCurrentTag();
+    const currentTag = await walletStorageService.getCurrentTag();
     if (currentTag == null) {
       router.push('/my-tags');
       return;
     }
     tagInfo.value = currentTag;
-    await loadTagAssets(currentTag.PublicKey);
+    await loadTagAssets(currentTag.PublicKey || '');
     loading.value = false;
   }
 }, { immediate: true });
@@ -296,25 +299,26 @@ async function withdrawFromWallet(wallet: any) {
   if (nfcModal.value == null) return;
   try {
     if (!wallet) {
-      alert('Select the Wallet');
+      await UIService.showError('Select the Wallet');
       return;
     }
     closeWithdrawModal();
     lucid.selectWalletFromSeed(wallet.mnemonic);
     const publicKeyHash = lucid.utils.getAddressDetails(await lucid.wallet.address()).paymentCredential?.hash;
-    const currentTag = await getCurrentTag();
+    const currentTag = await walletStorageService.getCurrentTag();
+    if (!currentTag) return;
     let utxoToCollect = [];
     const allScriptUtxo = await lucid.utxosAt(contractAddress);
     for (let i = 0; i < allScriptUtxo.length; i++) {
       if (allScriptUtxo[i].datum || allScriptUtxo[i].datumHash) {
-        if (allScriptUtxo[i].datum.toUpperCase().indexOf(compressPublicKey(currentTag.PublicKey).toUpperCase()) == 10) {
+        if (allScriptUtxo[i].datum.toUpperCase().indexOf(compressPublicKey(currentTag.PublicKey || '').toUpperCase()) == 10) {
           utxoToCollect.push(allScriptUtxo[i]);
           if (utxoToCollect.length === 20) break;
         }
       }
     }
     if (utxoToCollect.length === 0) {
-      alert('No assets found');
+      await UIService.showError('No assets found');
       return;
     }
 
@@ -338,12 +342,12 @@ async function withdrawFromWallet(wallet: any) {
     const signedTx = await tx.sign().complete();
     const txHash = await signedTx.submit();
     console.log('TX:' + txHash);
-    alert('Success!');
+    await UIService.showSuccess('Success!');
   } catch (error) {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      alert(error);
+      await UIService.showError(error);
     }
   }
 }
@@ -351,18 +355,19 @@ async function withdrawFromWallet(wallet: any) {
 async function depositFromWallet(wallet: any) {
   try {
     if (!wallet) {
-      alert('Select the Wallet');
+      await UIService.showError('Select the Wallet');
       return;
     }
     if (depositAmount.value == 0) {
-      alert('Enter the ADA Amount');
+      await UIService.showError('Enter the ADA Amount');
       return;
     }
 
     closeDepositModal();
     lucid.selectWalletFromSeed(wallet.mnemonic);
-    const currentTag = await getCurrentTag();
-    const datum = Data.to(new Constr(0, [compressPublicKey(currentTag.PublicKey), "00"]));
+    const currentTag = await walletStorageService.getCurrentTag();
+    if (!currentTag) return;
+    const datum = Data.to(new Constr(0, [compressPublicKey(currentTag.PublicKey || ''), "00"]));
     let tx = await lucid.newTx();
 
     tx = tx.payToContract(contractAddress, { inline: datum }, {
@@ -385,14 +390,14 @@ async function depositFromWallet(wallet: any) {
     const signedTx = await tx.sign().complete();
     const txHash = await signedTx.submit();
     console.log('TX:' + txHash);
-    alert('Success!');
+    await UIService.showSuccess('Success!');
   } catch (error) {
     console.error(error);
   }
 }
 
 async function loadWallets() {
-  wallets.value = await getLocalWallets();
+  wallets.value = await walletStorageService.getLocalWallets();
 }
 
 function openWithdrawModal() {

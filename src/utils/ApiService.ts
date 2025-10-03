@@ -89,6 +89,10 @@ export class ApiService {
     return this.makeRequest('SET_EMAIL', { id, email, key });
   }
 
+  static async updatePhysicalId(id: string, physicalId: string, auth: string) {
+    return this.makeRequest('UPDATE_PHYSICAL_ID', { id, physical_id: physicalId, auth });
+  }
+
   static async getEvents() {
     return this.makeRequest('GET_EVENTS');
   }
@@ -99,5 +103,52 @@ export class ApiService {
 
   static async getLotteryParticipants(eventId: string) {
     return this.makeRequest('GET_LOTTERY_PARTICIPANTS', { event_id: eventId });
+  }
+
+  // Admin methods
+  static async adminListItems(
+    tableName: string,
+    networkId: number,
+    auth: string,
+    filter?: any,
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc'
+  ) {
+    return this.makeRequest('ADMIN_LIST_ITEMS', {
+      auth,
+      table_name: tableName,
+      network_id: networkId,
+      filter: filter || {},
+      sort_by: sortBy,
+      sort_order: sortOrder || 'desc'
+    });
+  }
+
+  static async adminUpdateItem(
+    tableName: string,
+    networkId: number,
+    auth: string,
+    itemData: any
+  ) {
+    return this.makeRequest('ADMIN_UPDATE_ITEM', {
+      auth,
+      table_name: tableName,
+      network_id: networkId,
+      item_data: itemData
+    });
+  }
+
+  static async adminDeleteItem(
+    tableName: string,
+    networkId: number,
+    auth: string,
+    itemId: string
+  ) {
+    return this.makeRequest('ADMIN_DELETE_ITEM', {
+      auth,
+      table_name: tableName,
+      network_id: networkId,
+      item_id: itemId
+    });
   }
 }

@@ -81,18 +81,21 @@ import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonButton, IonIcon, IonImg } from '@ionic/vue';
 import { cardOutline, chevronForwardOutline, scanOutline, flameOutline } from 'ionicons/icons';
-import { getSimulateNFCTag, getDevMode, getBulkBurn } from '@/utils/StorageUtils';
+import { SeedVaultStorageService } from '@/utils/storage-services/SeedVaultStorageService';
+import { VirtualNFCService } from '@/utils/storage-services/VirtualNFCService';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
 import { ensureSerializableTags } from '@/utils/SeedVaultUtils';
 import { MobileNDEFService, SVTag } from '@/utils/MobileNDEFService';
 import { ApiService } from '@/utils/ApiService';
-import { StorageService } from '@/utils/StorageService';
 import { UIService } from '@/utils/UIService';
 import NFCModal from '@/components/NFCModal.vue';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Device } from '@capacitor/device';
 import { App } from '@capacitor/app';
 
-const storageService = new StorageService();
+const seedVaultService = new SeedVaultStorageService();
+const virtualNFCService = new VirtualNFCService();
+const appConfigService = new AppConfigStorageService();
 
 const playSuccessSound = async () => {
   try {
@@ -157,11 +160,11 @@ watch(() => route.path, async (newPath) => {
 
 const reloadAll = async () => {
   try {
-    isDevMode.value = await getDevMode();
-    isSimulate.value = await getSimulateNFCTag();
-    devToken.value = await storageService.get('dev-token') || '';
-    tagVersion.value = await storageService.get('tagVersion') || '';
-    eventId.value = await storageService.get('eventId') || '';
+    isDevMode.value = await appConfigService.getDevMode();
+    isSimulate.value = await appConfigService.getSimulateNFCTag();
+    devToken.value = await appConfigService.getDevToken();
+    tagVersion.value = await appConfigService.getTagVersion();
+    eventId.value = await appConfigService.getEventId();
     await loadTags();
   } catch (error) {
     console.error('Error reloading data:', error);
@@ -170,7 +173,7 @@ const reloadAll = async () => {
 
 const loadTags = async () => {
   try {
-    const tags = await storageService.get('sv_tags');
+    const tags = await seedVaultService.getTags();
     svTags.value = Array.isArray(tags) ? tags : [];
   } catch (error) {
     console.error('Error loading tags:', error);
@@ -180,10 +183,10 @@ const loadTags = async () => {
 
 const openTag = async (tag: { id: string, email?: string }, idx: number) => {
   try {
-    await storageService.set('currentSVTagIndex', idx);
+    await seedVaultService.setCurrentTagIndex(idx);
     router.push('/seed-vault/main');
   } catch (error) {
-    UIService.showError('Error opening tag');
+    await UIService.showError('Error opening tag');
     console.error(error);
   }
 };
@@ -222,7 +225,7 @@ declare const nfc: any;
 const burnTagEvent = async () => {
   let tag_id = null;
   
-  const isSimulateNFCTag = await getSimulateNFCTag();
+  const isSimulateNFCTag = await appConfigService.getSimulateNFCTag();
   const deviceMetadata = await getDeviceMetadata();
 
   try {
@@ -245,7 +248,7 @@ const burnTagEvent = async () => {
   }
   
   if (!tag_id) {
-    UIService.showError('Error trying to get new tag ID from server');
+    await UIService.showError('Error trying to get new tag ID from server');
     return;
   }
 
@@ -255,43 +258,50 @@ const burnTagEvent = async () => {
     if (isSimulateNFCTag) {
       nfcModal.value.openModal(1);
       await new Promise(resolve => setTimeout(resolve, 1000));
-      await storageService.set('burned-tag-id', tag_id);
-      await storageService.remove('my-secrets');
-      await storageService.remove('currentSeedPhrase');
+      await virtualNFCService.setBurnedTagId(tag_id);
+      await virtualNFCService.removeMySecrets();
+      await seedVaultService.removeCurrentSeedPhrase();
       nfcModal.value.incrementProgress();
       await playSuccessSound();
-      UIService.showSuccess('Tag burned successfully (simulated)!');
+      await UIService.showSuccess('Tag burned successfully (simulated)!');
       await nfcModal.value.closeModal(500);
     } else {
       nfcModal.value.openModal(2);
-      const mobileNDEFService = new MobileNDEFService();
+      const mobileNDEFService = MobileNDEFService.getInstance();
       nfcModal.value.onModalClose(() => {
         mobileNDEFService.cancel();
       });
-      await mobileNDEFService.readAndWrite(tag_id, true, (currentTag) => ({
-        id: tag_id,
-        labels: [],
-        secrets: [],
-        chains: []
-      } as SVTag));
+      let currentTag = null;
+      await mobileNDEFService.readAndWrite(null, (tag) => {
+        currentTag = tag;
+        return {
+          physicalId: currentTag.physicalId,
+          data: {
+            id: tag_id,
+            labels: [],
+            secrets: [],
+            chains: []
+          }
+        } as SVTag;
+      });
       nfcModal.value.incrementProgress();
       
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       if (isIOS) {
-        UIService.showSuccess('Tap again to verify write operation.');
+        await UIService.showSuccess('Tap again to verify write operation.');
       }
 
       const readTag = await mobileNDEFService.read();
       nfcModal.value.incrementProgress();
-      if (readTag.id === tag_id) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if ((readTag.data.id === tag_id) && (readTag.physicalId === currentTag!.physicalId)) {
+        await ApiService.updatePhysicalId(tag_id, readTag.physicalId, devToken.value);
         await playSuccessSound();
       } else {
         throw new Error('Tag ID verification failed');
       }
 
       await nfcModal.value.closeModal(500);
-      const isBulkBurnEnabled = await getBulkBurn();
+      const isBulkBurnEnabled = await appConfigService.getBulkBurn();
       if (isBulkBurnEnabled) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         await burnTagEvent();
@@ -302,7 +312,7 @@ const burnTagEvent = async () => {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      UIService.showError('Error trying to burn tag: ' + error);
+      await UIService.showError('Error trying to burn tag: ' + error);
       return;
     }
   }
@@ -310,6 +320,7 @@ const burnTagEvent = async () => {
 
 const addTagEvent = async () => {
   let tag_Id: string | null = null;
+  let tag_physicalId: string | undefined = undefined;
   let tag_labels: string[] = [];
   let tag_chains: string[] = [];
   
@@ -317,16 +328,17 @@ const addTagEvent = async () => {
   
   try {
     nfcModal.value.openModal(1);
-    const isSimulateNFCTag = await getSimulateNFCTag();
+    const isSimulateNFCTag = await appConfigService.getSimulateNFCTag();
     
     if (isSimulateNFCTag) {
-      tag_Id = await storageService.get('burned-tag-id') || '';
+      tag_Id = await virtualNFCService.getBurnedTagId() || '';
+      tag_physicalId = undefined;
       tag_labels = [];
       tag_chains = [];
       nfcModal.value.incrementProgress();
       await nfcModal.value.closeModal(500);
     } else {
-      const mobileNDEFService = new MobileNDEFService();
+      const mobileNDEFService = MobileNDEFService.getInstance();
       nfcModal.value.onModalClose(() => {
         mobileNDEFService.cancel();
       });
@@ -334,40 +346,45 @@ const addTagEvent = async () => {
       nfcModal.value.incrementProgress();
       await nfcModal.value.closeModal(500);
       console.log('NFC Tag content:', tag);
-      tag_Id = tag.id;
-      tag_labels = tag.labels || [];
-      tag_chains = tag.chains || [];
+      tag_Id = tag.data.id;
+      tag_physicalId = tag.physicalId;
+      tag_labels = tag.data.labels || [];
+      tag_chains = tag.data.chains || [];
     }
   } catch (error) {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      UIService.showError(String(error));
+      await UIService.showError(String(error));
       return;
     }
   }
 
   if (!tag_Id) {
-    UIService.showError('Unable to read Tag ID');
+    await UIService.showError('Unable to read Tag ID');
     return;
   }
 
-  const tags = await storageService.get('sv_tags') || [];
+  const tags = await seedVaultService.getTags();
   const svTagsArr = Array.isArray(tags) ? tags : [];
   const idx = svTagsArr.findIndex((t: any) => t.id === tag_Id);
   
   if (idx !== -1) {
+    if (tag_physicalId) {
+      svTagsArr[idx].physicalId = tag_physicalId;
+    }
     svTagsArr[idx].labels = tag_labels;
     svTagsArr[idx].chains = tag_chains;
-    await storageService.set('sv_tags', ensureSerializableTags(svTagsArr));
-    await storageService.set('currentSVTagIndex', idx);
+    await seedVaultService.saveTags(ensureSerializableTags(svTagsArr));
+    await seedVaultService.setCurrentTagIndex(idx);
     router.push('/seed-vault/main');
     return;
   }
 
-  await storageService.set('temp_tag_id', tag_Id);
-  await storageService.set('temp_tag_labels', tag_labels);
-  await storageService.set('temp_tag_chains', tag_chains);
+  await seedVaultService.setTempTagId(tag_Id);
+  await seedVaultService.setTempTagPhysicalId(tag_physicalId);
+  await seedVaultService.setTempTagLabels(tag_labels);
+  await seedVaultService.setTempTagChains(tag_chains);
 
   try {
     const result = await ApiService.getTag(tag_Id) as any;
@@ -378,13 +395,13 @@ const addTagEvent = async () => {
         router.push(`/seed-vault/auth?id=${tag_Id}`);
       }
     } else {
-      UIService.showError(result.error || 'Error retrieving tag info');
+      await UIService.showError(result.error || 'Error retrieving tag info');
     }
   } catch (err: any) {
     if (err.message && err.message.includes('404')) {
-      UIService.showError('Tag ID is not registered.');
+      await UIService.showError('Tag ID is not registered.');
     } else {
-      UIService.showError('Error communicating with server');
+      await UIService.showError('Error communicating with server');
     }
     console.error(err);
   }

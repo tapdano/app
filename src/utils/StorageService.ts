@@ -1,4 +1,10 @@
 /**
+ * @deprecated This class is deprecated. Use the new specialized storage services instead:
+ * - SeedVaultStorageService for Seed Vault data
+ * - VirtualNFCService for virtual NFC simulation data  
+ * - AppConfigStorageService for application configuration
+ * - WalletStorageService for legacy wallet management
+ * 
  * Centralized storage service with type safety and error handling
  * Eliminates repeated storage operations throughout the codebase
  */

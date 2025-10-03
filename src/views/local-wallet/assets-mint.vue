@@ -33,16 +33,18 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton } from '@ionic/vue';
-import { getCurrentLocalWallet } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 import { loadWallet } from '@/utils/CryptoUtils';
 import { Transaction, ForgeScript } from '@meshsdk/core';
 import type { Mint, AssetMetadata } from '@meshsdk/core';
 import NFCModal from '@/components/NFCModal.vue';
 import { TapDanoService } from 'tapdano';
+import { UIService } from '@/utils/UIService';
 import { hexToBase64 } from '@/utils/StringUtils';
 
 const router = useRouter();
 const route = useRoute();
+const walletStorageService = new WalletStorageService();
 const walletName = ref('');
 
 const form = ref({
@@ -58,7 +60,11 @@ const mintAsset = async () => {
   if (!nfcModal.value) return;
   try {
     loading.value = true;
-    const currentWallet = await getCurrentLocalWallet();
+    const currentWallet = await walletStorageService.getCurrentLocalWallet();
+    if (!currentWallet) {
+      await UIService.showError('No wallet found');
+      return;
+    }
     const wallet = await loadWallet(currentWallet.mnemonic);
     const tx = new Transaction({ initiator: wallet });
     const forgeScript = ForgeScript.withOneSignature(currentWallet.baseAddr);
@@ -94,13 +100,13 @@ const mintAsset = async () => {
     const unsignedTx = await tx.build();
     const signedTx = await wallet.signTx(unsignedTx);
     const txHash = await wallet.submitTx(signedTx);
-    alert('Success! TxID: ' + txHash);
+    await UIService.showSuccess('Success! TxID: ' + txHash);
     router.back();
   } catch (error) {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      alert(error);
+      await UIService.showError(error);
     }
   }
   loading.value = false;
@@ -109,7 +115,7 @@ const mintAsset = async () => {
 watch(() => route.path, async (newPath) => {
   if (newPath === '/local-wallet/assets/mint') {
     loading.value = false;
-    const currentWallet = await getCurrentLocalWallet();
+    const currentWallet = await walletStorageService.getCurrentLocalWallet();
     if (currentWallet == null) {
       router.replace('/local-wallets');
       return;

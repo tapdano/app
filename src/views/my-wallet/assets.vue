@@ -33,7 +33,7 @@ import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
 import WalletTabBar from '../../components/MyWalletTabBar.vue';
-import { getCurrentMyWallet } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 import { fetchWalletAssets, fetchAssetMetadata } from '@/utils/CryptoUtils';
 import { formatIpfsUrl } from '@/utils/StringUtils';
 
@@ -48,6 +48,7 @@ interface Asset {
 
 const router = useRouter();
 const route = useRoute();
+const walletStorageService = new WalletStorageService();
 const walletName = ref('');
 const loading = ref(true);
 const assets = ref<Asset[]>([]);
@@ -59,7 +60,7 @@ const navigateToAssetDetails = (asset: Asset) => {
 watch(() => route.path, async (newPath) => {
   if (newPath === '/my-wallet/assets') {
     loading.value = true;
-    const currentWallet = await getCurrentMyWallet();
+    const currentWallet = await walletStorageService.getCurrentMyWallet();
     if (currentWallet == null) {
       router.push('/my-wallets');
       return;

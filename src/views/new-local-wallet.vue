@@ -30,7 +30,8 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonTextarea, IonButton } from '@ionic/vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Storage } from '@ionic/storage';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
+import { UIService } from '@/utils/UIService';
 import { createWallet, validateMnemonic } from '@/utils/CryptoUtils';
 
 const props = defineProps({
@@ -38,8 +39,7 @@ const props = defineProps({
 });
 
 const router = useRouter();
-const storage = new Storage();
-storage.create();
+const walletStorageService = new WalletStorageService();
 
 const walletName = ref('');
 const walletRecoveryPhrase = ref('');
@@ -51,22 +51,20 @@ const handleSubmit = async () => {
     if (props.route == 'restore') {
       mnemonic = walletRecoveryPhrase.value;
       if (!validateMnemonic(mnemonic)) {
-        alert('Recovery phrase invalid.');
+        await UIService.showError('Recovery phrase invalid.');
         return;
       }
     }
 
     const cryptoWallet = await createWallet(mnemonic);
-    const wallets = (await storage.get('local-wallets')) || [];
-    const newIndex = wallets.length;
     const name = walletName.value.trim() || `TapWallet #${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-    wallets.push({
+    
+    const wallet = {
       name,
       ...cryptoWallet,
-    });
+    };
 
-    await storage.set('local-wallets', wallets);
-    await storage.set('currentLocalWallet', newIndex);
+    await walletStorageService.addLocalWallet(wallet);
 
     walletName.value = '';
     walletRecoveryPhrase.value = '';
@@ -74,7 +72,7 @@ const handleSubmit = async () => {
     router.replace('/local-wallet/main');
   } catch (error) {
     console.error(error);
-    alert(error);
+    await UIService.showError(error);
   }
 };
 

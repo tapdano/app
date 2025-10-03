@@ -19,14 +19,16 @@
 import { ref, watch } from 'vue';
 import { IonContent, IonButton, IonInput, IonItem, IonSpinner } from '@ionic/vue';
 import { TapDanoService } from 'tapdano';
+import { UIService } from '@/utils/UIService';
 import { createHash, randomBytes } from 'crypto';
 import { useRoute } from 'vue-router';
 import NFCModalPetro from '@/components/NFCModalPetro.vue';
-import { getNetworkId } from '@/utils/StorageUtils';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
 
 const isLoading = ref(false);
 const inputEmail = ref('');
 const nfcModal = ref<InstanceType<typeof NFCModalPetro> | null>(null);
+const appConfigService = new AppConfigStorageService();
 
 const route = useRoute();
 
@@ -41,13 +43,13 @@ const submit  = async () => {
   try {
 
     if (!inputEmail.value) {
-      alert('Preencha o E-mail');
+      await UIService.showError('Preencha o E-mail');
       return;
     }
 
     isLoading.value = true;
 
-    const networkId = await getNetworkId();
+    const networkId = await appConfigService.getNetworkId();
     const lambdaId_dev = '8yl2xan8xa';
     const lambdaId_prod = '0zx82ids4c';
     let useProdLambda = (networkId == 1);
@@ -118,12 +120,12 @@ const submit  = async () => {
     await mintRequest(url);
 
     inputEmail.value = '';
-    alert('Sucesso, você receberá sua confirmação por e-mail.');
+    await UIService.showSuccess('Sucesso, você receberá sua confirmação por e-mail.');
 
   } catch (error) {
     await nfcModal.value.closeModal();
     console.error(error);
-    alert(error);
+    await UIService.showError(error);
   }
   isLoading.value = false;
 };

@@ -107,12 +107,12 @@ import { settingsOutline, personOutline, mailOutline, keypadOutline, constructOu
 import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import SeedVaultTabBar from '../../components/SeedVaultTabBar.vue';
-import { StorageService } from '@/utils/StorageService';
+import { SeedVaultStorageService } from '@/utils/storage-services/SeedVaultStorageService';
 import { UIService } from '@/utils/UIService';
 
 const router = useRouter();
 const route = useRoute();
-const storageService = new StorageService();
+const seedVaultService = new SeedVaultStorageService();
 
 const tagId = ref('');
 const tagTitle = ref('Seed Vault');
@@ -122,7 +122,7 @@ const multipleWalletsEnabled = ref(false);
 
 const reloadTagData = async () => {
   try {
-    const currentTag = await storageService.getCurrentTag();
+    const currentTag = await seedVaultService.getCurrentTag();
 
     if (currentTag && currentTag.index !== undefined) {
       tagTitle.value = `Seed Vault #${currentTag.index + 1}`;
@@ -136,7 +136,7 @@ const reloadTagData = async () => {
       tagId.value = currentTag.tag.id;
       
       // Load multiple wallets setting
-      multipleWalletsEnabled.value = await storageService.isMultipleWalletsEnabled(currentTag.tag.id);
+      multipleWalletsEnabled.value = await seedVaultService.isMultipleWalletsEnabled(currentTag.tag.id);
     } else {
       svTags.value = [];
       currentIndex.value = null;
@@ -160,7 +160,7 @@ watch(() => route.path, async (newPath) => {
 
 const removeTagFromApp = async () => {
   if (!tagId.value) {
-    UIService.showError('Tag ID not found.');
+    await UIService.showError('Tag ID not found.');
     return;
   }
   
@@ -168,10 +168,10 @@ const removeTagFromApp = async () => {
   if (!confirmed) return;
   
   try {
-    await storageService.removeTag(tagId.value);
+    await seedVaultService.removeTag(tagId.value);
     router.replace('/seed-vault');
   } catch (error) {
-    UIService.showError('Error removing tag from app');
+    await UIService.showError('Error removing tag from app');
     console.error(error);
   }
 };
@@ -186,7 +186,7 @@ const goToChangePin = () => {
 
 const onMultipleWalletsToggle = async () => {
   if (!tagId.value) {
-    UIService.showError('Tag ID not found.');
+    await UIService.showError('Tag ID not found.');
     multipleWalletsEnabled.value = false;
     return;
   }
@@ -204,15 +204,15 @@ Please ensure you have backed up all your wallets before enabling this feature. 
   }
 
   try {
-    await storageService.setMultipleWalletsEnabled(tagId.value, multipleWalletsEnabled.value);
+    await seedVaultService.setMultipleWalletsEnabled(tagId.value, multipleWalletsEnabled.value);
     
     if (multipleWalletsEnabled.value) {
-      UIService.showSuccess('Multiple wallets feature enabled. Remember to backup your wallets regularly.');
+      await UIService.showSuccess('Multiple wallets feature enabled. Remember to backup your wallets regularly.');
     } else {
-      UIService.showSuccess('Multiple wallets feature disabled.');
+      await UIService.showSuccess('Multiple wallets feature disabled.');
     }
   } catch (error) {
-    UIService.showError('Error updating multiple wallets setting');
+    await UIService.showError('Error updating multiple wallets setting');
     console.error(error);
     // Revert the checkbox state on error
     multipleWalletsEnabled.value = !multipleWalletsEnabled.value;

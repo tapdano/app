@@ -29,12 +29,12 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton } from '@ionic/vue';
 import { ApiService } from '@/utils/ApiService';
-import { StorageService } from '@/utils/StorageService';
+import { SeedVaultStorageService } from '@/utils/storage-services/SeedVaultStorageService';
 import { ValidationService } from '@/utils/ValidationService';
 import { UIService } from '@/utils/UIService';
 
 const router = useRouter();
-const storageService = new StorageService();
+const seedVaultService = new SeedVaultStorageService();
 
 const newEmail = ref('');
 const isLoading = ref(false);
@@ -45,14 +45,14 @@ const submitChange = async () => {
   // Validate input
   const validation = ValidationService.validateEmail(newEmail.value);
   if (!validation.isValid) {
-    UIService.showError(validation.error);
+    await UIService.showError(validation.error);
     return;
   }
 
   isLoading.value = true;
 
   try {
-    const currentTag = await storageService.getCurrentTag();
+    const currentTag = await seedVaultService.getCurrentTag();
     if (!currentTag) {
       throw new Error('Tag not found');
     }
@@ -61,11 +61,11 @@ const submitChange = async () => {
 
     await ApiService.setEmail(id, newEmail.value, seedVaultKey || '');
 
-    UIService.showSuccess('E-mail changed successfully.');
+    await UIService.showSuccess('E-mail changed successfully.');
     router.replace('/seed-vault/settings');
 
   } catch (error) {
-    UIService.showError(error);
+    await UIService.showError(error);
   } finally {
     isLoading.value = false;
   }

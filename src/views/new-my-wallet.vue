@@ -31,18 +31,17 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonTextarea, IonButton } from '@ionic/vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Storage } from '@ionic/storage';
 import { TapDanoService } from 'tapdano';
+import { UIService } from '@/utils/UIService';
 import NFCModal from '@/components/NFCModal.vue';
-import { addMyWallet } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 
 const props = defineProps({
   route: String
 });
 
 const router = useRouter();
-const storage = new Storage();
-storage.create();
+const walletStorageService = new WalletStorageService();
 
 const walletName = ref('');
 const walletRecoveryPhrase = ref('');
@@ -61,11 +60,11 @@ const handleSubmit = async () => {
     await nfcModal.value.closeModal(500);
 
     if (tag.TagID != '5444') {
-      alert('Unknow Tag. Please try again with a TapDano Tag.');
+      await UIService.showError('Unknown Tag. Please try again with a TapDano Tag.');
       return;
     }
 
-    await addMyWallet(tag, walletName.value.trim());
+    await walletStorageService.addMyWallet(tag, walletName.value.trim());
 
     walletName.value = '';
     walletRecoveryPhrase.value = '';
@@ -75,7 +74,7 @@ const handleSubmit = async () => {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      alert(error);
+      await UIService.showError(error);
     }
   }
 };

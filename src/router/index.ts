@@ -195,6 +195,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/seed-vault/change-pin',
     component: () => import('../views/seed-vault/change-pin.vue')
+  },
+  {
+    path: '/admin',
+    component: () => import('../views/admin.vue')
   }
 ];
 

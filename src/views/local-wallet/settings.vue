@@ -32,15 +32,14 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton, IonTextarea, IonItem } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Storage } from '@ionic/storage';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
-import { getCurrentLocalWallet } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
+import { UIService } from '@/utils/UIService';
 import WalletTabBar from '../../components/LocalWalletTabBar.vue';
 
 const router = useRouter();
 const route = useRoute();
-const storage = new Storage();
-storage.create();
+const walletStorageService = new WalletStorageService();
 
 const walletName = ref('');
 const walletMnemonic = ref('');
@@ -50,7 +49,7 @@ const isMnemonicVisible = ref(false);
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/local-wallet/settings') {
-    const currentWallet = await getCurrentLocalWallet();
+    const currentWallet = await walletStorageService.getCurrentLocalWallet();
     if (currentWallet == null) {
       router.replace('/local-wallets');
       return;
@@ -65,25 +64,30 @@ watch(() => route.path, async (newPath) => {
 
 const getRecoveryPhrase = async () => {
   try {
-    const currentWallet = await getCurrentLocalWallet();
+    const currentWallet = await walletStorageService.getCurrentLocalWallet();
+    if (!currentWallet) {
+      await UIService.showError('No wallet found');
+      return;
+    }
     walletMnemonic.value = currentWallet.mnemonic;
     isMnemonicVisible.value = true;
   } catch (error) {
     console.error(error);
-    alert(error);
+    await UIService.showError(error);
   }
 };
 
 const deleteWallet = async () => {
-  const confirmation = confirm('Are you sure you want to delete this wallet?');
+  const confirmation = await UIService.showConfirmation('Are you sure you want to delete this wallet?');
   if (confirmation) {
-    let wallets = await storage.get('local-wallets');
-    const currentIndex = await storage.get('currentLocalWallet');
-    if (wallets && wallets[currentIndex]) {
-      wallets.splice(currentIndex, 1);
-      await storage.set('local-wallets', wallets);
-      await storage.remove('currentLocalWallet');
-      router.push('/local-wallets');
+    const wallets = await walletStorageService.getLocalWallets();
+    const currentWallet = await walletStorageService.getCurrentLocalWallet();
+    if (currentWallet && wallets) {
+      const currentIndex = wallets.findIndex(w => w.name === currentWallet.name);
+      if (currentIndex !== -1) {
+        await walletStorageService.removeLocalWallet(currentIndex);
+        router.push('/local-wallets');
+      }
     }
   }
 };

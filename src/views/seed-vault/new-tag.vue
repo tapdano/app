@@ -35,15 +35,15 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton } from '@ionic/vue';
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { saveSeedVaultTag } from '@/utils/SeedVaultUtils';
 import { ApiService } from '@/utils/ApiService';
-import { StorageService } from '@/utils/StorageService';
+import { SeedVaultStorageService } from '@/utils/storage-services/SeedVaultStorageService';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
 import { ValidationService } from '@/utils/ValidationService';
 import { UIService } from '@/utils/UIService';
-import { getDevMode } from '@/utils/StorageUtils';
 
 const router = useRouter();
-const storageService = new StorageService();
+const seedVaultService = new SeedVaultStorageService();
+const appConfigService = new AppConfigStorageService();
 
 const email = ref('');
 const pin = ref('');
@@ -58,14 +58,14 @@ const handleSubmit = async () => {
   // Validate email
   const emailValidation = ValidationService.validateEmail(email.value);
   if (!emailValidation.isValid) {
-    UIService.showError(emailValidation.error);
+    await UIService.showError(emailValidation.error);
     return;
   }
   
   // Validate PIN confirmation
   const pinValidation = ValidationService.validatePinConfirmation(pin.value, confirmPin.value);
   if (!pinValidation.isValid) {
-    UIService.showError(pinValidation.error);
+    await UIService.showError(pinValidation.error);
     return;
   }
   
@@ -74,20 +74,27 @@ const handleSubmit = async () => {
   try {
     const urlParams = new URLSearchParams(window.location.search);
     tagId.value = urlParams.get('id') || '';
-    tagLabels.value = await storageService.get('temp_tag_labels') || [];
+    tagLabels.value = await seedVaultService.getTempTagLabels();
 
     const result = await ApiService.startTag(tagId.value, email.value, pin.value) as any;
     
     if (result.key) {
-      const tagChains = (await storageService.get('temp_tag_chains')) as string[] || [];
-      await saveSeedVaultTag({ key: result.key, tagId: tagId.value, labels: tagLabels.value, chains: tagChains });
-      await storageService.clearTempData();
+      const tagChains = await seedVaultService.getTempTagChains();
+      const tagPhysicalId = await seedVaultService.getTempTagPhysicalId();
+      await seedVaultService.saveSeedVaultTag({ 
+        key: result.key, 
+        tagId: tagId.value, 
+        physicalId: tagPhysicalId || undefined,
+        labels: tagLabels.value, 
+        chains: tagChains 
+      });
+      await seedVaultService.clearTempData();
       router.replace('/seed-vault/main');
     } else {
-      UIService.showError(result.error || 'Error associating email');
+      await UIService.showError(result.error || 'Error associating email');
     }
   } catch (error) {
-    UIService.showError(error);
+    await UIService.showError(error);
   } finally {
     isLoading.value = false;
   }
@@ -95,7 +102,7 @@ const handleSubmit = async () => {
 
 onMounted(async () => {
   // Se estiver em modo de desenvolvimento, preencher automaticamente os campos
-  const isDevMode = await getDevMode();
+  const isDevMode = await appConfigService.getDevMode();
   if (isDevMode) {
     email.value = 'boemekeld@gmail.com';
     pin.value = '123456';

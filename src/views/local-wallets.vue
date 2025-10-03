@@ -34,19 +34,18 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonButton } from '@ionic/vue';
-import { Storage } from '@ionic/storage';
-
-const storage = new Storage();
-storage.create();
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
+import type { Wallet } from '@/utils/storage-services/WalletStorageService';
 
 const router = useRouter();
 const route = useRoute();
-const wallets = ref([]);
+const wallets = ref<Wallet[]>([]);
 const loading = ref(true);
+const walletStorageService = new WalletStorageService();
 
 const load = async () => {
   loading.value = true;
-  const storedWallets = await storage.get('local-wallets') || [];
+  const storedWallets = await walletStorageService.getLocalWallets();
   wallets.value = storedWallets;
   loading.value = false;
 };
@@ -58,7 +57,7 @@ watch(() => route.path, async (newPath) => {
 }, { immediate: true });
 
 const selectWallet = async (index: number) => {
-  await storage.set('currentLocalWallet', index);
+  await walletStorageService.setCurrentLocalWallet(index);
   router.push('/local-wallet/main');
 };
 </script>

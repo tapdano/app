@@ -33,20 +33,19 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton, IonTextarea, IonItem } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Storage } from '@ionic/storage';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
-import { getCurrentMyWallet } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 import WalletTabBar from '../../components/MyWalletTabBar.vue';
 import NFCModal from '@/components/NFCModal.vue';
 import { calculateSHA256 } from '@/utils/StringUtils';
 import { TapDanoService } from 'tapdano';
 import { randomBytes } from 'crypto';
 import { ec as EC } from 'elliptic';
+import { UIService } from '@/utils/UIService';
 
 const router = useRouter();
 const route = useRoute();
-const storage = new Storage();
-storage.create();
+const walletStorageService = new WalletStorageService();
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const walletName = ref('');
@@ -57,7 +56,7 @@ const isMnemonicVisible = ref(false);
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/my-wallet/settings') {
-    const currentWallet = await getCurrentMyWallet();
+    const currentWallet = await walletStorageService.getCurrentMyWallet();
     if (currentWallet == null) {
       router.replace('/my-wallets');
       return;
@@ -89,7 +88,7 @@ const checkTwoFactor = async (wallet: any) => {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      alert(error);
+      await UIService.showError(error);
     }
     return false;
   }
@@ -97,29 +96,34 @@ const checkTwoFactor = async (wallet: any) => {
 
 const getRecoveryPhrase = async () => {
   try {
-    const currentWallet = await getCurrentMyWallet();
+    const currentWallet = await walletStorageService.getCurrentMyWallet();
+    if (!currentWallet) {
+      await UIService.showError('No wallet found');
+      return;
+    }
     if (!(await checkTwoFactor(currentWallet))) {
-      alert('Error, authentication failed.');
+      await UIService.showError('Error, authentication failed.');
       return;
     }
     walletMnemonic.value = currentWallet.mnemonic;
     isMnemonicVisible.value = true;
   } catch (error) {
     console.error(error);
-    alert(error);
+    await UIService.showError(error);
   }
 };
 
 const deleteWallet = async () => {
-  const confirmation = confirm('Are you sure you want to delete this wallet?');
+  const confirmation = await UIService.showConfirmation('Are you sure you want to delete this wallet?');
   if (confirmation) {
-    let wallets = await storage.get('my-wallets');
-    const currentIndex = await storage.get('currentMyWallet');
-    if (wallets && wallets[currentIndex]) {
-      wallets.splice(currentIndex, 1);
-      await storage.set('my-wallets', wallets);
-      await storage.remove('currentMyWallet');
-      router.push('/my-wallets');
+    const wallets = await walletStorageService.getMyWallets();
+    const currentWallet = await walletStorageService.getCurrentMyWallet();
+    if (currentWallet && wallets) {
+      const currentIndex = wallets.findIndex(w => w.name === currentWallet.name);
+      if (currentIndex !== -1) {
+        await walletStorageService.removeMyWallet(currentIndex);
+        router.push('/my-wallets');
+      }
     }
   }
 };

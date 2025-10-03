@@ -36,6 +36,7 @@ import NFCModal from '@/components/NFCModal.vue';
 import TagTabBar from '../../components/TagTabBar.vue';
 import { calculateSHA256 } from '@/utils/StringUtils';
 import { TapDanoService } from 'tapdano';
+import { UIService } from '@/utils/UIService';
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const message = ref('');
@@ -81,7 +82,7 @@ const signWithTag = async () => {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      alert(error);
+      await UIService.showError(error);
     }
   }
 };

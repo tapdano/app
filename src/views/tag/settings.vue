@@ -24,22 +24,21 @@
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Storage } from '@ionic/storage';
-import { getCurrentTag, deleteTagByPublicKey, addTag } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 import TagTabBar from '../../components/TagTabBar.vue';
 import NFCModal from '@/components/NFCModal.vue';
 import { TapDanoService } from 'tapdano';
+import { UIService } from '@/utils/UIService';
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 
 const router = useRouter();
 const route = useRoute();
-const storage = new Storage();
-storage.create();
+const walletStorageService = new WalletStorageService();
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/tag/settings') {
-    const currentTag = await getCurrentTag();
+    const currentTag = await walletStorageService.getCurrentTag();
     if (currentTag == null) {
       router.push('/my-tags');
       return;
@@ -49,7 +48,7 @@ watch(() => route.path, async (newPath) => {
 
 const lockTag = async () => {
   if (!nfcModal.value) return;
-  const confirmation = confirm('Are you sure you want to LOCK this Tag?');
+  const confirmation = await UIService.showConfirmation('Are you sure you want to LOCK this Tag?');
   if (confirmation) {
     try {
       const tapDanoService = new TapDanoService();
@@ -60,13 +59,13 @@ const lockTag = async () => {
       const tag = await tapDanoService.lockTag();
       nfcModal.value.incrementProgress();
       await nfcModal.value.closeModal(500);
-      await addTag(tag);
+      await walletStorageService.addTag(tag);
       router.replace('/tag/main');
     } catch (error) {
       if (error && error != 'canceled') {
         await nfcModal.value.closeModal(0);
         console.error(error);
-        alert(error);
+        await UIService.showError(error);
       }
     }
   }
@@ -74,7 +73,7 @@ const lockTag = async () => {
 
 const formatTag = async () => {
   if (!nfcModal.value) return;
-  const confirmation = confirm('Are you sure you want to FORMAT this Tag?');
+  const confirmation = await UIService.showConfirmation('Are you sure you want to FORMAT this Tag?');
   if (confirmation) {
     try {
       const tapDanoService = new TapDanoService();
@@ -85,14 +84,16 @@ const formatTag = async () => {
       await tapDanoService.formatTag();
       nfcModal.value.incrementProgress();
       await nfcModal.value.closeModal(500);
-      const currentTag = await getCurrentTag();
-      await deleteTagByPublicKey(currentTag.PublicKey);
+      const currentTag = await walletStorageService.getCurrentTag();
+      if (currentTag?.PublicKey) {
+        await walletStorageService.deleteTagByPublicKey(currentTag.PublicKey);
+      }
       router.replace('/my-tags');
     } catch (error) {
       if (error && error != 'canceled') {
         await nfcModal.value.closeModal(0);
         console.error(error);
-        alert(error);
+        await UIService.showError(error);
       }
     }
   }

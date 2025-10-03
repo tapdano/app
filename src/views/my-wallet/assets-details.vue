@@ -32,6 +32,7 @@ import { useRoute } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonBackButton, IonButton, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
 import { fetchAssetFull, getCExplorerURL } from '@/utils/CryptoUtils';
 import { formatIpfsUrl } from '@/utils/StringUtils';
+import { UIService } from '@/utils/UIService';
 import { AssetFull } from '@meshsdk/core';
 
 const route = useRoute();
@@ -52,7 +53,7 @@ watch(() => route.path, async (newPath) => {
       asset.value = assetFull;
     } catch (error) {
       console.log(error);
-      alert(error);
+      await UIService.showError(error);
     }
     loading.value = false;
   }

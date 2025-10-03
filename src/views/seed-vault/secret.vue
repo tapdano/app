@@ -124,20 +124,23 @@ import { ref, watch, computed } from 'vue';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonItem, IonInput, IonButton, IonIcon, IonToast } from '@ionic/vue';
 import { copyOutline, keyOutline, locationOutline, shieldOutline, warningOutline, trashOutline } from 'ionicons/icons';
 import { useRoute, useRouter } from 'vue-router';
-import { Storage } from '@ionic/storage';
 import CryptoJS from 'crypto-js';
-import { getSimulateNFCTag } from '@/utils/StorageUtils';
+import { SeedVaultStorageService } from '@/utils/storage-services/SeedVaultStorageService';
+import { VirtualNFCService } from '@/utils/storage-services/VirtualNFCService';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
 import { ensureSerializableTags } from '@/utils/SeedVaultUtils';
 import { MobileNDEFService, SVTag } from '@/utils/MobileNDEFService';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import NFCModal from '@/components/NFCModal.vue';
 import { getWalletTypeIcon, getWalletTypeName } from '@/utils/WalletTypes';
 import { generateWalletAddress } from '@/utils/CryptoUtils';
+import { UIService } from '@/utils/UIService';
 
 const router = useRouter();
 const route = useRoute();
-const storage = new Storage();
-storage.create();
+const seedVaultService = new SeedVaultStorageService();
+const virtualNFCService = new VirtualNFCService();
+const appConfigService = new AppConfigStorageService();
 
 const secrets = ref([]);
 const name = ref('');
@@ -184,17 +187,18 @@ const copyAddress = async () => {
 
 const load = async () => {
   setTimeout(async () => {
-    const svTagsArr = await storage.get('sv_tags');
-    const currentTagIdx = await storage.get('currentSVTagIndex');
+    const currentTagResult = await seedVaultService.getCurrentTag();
+    const svTagsArr = currentTagResult?.allTags || [];
+    const currentTagIdx = currentTagResult?.index;
     let secretsData = [];
     
-    const isSimulate = await getSimulateNFCTag();
+    const isSimulate = await appConfigService.getSimulateNFCTag();
     if (isSimulate) {
       let key = '';
-      if (Array.isArray(svTagsArr) && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].seedVaultKey) {
+      if (Array.isArray(svTagsArr) && currentTagIdx !== undefined && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].seedVaultKey) {
         key = svTagsArr[currentTagIdx].seedVaultKey;
       }
-      const encryptedSecrets = await storage.get('my-secrets');
+      const encryptedSecrets = await virtualNFCService.getMySecrets();
       if (encryptedSecrets && key) {
         try {
           const bytes = CryptoJS.AES.decrypt(encryptedSecrets, key);
@@ -206,49 +210,49 @@ const load = async () => {
       }
     } else {
       // Use labels from current tag and read secrets from NFC for current item
-      if (Array.isArray(svTagsArr) && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].labels) {
+      if (Array.isArray(svTagsArr) && currentTagIdx !== undefined && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].labels) {
         const labels = svTagsArr[currentTagIdx].labels;
         
         // Create secrets array with empty wallet seed phrases
         secretsData = labels.map((label: string, index: number) => ({
           name: label,
           seedPhrase: '',
-          walletType: (svTagsArr[currentTagIdx].chains && svTagsArr[currentTagIdx].chains[index]) || '1'
+          walletType: (svTagsArr[currentTagIdx!].chains && svTagsArr[currentTagIdx!].chains[index]) || '1'
         }));
         
         // Load the specific secret from NFC tag
-        const currentIndex = await storage.get('currentSeedPhrase');
-        if (currentIndex >= 0 && currentIndex < labels.length) {
+        const currentIndex = await seedVaultService.getCurrentSeedPhrase();
+        if (currentIndex !== null && currentIndex >= 0 && currentIndex < labels.length) {
           let key = '';
-          if (svTagsArr[currentTagIdx].seedVaultKey) {
-            key = svTagsArr[currentTagIdx].seedVaultKey;
+          if (svTagsArr[currentTagIdx!].seedVaultKey) {
+            key = svTagsArr[currentTagIdx!].seedVaultKey;
           }
           
           if (!nfcModal.value) return;
           try {
             nfcModal.value.openModal(1);
+            const mobileNDEFService = MobileNDEFService.getInstance();
             nfcModal.value.onModalClose(() => {
               mobileNDEFService.cancel();
             });
-            const mobileNDEFService = new MobileNDEFService();
             const tagData = await mobileNDEFService.read();
             nfcModal.value.incrementProgress();
             await nfcModal.value.closeModal(500);
-            if (tagData.secrets && tagData.secrets[currentIndex]) {
+            if (tagData.data.secrets && tagData.data.secrets[currentIndex!]) {
               try {
-                const bytes = CryptoJS.AES.decrypt(tagData.secrets[currentIndex], key);
+                const bytes = CryptoJS.AES.decrypt(tagData.data.secrets[currentIndex!], key);
                 const decryptedSeedPhrase = bytes.toString(CryptoJS.enc.Utf8);
-                secretsData[currentIndex].seedPhrase = decryptedSeedPhrase;
+                secretsData[currentIndex!].seedPhrase = decryptedSeedPhrase;
               } catch (decryptError) {
                 console.error('Failed to decrypt secret:', decryptError);
-                secretsData[currentIndex].seedPhrase = 'Error decrypting';
+                secretsData[currentIndex!].seedPhrase = 'Error decrypting';
               }
             }
           } catch (error) {
             if (error && error !== 'canceled') {
               await nfcModal.value.closeModal(0);
               console.error(error);
-              alert('Error reading NFC tag: ' + error);
+              await UIService.showError('Error reading NFC tag: ' + error);
             }
             router.replace('/seed-vault/main');
           }
@@ -257,8 +261,8 @@ const load = async () => {
     }
     
     secrets.value = secretsData;
-    const currentIndex = await storage.get('currentSeedPhrase');
-    if (secrets.value[currentIndex]) {
+    const currentIndex = await seedVaultService.getCurrentSeedPhrase();
+    if (currentIndex !== null && secrets.value[currentIndex]) {
       name.value = (secrets.value[currentIndex] as any).name;
       seedPhrase.value = (secrets.value[currentIndex] as any).seedPhrase;
       walletType.value = (secrets.value[currentIndex] as any).walletType || '1';
@@ -290,20 +294,21 @@ watch(() => route.path, async (newPath) => {
 }, { immediate: true });
 
 const deleteSecret = async () => {
-  const confirmation = confirm('Are you sure you want to delete this Wallet?');
+  const confirmation = await UIService.showConfirmation('Are you sure you want to delete this Wallet?');
   if (confirmation) {
-    const svTagsArr = await storage.get('sv_tags');
-    const currentTagIdx = await storage.get('currentSVTagIndex');
-    const currentIndex = await storage.get('currentSeedPhrase');
+    const currentTagResult = await seedVaultService.getCurrentTag();
+    const svTagsArr = currentTagResult?.allTags || [];
+    const currentTagIdx = currentTagResult?.index;
+    const currentIndex = await seedVaultService.getCurrentSeedPhrase();
     
-    const isSimulate = await getSimulateNFCTag();
+    const isSimulate = await appConfigService.getSimulateNFCTag();
     if (isSimulate) {
       // Delete from encrypted secrets
       let key = '';
-      if (Array.isArray(svTagsArr) && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].seedVaultKey) {
+      if (Array.isArray(svTagsArr) && currentTagIdx !== undefined && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].seedVaultKey) {
         key = svTagsArr[currentTagIdx].seedVaultKey;
       }
-      const encryptedSecrets = await storage.get('my-secrets');
+      const encryptedSecrets = await virtualNFCService.getMySecrets();
       let secretsArr = [];
       if (encryptedSecrets && key) {
         try {
@@ -314,16 +319,16 @@ const deleteSecret = async () => {
           secretsArr = [];
         }
       }
-      if (secretsArr && secretsArr[currentIndex]) {
+      if (secretsArr && currentIndex !== null && secretsArr[currentIndex]) {
         secretsArr.splice(currentIndex, 1);
         const encrypted = CryptoJS.AES.encrypt(JSON.stringify(secretsArr), key).toString();
-        await storage.set('my-secrets', encrypted);
+        await virtualNFCService.setMySecrets(encrypted);
       }
 
-      await storage.remove('currentSeedPhrase');
+      await seedVaultService.removeCurrentSeedPhrase();
       router.replace('/seed-vault/main');
     } else {
-      if (Array.isArray(svTagsArr) && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].labels) {
+      if (Array.isArray(svTagsArr) && currentTagIdx !== undefined && svTagsArr[currentTagIdx] && svTagsArr[currentTagIdx].labels && currentIndex !== null) {
         svTagsArr[currentTagIdx].labels.splice(currentIndex, 1);
         if (svTagsArr[currentTagIdx].chains && svTagsArr[currentTagIdx].chains.length > currentIndex) {
           svTagsArr[currentTagIdx].chains.splice(currentIndex, 1);
@@ -333,44 +338,46 @@ const deleteSecret = async () => {
         
         try {
           nfcModal.value.openModal(1);
-          const mobileNDEFService = new MobileNDEFService();
+          const mobileNDEFService = MobileNDEFService.getInstance();
           
           nfcModal.value.onModalClose(() => {
             mobileNDEFService.cancel();
           });
 
-          const currentTag = svTagsArr[currentTagIdx];
+          const currentTag = svTagsArr[currentTagIdx!];
           await mobileNDEFService.readAndWrite(
-            currentTag.id,
-            false, // forceWrite
+            currentTag.physicalId || null,
             (currentTagData) => {
               console.log('Current tag data from NFC:', currentTagData);
-              let currentSecrets = currentTagData.secrets || [];
-              if (currentSecrets.length > currentIndex) {
-                currentSecrets.splice(currentIndex, 1);
+              let currentSecrets = currentTagData.data.secrets || [];
+              if (currentSecrets.length > currentIndex!) {
+                currentSecrets.splice(currentIndex!, 1);
               }
               return {
-                id: currentTag.id,
-                labels: currentTag.labels || [],
-                secrets: currentSecrets,
-                chains: currentTag.chains || []
+                physicalId: currentTagData.physicalId,
+                data: {
+                  id: currentTag.id,
+                  labels: currentTag.labels || [],
+                  secrets: currentSecrets,
+                  chains: currentTag.chains || []
+                }
               } as SVTag;
             }
           );
 
           const serializableTags = ensureSerializableTags(svTagsArr);
-          await storage.set('sv_tags', serializableTags);
+          await seedVaultService.saveTags(serializableTags);
           
           nfcModal.value.incrementProgress();
           await nfcModal.value.closeModal(500);
           
-          await storage.remove('currentSeedPhrase');
+          await seedVaultService.removeCurrentSeedPhrase();
           router.replace('/seed-vault/main');
         } catch (error) {
           if (error && error != 'canceled') {
             await nfcModal.value.closeModal(0);
             console.error('Failed to update NFC tag:', error);
-            alert('Failed to update NFC tag: ' + error);
+            await UIService.showError('Failed to update NFC tag: ' + error);
           }
         }
       }

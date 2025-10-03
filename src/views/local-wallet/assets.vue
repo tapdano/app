@@ -34,7 +34,7 @@ import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/vue';
 import WalletTabBar from '../../components/LocalWalletTabBar.vue';
-import { getCurrentLocalWallet } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 import { fetchWalletAssets, fetchAssetMetadata } from '@/utils/CryptoUtils';
 import { formatIpfsUrl } from '@/utils/StringUtils';
 
@@ -49,6 +49,7 @@ interface Asset {
 
 const router = useRouter();
 const route = useRoute();
+const walletStorageService = new WalletStorageService();
 const walletName = ref('');
 const loading = ref(true);
 const assets = ref<Asset[]>([]);
@@ -64,7 +65,7 @@ const navigateToAssetDetails = (asset: Asset) => {
 watch(() => route.path, async (newPath) => {
   if (newPath === '/local-wallet/assets') {
     loading.value = true;
-    const currentWallet = await getCurrentLocalWallet();
+    const currentWallet = await walletStorageService.getCurrentLocalWallet();
     if (currentWallet == null) {
       router.push('/local-wallets');
       return;

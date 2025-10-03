@@ -68,10 +68,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, IonToolbar, IonToggle, IonLabel, IonButton, IonItem, IonSelect, IonSelectOption, ToggleChangeEventDetail, IonAccordionGroup, IonAccordion, IonInput } from '@ionic/vue';
-import { getNetworkId, setNetworkId, getDevMode, getSimulateNFCTag, setDevMode, setSimulateNFCTag, getHomologAPI, setHomologAPI, getBulkBurn, setBulkBurn } from '@/utils/StorageUtils';
-import { Storage } from '@ionic/storage';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
 import { App } from '@capacitor/app';
 import { format } from 'timeago.js';
+import { UIService } from '@/utils/UIService';
 
 const isDarkMode = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 const isDevMode = ref<boolean | undefined>(undefined);
@@ -86,35 +86,34 @@ const devTokenSaved = ref(false);
 const appVersion = ref('');
 const buildNumber = ref('');
 const lastBuildTime = ref('');
-const storage = new Storage();
-storage.create();
+const appConfigService = new AppConfigStorageService();
 
 const toggleDevMode = async (event: any) => {
   isDevMode.value = event.detail.checked;
-  await setDevMode(event.detail.checked);
+  await appConfigService.setDevMode(event.detail.checked);
   window.location.reload();
 };
 
 const toggleSimulateNFCTag = async (event: any) => {
   isSimulateNFCTag.value = event.detail.checked;
-  await setSimulateNFCTag(event.detail.checked);
+  await appConfigService.setSimulateNFCTag(event.detail.checked);
   window.location.reload();
 };
 
 const toggleHomologAPI = async (event: any) => {
   isHomologAPI.value = event.detail.checked;
-  await setHomologAPI(event.detail.checked);
+  await appConfigService.setHomologAPI(event.detail.checked);
   window.location.reload();
 };
 
 const toggleBulkBurn = async (event: any) => {
   isBulkBurn.value = event.detail.checked;
-  await setBulkBurn(event.detail.checked);
+  await appConfigService.setBulkBurn(event.detail.checked);
   window.location.reload();
 };
 
 const updateNetwork = async (event: any) => {
-  await setNetworkId(event.detail.value);
+  await appConfigService.setNetworkId(event.detail.value);
   window.location.reload();
 };
 
@@ -138,9 +137,9 @@ const getCacheName = async (): Promise<string> => {
   }
 };
 
-const checkForUpdate = () => {
-  alert((window as any).nfc);
-  alert(JSON.stringify((window as any).nfc));
+const checkForUpdate = async () => {
+  await UIService.showInfo((window as any).nfc);
+  await UIService.showInfo(JSON.stringify((window as any).nfc));
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistration().then(registration => {
       if (registration && registration.waiting) {
@@ -162,23 +161,23 @@ const checkForUpdate = () => {
 };
 
 const saveDevToken = async () => {
-  await storage.set('dev-token', devToken.value);
+  await appConfigService.setDevToken(devToken.value);
   devTokenSaved.value = true;
   setTimeout(() => devTokenSaved.value = false, 1500);
 };
 
 onMounted(async () => {
-  isDevMode.value = await getDevMode();
-  isSimulateNFCTag.value = await getSimulateNFCTag();
-  isHomologAPI.value = await getHomologAPI();
-  isBulkBurn.value = await getBulkBurn();
-  network.value = String(await getNetworkId());
+  isDevMode.value = await appConfigService.getDevMode();
+  isSimulateNFCTag.value = await appConfigService.getSimulateNFCTag();
+  isHomologAPI.value = await appConfigService.getHomologAPI();
+  isBulkBurn.value = await appConfigService.getBulkBurn();
+  network.value = String(await appConfigService.getNetworkId());
   try {
     cacheName.value = await getCacheName();
   } catch (error) {
     console.error('Failed to get cache name:', error);
   }
-  devToken.value = await storage.get('dev-token') || '';
+  devToken.value = await appConfigService.getDevToken();
   
   // Get app version information
   try {

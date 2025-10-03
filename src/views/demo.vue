@@ -54,15 +54,14 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { IonContent, IonIcon, IonButton, IonGrid, IonRow, IonCol, IonSpinner } from '@ionic/vue';
 import { radioButtonOn, radioButtonOff, checkmarkCircle } from 'ionicons/icons';
-import { Storage } from '@ionic/storage';
 import { TapDanoService } from 'tapdano';
-import { getCurrentTag, getCurrentLocalWallet } from '@/utils/StorageUtils';
+import { UIService } from '@/utils/UIService';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 import { getBlockfrostURL, getBlockfrostAPI, getNetworkName, getCardanoScanURL } from '@/utils/CryptoUtils';
 import { serializeBigInt, utf8ToHex } from '@/utils/StringUtils';
 import NFCModalPetro from '@/components/NFCModalPetro.vue';
 
-const storage = new Storage();
-storage.create();
+const walletStorageService = new WalletStorageService();
 
 const wallet = ref();
 const drilling = ref(false);
@@ -85,13 +84,12 @@ let contractAddress: any;
 let isInitialzied = false;
 
 async function initialize() {
-  await storage.create();
   lucid = await Lucid.new(
     new Blockfrost(await getBlockfrostURL(), await getBlockfrostAPI()),
     await getNetworkName(),
   );
   contractAddress = lucid.utils.validatorToAddress(validador);
-  wallet.value = await getCurrentLocalWallet();
+  wallet.value = await walletStorageService.getCurrentLocalWallet();
   const ably = new (window as any).Ably.Realtime('iTZ0XA.06wqDQ:ZI6bW8YuX0nbFqg522l6iQ1N6u382WlHzczw4M2_fe8');
   await ably.connection.once('connected');
   const channel = ably.channels.get('webhook');
@@ -125,12 +123,13 @@ const registerAction  = async () => {
   try {
     lucid.selectWalletFromSeed(wallet.value.mnemonic);
     const publicKeyHash = lucid.utils.getAddressDetails(await lucid.wallet.address()).paymentCredential?.hash;
-    const currentTag = await getCurrentTag();
+    const currentTag = await walletStorageService.getCurrentTag();
+    if (!currentTag) return;
     let utxoToCollect = [];
     const allScriptUtxo = await lucid.utxosAt(contractAddress);
     for (let i = 0; i < allScriptUtxo.length; i++) {
       if (allScriptUtxo[i].datum || allScriptUtxo[i].datumHash) {
-        if (allScriptUtxo[i].datum.toUpperCase().indexOf(currentTag.PublicKey.toUpperCase()) === 10) {
+        if (allScriptUtxo[i].datum.toUpperCase().indexOf((currentTag.PublicKey || '').toUpperCase()) === 10) {
           if (serializeBigInt(allScriptUtxo[i].assets) == '{"lovelace":"2000000n"}') {
             utxoToCollect.push(allScriptUtxo[i]);
             break;
@@ -139,7 +138,7 @@ const registerAction  = async () => {
       }
     }
     if (utxoToCollect.length === 0) {
-      alert('No assets found');
+      await UIService.showError('No assets found');
       return;
     }
     if (nextUTXO != null) {
@@ -166,7 +165,7 @@ const registerAction  = async () => {
     }
     await nfcModal.value.closeModal(500);
     tx = tx.addSigner(await lucid.wallet.address()).attachSpendingValidator(validador);
-    const datum = Data.to(new Constr(0, [currentTag.PublicKey, (drilling.value ? '00' : '01') + new Date().getTime().toString(16).padStart(16, '0')]));
+    const datum = Data.to(new Constr(0, [currentTag.PublicKey || '', (drilling.value ? '00' : '01') + new Date().getTime().toString(16).padStart(16, '0')]));
     const assets = {
       lovelace: 2000000n,
     };
@@ -199,7 +198,7 @@ const registerAction  = async () => {
     });
   } catch (error) {
     console.error(error);
-    alert('Registrando ação anterior, por favor aguarde alguns instantes e tente novamente.');
+    await UIService.showError('Registrando ação anterior, por favor aguarde alguns instantes e tente novamente.');
   }
 };
 

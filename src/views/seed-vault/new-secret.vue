@@ -120,10 +120,11 @@ import { createOutline, downloadOutline, refreshOutline, checkmarkOutline, warni
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import CryptoJS from 'crypto-js';
-import { getSimulateNFCTag, getDevMode } from '@/utils/StorageUtils';
+import { SeedVaultStorageService } from '@/utils/storage-services/SeedVaultStorageService';
+import { VirtualNFCService } from '@/utils/storage-services/VirtualNFCService';
+import { AppConfigStorageService } from '@/utils/storage-services/AppConfigStorageService';
 import { MobileNDEFService, SVTag } from '@/utils/MobileNDEFService';
 import NFCModal from '@/components/NFCModal.vue';
-import { StorageService } from '@/utils/StorageService';
 import { ValidationService } from '@/utils/ValidationService';
 import { UIService } from '@/utils/UIService';
 import { AppWallet } from '@meshsdk/core';
@@ -132,7 +133,9 @@ import { WALLET_TYPES } from '@/utils/WalletTypes';
 
 const router = useRouter();
 const route = useRoute();
-const storageService = new StorageService();
+const seedVaultService = new SeedVaultStorageService();
+const virtualNFCService = new VirtualNFCService();
+const appConfigService = new AppConfigStorageService();
 
 const name = ref('');
 const seedPhrase = ref('');
@@ -249,29 +252,29 @@ const generateRandomWalletName = () => {
 // Generate a new wallet on mount if in create mode
 onMounted(async () => {
   // Se estiver em modo de desenvolvimento, preencher automaticamente o nome da wallet
-  const isDevMode = await getDevMode();
+  const isDevMode = await appConfigService.getDevMode();
   if (isDevMode) {
     name.value = generateRandomWalletName();
   }
   
   if (isCreateMode.value) {
-    generateNewSeedPhrase();
+    await generateNewSeedPhrase();
   }
 });
 
 // Watch for wallet type changes and regenerate seed phrase in create mode
-watch(walletType, () => {
+watch(walletType, async () => {
   if (isCreateMode.value) {
-    generateNewSeedPhrase();
+    await generateNewSeedPhrase();
   }
 });
 
-const generateNewSeedPhrase = () => {
+const generateNewSeedPhrase = async () => {
   try {
     const newSeedPhrase = generateMnemonic(walletType.value);
     seedPhrase.value = newSeedPhrase;
   } catch (error) {
-    UIService.showError('Error generating wallet: ' + error);
+    await UIService.showError('Error generating wallet: ' + error);
   }
 };
 
@@ -281,26 +284,26 @@ const handleSubmit = async () => {
   // Validate inputs
   const nameValidation = ValidationService.validateRequiredField(name.value, 'Name');
   if (!nameValidation.isValid) {
-    UIService.showError(nameValidation.error);
+    await UIService.showError(nameValidation.error);
     return;
   }
   
   const seedPhraseValidation = ValidationService.validateRequiredField(seedPhrase.value, 'Wallet Seed Phrase');
   if (!seedPhraseValidation.isValid) {
-    UIService.showError(seedPhraseValidation.error);
+    await UIService.showError(seedPhraseValidation.error);
     return;
   }
 
   const walletTypeValidation = ValidationService.validateRequiredField(walletType.value, 'Wallet Type');
   if (!walletTypeValidation.isValid) {
-    UIService.showError(walletTypeValidation.error);
+    await UIService.showError(walletTypeValidation.error);
     return;
   }
 
   // Validate wallet seed phrase format (for both import and create modes)
   if (!validateMnemonic(seedPhrase.value, walletType.value)) {
     const walletTypeName = walletTypes.value.find(type => type.id === walletType.value)?.name || 'wallet';
-    UIService.showError(`Invalid ${walletTypeName} seed phrase format. Please check your seed phrase.`);
+    await UIService.showError(`Invalid ${walletTypeName} seed phrase format. Please check your seed phrase.`);
     return;
   }
   
@@ -317,12 +320,12 @@ const handleSubmit = async () => {
       ? 'Wallet created successfully!'
       : 'Wallet imported successfully!';
     
-    UIService.showSuccess(successMessage);
+    await UIService.showSuccess(successMessage);
     router.replace('/seed-vault/main');
   } catch (error) {
     if (error && error !== 'canceled') {
       console.error(error);
-      UIService.showError(String(error));
+      await UIService.showError(String(error));
     }
   } finally {
     isLoading.value = false;
@@ -330,13 +333,13 @@ const handleSubmit = async () => {
 };
 
 const saveSecret = async (newSecretObj: any) => {
-  const currentTag = await storageService.getCurrentTag();
+  const currentTag = await seedVaultService.getCurrentTag();
   
   if (!currentTag) {
     throw new Error('No current tag found');
   }
   
-  const isSimulate = await getSimulateNFCTag();
+  const isSimulate = await appConfigService.getSimulateNFCTag();
   
   if (isSimulate) {
     await saveToEncryptedStorage(newSecretObj, currentTag.tag.seedVaultKey);
@@ -350,7 +353,7 @@ const saveToEncryptedStorage = async (newSecretObj: any, key: string) => {
     throw new Error('Authentication key not found.');
   }
   
-  const existingEncrypted = await storageService.get('my-secrets') as string;
+  const existingEncrypted = await virtualNFCService.getMySecrets();
   let secretsArr = [];
   
   if (existingEncrypted) {
@@ -366,7 +369,7 @@ const saveToEncryptedStorage = async (newSecretObj: any, key: string) => {
   
   secretsArr.push(newSecretObj);
   const encrypted = CryptoJS.AES.encrypt(JSON.stringify(secretsArr), key).toString();
-  await storageService.set('my-secrets', encrypted);
+  await virtualNFCService.setMySecrets(encrypted);
 };
 
 const saveToNFCTag = async (newSecretObj: any, currentTagData: any) => {
@@ -376,32 +379,34 @@ const saveToNFCTag = async (newSecretObj: any, currentTagData: any) => {
   
   try {
     nfcModal.value.openModal(1); // Single step: read + write
-    const mobileNDEFService = new MobileNDEFService();
+    const mobileNDEFService = MobileNDEFService.getInstance();
     
     nfcModal.value.onModalClose(() => {
       mobileNDEFService.cancel();
     });
     
     await mobileNDEFService.readAndWrite(
-      updatedTag.id,
-      false, // forceWrite
+      updatedTag.physicalId || null,
       (currentTag) => {
-        let currentSecrets = currentTag.secrets || [];
+        let currentSecrets = currentTag.data.secrets || [];
         currentSecrets.push(CryptoJS.AES.encrypt(newSecretObj.seedPhrase, updatedTag.seedVaultKey).toString());
-        const newLabels = (currentTag.labels || []).concat([newSecretObj.name]);
-        const newChains = (currentTag.chains || []).concat([newSecretObj.walletType]);
+        const newLabels = (currentTag.data.labels || []).concat([newSecretObj.name]);
+        const newChains = (currentTag.data.chains || []).concat([newSecretObj.walletType]);
         updatedTag.labels = newLabels;
         updatedTag.chains = newChains;
         updatedTag.secrets = currentSecrets;
         return {
-          id: updatedTag.id,
-          labels: newLabels,
-          secrets: currentSecrets,
-          chains: newChains
+          physicalId: currentTag.physicalId,
+          data: {
+            id: updatedTag.id,
+            labels: newLabels,
+            secrets: currentSecrets,
+            chains: newChains
+          }
         } as SVTag;
       }
     );
-    storageService.updateCurrentTag(updatedTag);    
+    seedVaultService.updateCurrentTag(updatedTag);    
     nfcModal.value.incrementProgress();
     await nfcModal.value.closeModal(500);
   } catch (error) {

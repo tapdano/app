@@ -46,7 +46,7 @@
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonBackButton, IonPage, IonTitle, IonToolbar, IonTextarea, IonInput, IonItem, IonButton } from '@ionic/vue';
-import { getCurrentMyWallet } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 import { copyToClipboard } from '@/utils/ClipboardUtils';
 import { loadWallet, fetchAccountInfo } from '@/utils/CryptoUtils';
 import { Transaction } from '@meshsdk/core';
@@ -57,6 +57,7 @@ import { calculateSHA256 } from '@/utils/StringUtils';
 import { TapDanoService } from 'tapdano';
 import { randomBytes } from 'crypto';
 import { ec as EC } from 'elliptic';
+import { UIService } from '@/utils/UIService';
 
 const nfcModal = ref<InstanceType<typeof NFCModal> | null>(null);
 const walletBalance = ref(0);
@@ -82,6 +83,7 @@ const getCardanoUsdPrice = async () => {
 
 const router = useRouter();
 const route = useRoute();
+const walletStorageService = new WalletStorageService();
 
 const walletName = ref('');
 const walletReceiveAddress = ref('');
@@ -91,16 +93,20 @@ const adaAmount = ref(0);
 
 const sendTransaction = async () => {
   if (!destinationAddress.value || adaAmount.value <= 0) {
-    alert('Please fill in all fields correctly.');
+    await UIService.showError('Please fill in all fields correctly.');
     return;
   }
 
-  if (!confirm('Confirm transaction submission?')) return;
+  if (!(await UIService.showConfirmation('Confirm transaction submission?'))) return;
 
   try {
-    const currentWallet = await getCurrentMyWallet();
+    const currentWallet = await walletStorageService.getCurrentMyWallet();
+    if (!currentWallet) {
+      await UIService.showError('No wallet found');
+      return;
+    }
     if (!(await checkTwoFactor(currentWallet))) {
-      alert('Error, authentication failed.');
+      await UIService.showError('Error, authentication failed.');
       return;
     }
     const wallet = await loadWallet(currentWallet.mnemonic);
@@ -116,10 +122,10 @@ const sendTransaction = async () => {
 
     destinationAddress.value = '';
     adaAmount.value = 0;
-    alert('Success! TxID: ' + txHash);
+    await UIService.showSuccess('Success! TxID: ' + txHash);
   } catch (error) {
     console.error(error);
-    alert(error);
+    await UIService.showError(error);
   }
 };
 
@@ -142,7 +148,7 @@ const checkTwoFactor = async (wallet: any) => {
     if (error && error != 'canceled') {
       await nfcModal.value.closeModal(0);
       console.error(error);
-      alert(error);
+      await UIService.showError(error);
     }
     return false;
   }
@@ -167,7 +173,7 @@ const formatAdaAmount = (inputValue: any) => {
 
 watch(() => route.path, async (newPath) => {
   if (newPath === '/my-wallet/main') {
-    const currentWallet = await getCurrentMyWallet();
+    const currentWallet = await walletStorageService.getCurrentMyWallet();
     if (currentWallet == null) {
       router.push('/my-wallets');
       return;

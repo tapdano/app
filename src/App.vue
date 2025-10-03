@@ -16,11 +16,14 @@
       </ion-menu>
       <ion-router-outlet id="main-content"></ion-router-outlet>
     </ion-split-pane>
+    
+    <!-- Global Alert Modal -->
+    <AlertModal ref="alertModal" />
   </ion-app>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { Storage } from '@ionic/storage';
 import {
   IonApp,
@@ -47,6 +50,9 @@ import {
 } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import { getDevMode } from '@/utils/StorageUtils';
+import { MobileNDEFService } from '@/utils/MobileNDEFService';
+import AlertModal from '@/components/AlertModal.vue';
+import { UIService } from '@/utils/UIService';
 
 const route = useRoute();
 
@@ -55,8 +61,9 @@ storage.create();
 
 const appPages = ref([] as any);
 const selectedIndex = ref(0);
+const alertModal = ref();
 
-const showMenu = computed(() => route.path != '/demo-auth' && route.path != '/dash' && !route.path.includes('/signed') && !route.path.includes('/poa') && !route.path.includes('/lottery'));
+const showMenu = computed(() => route.path != '/demo-auth' && route.path != '/dash' && !route.path.includes('/signed') && !route.path.includes('/poa') && !route.path.includes('/lottery') && !route.path.includes('/admin'));
 
 watch(() => route.path, async (newPath) => {
   selectedIndex.value = appPages.value.findIndex((page: any) => page.url.toLowerCase().indexOf(newPath.toLowerCase()) != -1);
@@ -64,6 +71,12 @@ watch(() => route.path, async (newPath) => {
 
 onMounted(async () => {
   try {
+    // Set up global alert modal
+    UIService.setAlertModal(alertModal.value);
+    
+    const mobileNDEFService = MobileNDEFService.getInstance();
+    await mobileNDEFService.initializeAndroidSession();
+
     const devMode = await getDevMode();
 
     const pages = [];
@@ -121,6 +134,11 @@ onMounted(async () => {
   if (loadingScreen) {
     loadingScreen.style.display = 'none';
   }
+});
+
+onUnmounted(() => {
+  const mobileNDEFService = MobileNDEFService.getInstance();
+  mobileNDEFService.destroyAndroidSession();
 });
 </script>
 

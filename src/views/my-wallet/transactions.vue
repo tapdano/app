@@ -33,7 +33,7 @@ import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonBackButton, IonTitle, IonToolbar, IonItem, IonList } from '@ionic/vue';
 import WalletTabBar from '../../components/MyWalletTabBar.vue';
-import { getCurrentMyWallet } from '@/utils/StorageUtils';
+import { WalletStorageService } from '@/utils/storage-services/WalletStorageService';
 import { fetchTransactions, getCardanoScanURL } from '@/utils/CryptoUtils';
 
 interface Transaction {
@@ -42,6 +42,7 @@ interface Transaction {
 
 const router = useRouter();
 const route = useRoute();
+const walletStorageService = new WalletStorageService();
 const walletName = ref('');
 const transactions = ref<Transaction[]>([]);
 const loading = ref(true);
@@ -50,7 +51,7 @@ let cardanoScanURL = '';
 watch(() => route.path, async (newPath) => {
   if (newPath === '/my-wallet/transactions') {
     loading.value = true;
-    const currentWallet = await getCurrentMyWallet();
+    const currentWallet = await walletStorageService.getCurrentMyWallet();
     if (currentWallet == null) {
       router.push('/my-wallets');
       return;
